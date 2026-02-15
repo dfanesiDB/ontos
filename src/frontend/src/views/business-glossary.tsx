@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import i18n from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ import {
   GraphTab,
   CollectionEditorDialog,
   ConceptEditorDialog,
+  GlossaryFilterPanel,
 } from '@/components/knowledge';
 
 type TabValue = 'collections' | 'concepts' | 'graph';
@@ -70,6 +72,9 @@ export default function BusinessGlossaryView() {
   const [editingCollection, setEditingCollection] = useState<KnowledgeCollection | null>(null);
   const [conceptEditorOpen, setConceptEditorOpen] = useState(false);
   const [editingConcept, setEditingConcept] = useState<OntologyConcept | null>(null);
+  
+  // Language selection for concept labels - defaults to UI language
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(i18n.language?.split('-')[0] || 'en');
   
   // Glossary preferences from persistent store
   const glossaryPrefs = useGlossaryPreferencesStore();
@@ -112,9 +117,14 @@ export default function BusinessGlossaryView() {
     const allProperties = showProperties ? Object.values(groupedProperties).flat() : [];
     
     // Deduplicate by IRI: properties may exist in both groupedConcepts and groupedProperties
+    // Also filter out properties from groupedConcepts when showProperties is disabled
     const seenIris = new Set<string>();
     const combined: OntologyConcept[] = [];
     for (const item of [...allConcepts, ...allProperties]) {
+      // Skip properties if showProperties is disabled (they may be in groupedConcepts cache)
+      if (!showProperties && item.concept_type === 'property') {
+        continue;
+      }
       if (!seenIris.has(item.iri)) {
         seenIris.add(item.iri);
         combined.push(item);
@@ -493,9 +503,31 @@ export default function BusinessGlossaryView() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        /* Tabs */
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
-          <TabsList className="w-fit">
+        <div className="flex-1 flex flex-col">
+          {/* Unified Filter Panel */}
+          <GlossaryFilterPanel
+            groupedConcepts={groupedConcepts}
+            filteredConcepts={filteredConcepts}
+            availableSources={availableSources}
+            hiddenSources={hiddenSources}
+            onToggleSource={toggleSource}
+            onSelectAllSources={selectAllSources}
+            onSelectNoneSources={selectNoneSources}
+            groupBySource={groupBySource}
+            showProperties={showProperties}
+            groupByDomain={groupByDomain}
+            onSetGroupBySource={setGroupBySource}
+            onSetShowProperties={setShowProperties}
+            onSetGroupByDomain={setGroupByDomain}
+            selectedLanguage={selectedLanguage}
+            onSetSelectedLanguage={setSelectedLanguage}
+            isFilterExpanded={isFilterExpanded}
+            onSetFilterExpanded={setFilterExpanded}
+          />
+          
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
+            <TabsList className="w-fit">
             <TabsTrigger value="concepts" className="gap-2">
               <Layers className="h-4 w-4" />
               {t('semantic-models:tabs.concepts')}
@@ -528,20 +560,11 @@ export default function BusinessGlossaryView() {
               onDeleteConcept={handleDeleteConcept}
               onRefresh={fetchData}
               canEdit={canWrite}
-              // Filter props
-              availableSources={availableSources}
-              hiddenSources={hiddenSources}
+              // Display options (from unified filter panel)
               groupBySource={groupBySource}
               showProperties={showProperties}
               groupByDomain={groupByDomain}
-              isFilterExpanded={isFilterExpanded}
-              onToggleSource={toggleSource}
-              onSelectAllSources={selectAllSources}
-              onSelectNoneSources={selectNoneSources}
-              onSetGroupBySource={setGroupBySource}
-              onSetShowProperties={setShowProperties}
-              onSetGroupByDomain={setGroupByDomain}
-              onSetFilterExpanded={setFilterExpanded}
+              selectedLanguage={selectedLanguage}
             />
           </TabsContent>
           
@@ -565,14 +588,10 @@ export default function BusinessGlossaryView() {
               onToggleRoot={handleToggleRoot}
               onNodeClick={handleSelectConcept}
               showRootBadges={!groupBySource}
-              availableSources={availableSources}
-              hiddenSources={hiddenSources}
-              onToggleSource={toggleSource}
-              onSelectAllSources={selectAllSources}
-              onSelectNoneSources={selectNoneSources}
             />
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        </div>
       )}
       
       {/* Collection Editor Dialog */}
