@@ -40,6 +40,15 @@ class TriggerType(str, Enum):
     ON_EXPIRING = "on_expiring"  # When access/entity is about to expire
     ON_REVOKE = "on_revoke"  # When access is revoked
 
+    # App-known UI actions — approval workflows looked up by trigger type (not name).
+    # All power the same ApprovalWizardDialog; 1:1 match with ON_* process triggers.
+    FOR_APPROVAL_RESPONSE = "for_approval_response"  # Approver responds to a paused process-workflow approval step
+    FOR_SUBSCRIBE = "for_subscribe"  # User subscribes to / signs a contract (matches ON_SUBSCRIBE)
+    FOR_REQUEST_REVIEW = "for_request_review"  # Wizard before review request (matches ON_REQUEST_REVIEW)
+    FOR_REQUEST_ACCESS = "for_request_access"  # Wizard before access request (matches ON_REQUEST_ACCESS)
+    FOR_REQUEST_PUBLISH = "for_request_publish"  # Wizard before publish/deploy request (matches ON_REQUEST_PUBLISH)
+    FOR_REQUEST_STATUS_CHANGE = "for_request_status_change"  # Wizard before status change request (matches ON_REQUEST_STATUS_CHANGE)
+
 
 class EntityType(str, Enum):
     """Entity types that can trigger workflows."""

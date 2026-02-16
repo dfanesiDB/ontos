@@ -299,9 +299,9 @@ export default function DataProductDetails() {
   const handleSubscribeClick = async () => {
     if (!productId) return;
     try {
-      const res = await get<{ workflow_id: string }>('/api/approvals/default-subscription-workflow');
-      if (res.data?.workflow_id) {
-        setSubscriptionWorkflowId(res.data.workflow_id);
+      const res = await get<{ id: string }>('/api/workflows/for-trigger/for_subscribe');
+      if (res.data?.id) {
+        setSubscriptionWorkflowId(res.data.id);
         setSubscriptionWizardOpen(true);
       } else {
         toast({

@@ -237,11 +237,11 @@ export default function DatasetDetails() {
   const handleSubscribeClick = async () => {
     if (!datasetId) return;
     try {
-      const res = await fetch('/api/approvals/default-subscription-workflow');
+      const res = await fetch('/api/workflows/for-trigger/for_subscribe');
       if (res.ok) {
         const data = await res.json();
-        if (data?.workflow_id) {
-          setSubscriptionWorkflowId(data.workflow_id);
+        if (data?.id) {
+          setSubscriptionWorkflowId(data.id);
           setSubscriptionWizardOpen(true);
           return;
         }

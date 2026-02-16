@@ -77,8 +77,12 @@ class WorkflowsManager:
                 # Parse trigger
                 trigger_data = wf_data.get('trigger', {})
                 trigger = WorkflowTrigger(
-                    type=TriggerType(trigger_data.get('type', 'manual')),
-                    entity_types=[EntityType(et) for et in trigger_data.get('entity_types', [])],
+                    type=self._safe_trigger_type(trigger_data.get('type', 'manual')),
+                    entity_types=[
+                        et for et in
+                        (self._safe_entity_type(v) for v in trigger_data.get('entity_types', []))
+                        if et is not None
+                    ],
                     from_status=trigger_data.get('from_status'),
                     to_status=trigger_data.get('to_status'),
                     schedule=trigger_data.get('schedule'),
@@ -174,6 +178,21 @@ class WorkflowsManager:
             return None
         return self._db_to_model(db_workflow)
 
+    def get_workflow_by_trigger_type(
+        self, trigger_type: str, *, entity_type: Optional[str] = None
+    ) -> Optional[ProcessWorkflow]:
+        """Get the first active workflow for a given trigger type.
+
+        If *entity_type* is provided the match is narrowed to workflows whose
+        trigger.entity_types includes the value (or is empty — meaning "all").
+        """
+        db_workflow = process_workflow_repo.get_by_trigger_type(
+            self._db, trigger_type, entity_type=entity_type, active_only=True
+        )
+        if not db_workflow:
+            return None
+        return self._db_to_model(db_workflow)
+
     def create_workflow(
         self,
         workflow: ProcessWorkflowCreate,
@@ -247,8 +266,12 @@ class WorkflowsManager:
         
         # Create new workflow
         trigger = WorkflowTrigger(
-            type=TriggerType(trigger_config.get('type', 'manual')),
-            entity_types=[EntityType(et) for et in trigger_config.get('entity_types', [])],
+            type=self._safe_trigger_type(trigger_config.get('type', 'manual')),
+            entity_types=[
+                et for et in
+                (self._safe_entity_type(v) for v in trigger_config.get('entity_types', []))
+                if et is not None
+            ],
             from_status=trigger_config.get('from_status'),
             to_status=trigger_config.get('to_status'),
             schedule=trigger_config.get('schedule'),
@@ -590,14 +613,37 @@ class WorkflowsManager:
             ),
         ]
 
+    @staticmethod
+    def _safe_trigger_type(value: str) -> TriggerType:
+        """Parse a trigger type string, falling back to MANUAL for unknown/legacy values."""
+        try:
+            return TriggerType(value)
+        except ValueError:
+            logger.warning("Unknown trigger type '%s' in DB — treating as MANUAL", value)
+            return TriggerType.MANUAL
+
+    @staticmethod
+    def _safe_entity_type(value: str) -> EntityType:
+        """Parse an entity type string, skipping unknown values."""
+        try:
+            return EntityType(value)
+        except ValueError:
+            logger.warning("Unknown entity type '%s' in DB — skipping", value)
+            return None  # type: ignore[return-value]
+
     def _db_to_model(self, db_workflow: ProcessWorkflowDb) -> ProcessWorkflow:
         """Convert database model to Pydantic model."""
         trigger_config = json.loads(db_workflow.trigger_config) if db_workflow.trigger_config else {}
         scope_config = json.loads(db_workflow.scope_config) if db_workflow.scope_config else {}
         
+        parsed_entity_types = [
+            et for et in
+            (self._safe_entity_type(v) for v in trigger_config.get('entity_types', []))
+            if et is not None
+        ]
         trigger = WorkflowTrigger(
-            type=TriggerType(trigger_config.get('type', 'manual')),
-            entity_types=[EntityType(et) for et in trigger_config.get('entity_types', [])],
+            type=self._safe_trigger_type(trigger_config.get('type', 'manual')),
+            entity_types=parsed_entity_types,
             from_status=trigger_config.get('from_status'),
             to_status=trigger_config.get('to_status'),
             schedule=trigger_config.get('schedule'),

@@ -144,17 +144,14 @@ export default function MyRequests() {
     return merged;
   }, []);
 
-  // Fetch both access requests and approval/subscription sessions on mount.
+  // Fetch access requests only. (Approval/subscription sessions are not shown in Requests; completed agreements may be added later.)
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       setLoading(true);
       setError(null);
       try {
-        const [accessResp, sessionsResp] = await Promise.all([
-          fetch('/api/access-grants/my-requests'),
-          fetch('/api/approvals/my-sessions'),
-        ]);
+        const accessResp = await fetch('/api/access-grants/my-requests');
         if (cancelled) return;
         if (!accessResp.ok) {
           const errText = await accessResp.text();
@@ -163,13 +160,8 @@ export default function MyRequests() {
           return;
         }
         const accessData: MyRequestsResponse = await accessResp.json();
-        let sessions: ApprovalSessionItem[] = [];
-        if (sessionsResp.ok) {
-          const sessionsData: MyApprovalSessionsResponse = await sessionsResp.json();
-          sessions = sessionsData?.sessions ?? [];
-        }
         if (cancelled) return;
-        setRows(mergeAndSort(accessData?.requests ?? [], sessions));
+        setRows(mergeAndSort(accessData?.requests ?? [], []));
       } catch (e) {
         if (cancelled) return;
         console.warn('Failed to fetch my requests:', e);
@@ -187,13 +179,8 @@ export default function MyRequests() {
     try {
       setLoading(true);
       setError(null);
-      const [accessResp, sessionsResp] = await Promise.all([
-        api.get<MyRequestsResponse>('/api/access-grants/my-requests'),
-        api.get<MyApprovalSessionsResponse>('/api/approvals/my-sessions'),
-      ]);
-      const accessData = accessResp.data;
-      const sessionsData = sessionsResp.data;
-      setRows(mergeAndSort(accessData?.requests ?? [], sessionsData?.sessions ?? []));
+      const accessResp = await api.get<MyRequestsResponse>('/api/access-grants/my-requests');
+      setRows(mergeAndSort(accessResp.data?.requests ?? [], []));
     } catch (e) {
       console.warn('Failed to fetch my requests:', e);
       setError(e instanceof Error ? e.message : 'Failed to load');

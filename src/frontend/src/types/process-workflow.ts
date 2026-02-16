@@ -28,7 +28,14 @@ export type TriggerType =
   | 'on_unsubscribe'
   // Access lifecycle triggers
   | 'on_expiring'
-  | 'on_revoke';
+  | 'on_revoke'
+  // App-known UI actions (approval workflows looked up by trigger type, 1:1 match with ON_*)
+  | 'for_approval_response'
+  | 'for_subscribe'
+  | 'for_request_review'
+  | 'for_request_access'
+  | 'for_request_publish'
+  | 'for_request_status_change';
 
 export type EntityType =
   | 'catalog'

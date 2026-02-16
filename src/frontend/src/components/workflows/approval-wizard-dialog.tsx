@@ -79,10 +79,10 @@ export default function ApprovalWizardDialog({
     setCompleteResult(null);
     setSelectedWorkflowId(preselectedWorkflowId ?? null);
     let cancelled = false;
-    get<ApprovalWorkflowRef[]>('/api/approvals/workflows')
+    get<{ workflows: ApprovalWorkflowRef[]; total: number }>('/api/workflows?workflow_type=approval')
       .then((res) => {
         if (cancelled || !res.data) return;
-        setWorkflows(Array.isArray(res.data) ? res.data : []);
+        setWorkflows(Array.isArray(res.data?.workflows) ? res.data.workflows : []);
       })
       .catch(() => {});
     return () => { cancelled = true; };

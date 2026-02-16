@@ -152,6 +152,13 @@ export const ALL_TRIGGER_TYPES: TriggerType[] = [
   'on_unsubscribe',
   'on_expiring',
   'on_revoke',
+  // App-known UI actions (approval workflows, 1:1 match with ON_*)
+  'for_approval_response',
+  'for_subscribe',
+  'for_request_review',
+  'for_request_access',
+  'for_request_publish',
+  'for_request_status_change',
 ];
 
 /**

@@ -71,6 +71,43 @@ class ProcessWorkflowRepository:
             .first()
         )
 
+    def get_by_trigger_type(
+        self,
+        db: Session,
+        trigger_type: str,
+        *,
+        entity_type: Optional[str] = None,
+        active_only: bool = True,
+    ) -> Optional[ProcessWorkflowDb]:
+        """Get the first active workflow whose trigger.type matches.
+
+        If *entity_type* is given, only workflows whose trigger.entity_types
+        list includes the value (or is empty — meaning "all") are considered.
+        Used for app-known UI actions (for_approval_response, for_subscribe,
+        for_request_review, for_request_access, etc.).
+        """
+        query = (
+            db.query(ProcessWorkflowDb)
+            .options(joinedload(ProcessWorkflowDb.steps))
+            .order_by(ProcessWorkflowDb.name)
+        )
+        if active_only:
+            query = query.filter(ProcessWorkflowDb.is_active == True)
+        workflows = query.all()
+        for wf in workflows:
+            try:
+                trigger_config = json.loads(wf.trigger_config) if wf.trigger_config else {}
+                if trigger_config.get('type') != trigger_type:
+                    continue
+                if entity_type:
+                    et_list = trigger_config.get('entity_types', [])
+                    if et_list and entity_type not in et_list:
+                        continue
+                return wf
+            except (json.JSONDecodeError, TypeError):
+                continue
+        return None
+
     def get_for_trigger(
         self,
         db: Session,

@@ -301,6 +301,46 @@ async def get_policy_workflow_usage(
     }
 
 
+# App-known trigger types for GET /for-trigger/{trigger_type} (workflow looked up by trigger type, not name).
+# All power the same ApprovalWizardDialog. 1:1 match with ON_* process triggers.
+APP_ACTION_TRIGGER_TYPES = frozenset({
+    TriggerType.FOR_APPROVAL_RESPONSE.value,
+    TriggerType.FOR_SUBSCRIBE.value,
+    TriggerType.FOR_REQUEST_REVIEW.value,
+    TriggerType.FOR_REQUEST_ACCESS.value,
+    TriggerType.FOR_REQUEST_PUBLISH.value,
+    TriggerType.FOR_REQUEST_STATUS_CHANGE.value,
+})
+
+
+@router.get("/for-trigger/{trigger_type}", response_model=ProcessWorkflow)
+async def get_workflow_for_trigger(
+    request: Request,
+    trigger_type: str,
+    entity_type: Optional[str] = Query(None, description="Optional entity type to match against workflow trigger entity_types"),
+    manager: WorkflowsManager = Depends(get_workflows_manager),
+    _: bool = Depends(PermissionChecker('settings', FeatureAccessLevel.READ_ONLY)),
+) -> ProcessWorkflow:
+    """Get the first active workflow that declares this trigger type.
+
+    Trigger type is the stable contract; workflow names are for display only.
+    Optionally pass ?entity_type= to narrow the match to workflows whose
+    trigger.entity_types includes the value (or is empty, meaning "all").
+    """
+    if trigger_type not in APP_ACTION_TRIGGER_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid trigger_type. Allowed: {sorted(APP_ACTION_TRIGGER_TYPES)}",
+        )
+    workflow = manager.get_workflow_by_trigger_type(trigger_type, entity_type=entity_type)
+    if not workflow:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No active workflow found for trigger type '{trigger_type}'. Load default workflows from Settings.",
+        )
+    return workflow
+
+
 @router.get("/{workflow_id}", response_model=ProcessWorkflow)
 async def get_workflow(
     request: Request,

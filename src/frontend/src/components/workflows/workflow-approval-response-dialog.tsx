@@ -14,7 +14,7 @@ import { Loader2, Check, XCircle } from 'lucide-react';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 
-/** Config returned by GET /api/approvals/default-response-workflow */
+/** Built from GET /api/workflows/for-trigger/for_approval_response (first step used for dialog). */
 interface DefaultResponseWorkflowStep {
   workflow_id: string;
   workflow_name: string;
@@ -63,11 +63,23 @@ export default function WorkflowApprovalResponseDialog({
     }
     let cancelled = false;
     setLoadingConfig(true);
-    get<DefaultResponseWorkflowStep>('/api/approvals/default-response-workflow')
+    get<{ id: string; name: string; steps: Array<{ step_id: string; name: string | null; step_type: string; config: Record<string, unknown> }> }>(
+      '/api/workflows/for-trigger/for_approval_response',
+    )
       .then((res) => {
         if (cancelled) return;
-        if (res.data) setStepConfig(res.data);
-        else setStepConfig(null);
+        const w = res.data;
+        if (w?.steps?.length) {
+          const first = w.steps[0];
+          setStepConfig({
+            workflow_id: w.id,
+            workflow_name: w.name,
+            step_id: first.step_id,
+            step_name: first.name ?? first.step_id,
+            step_type: first.step_type,
+            config: (first.config ?? {}) as DefaultResponseWorkflowStep['config'],
+          });
+        } else setStepConfig(null);
       })
       .catch(() => {
         if (!cancelled) setStepConfig(null);
