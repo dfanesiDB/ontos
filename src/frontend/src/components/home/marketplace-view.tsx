@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Database, Search, Bell, Bookmark, X, LayoutList, Network, Package, Table2, Grid2X2, ExternalLink } from 'lucide-react';
+import { Loader2, Database, Search, Bell, X, LayoutList, Network, Package, Table2, Grid2X2, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDomains } from '@/hooks/use-domains';
 import { type DataProduct } from '@/types/data-product';
@@ -53,7 +52,6 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'explore' | 'subscriptions'>('explore');
   const [assetType, setAssetType] = useState<MarketplaceAssetType>('products');
   
   // Graph view state
@@ -813,31 +811,9 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
       </div>
       )}
 
-      {/* Tabs with Asset Type Toggle */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'explore' | 'subscriptions')}>
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <TabsList>
-            <TabsTrigger value="explore" className="gap-2">
-              <Search className="h-4 w-4" />
-              {t('marketplace.tabs.explore')}
-            </TabsTrigger>
-            <TabsTrigger value="subscriptions" className="gap-2">
-              <Bookmark className="h-4 w-4" />
-              {t('marketplace.tabs.subscriptions')}
-              {assetType === 'products' && subscribedProducts.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                  {subscribedProducts.length}
-                </Badge>
-              )}
-              {assetType === 'datasets' && subscribedDatasets.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                  {subscribedDatasets.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Asset Type Toggle & Tiles Per Row */}
+      {/* Asset Type Toggle & Tiles Per Row */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+          <div />
           <div className="flex items-center gap-4 flex-wrap">
             {/* Asset Type Toggle - only show when both types have data */}
             {showAssetToggle && (
@@ -887,9 +863,9 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
           </div>
         </div>
 
-        {/* Explore Tab Content - Products */}
+        {/* Products */}
         {assetType === 'products' && (
-          <TabsContent value="explore" className="mt-4">
+          <div className="mt-4">
             {productsLoading || matchesLoading ? (
               <div className="flex items-center justify-center h-48">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -916,12 +892,12 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
                 </div>
               </>
             )}
-          </TabsContent>
+          </div>
         )}
 
-        {/* Explore Tab Content - Datasets */}
+        {/* Datasets */}
         {assetType === 'datasets' && (
-          <TabsContent value="explore" className="mt-4">
+          <div className="mt-4">
             {datasetsLoading ? (
               <div className="flex items-center justify-center h-48">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -948,77 +924,8 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
                 </div>
               </>
             )}
-          </TabsContent>
+          </div>
         )}
-
-        {/* My Data (Subscriptions) Tab Content - Products */}
-        {assetType === 'products' && (
-          <TabsContent value="subscriptions" className="mt-4">
-            {subscribedLoading ? (
-              <div className="flex items-center justify-center h-48">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : subscribedProducts.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Bell className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p>{t('marketplace.products.noSubscriptions')}</p>
-                <p className="text-sm mt-1">{t('marketplace.products.browseToSubscribe')}</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4"
-                  onClick={() => setActiveTab('explore')}
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  {t('marketplace.products.exploreProducts')}
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="text-sm text-muted-foreground mb-4">
-                  {subscribedProducts.length} subscribed {subscribedProducts.length === 1 ? 'product' : 'products'}
-                </div>
-                <div className={gridClass}>
-                  {subscribedProducts.map(p => renderProductCard(p, true))}
-                </div>
-              </>
-            )}
-          </TabsContent>
-        )}
-
-        {/* My Data (Subscriptions) Tab Content - Datasets */}
-        {assetType === 'datasets' && (
-          <TabsContent value="subscriptions" className="mt-4">
-            {subscribedDatasetsLoading ? (
-              <div className="flex items-center justify-center h-48">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : subscribedDatasets.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Bell className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p>{t('marketplace.datasets.noSubscriptions')}</p>
-                <p className="text-sm mt-1">{t('marketplace.datasets.browseToSubscribe')}</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4"
-                  onClick={() => setActiveTab('explore')}
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  {t('marketplace.datasets.exploreDatasets')}
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="text-sm text-muted-foreground mb-4">
-                  {subscribedDatasets.length} subscribed {subscribedDatasets.length === 1 ? 'dataset' : 'datasets'}
-                </div>
-                <div className={gridClass}>
-                  {subscribedDatasets.map(d => renderDatasetCard(d, true))}
-                </div>
-              </>
-            )}
-          </TabsContent>
-        )}
-      </Tabs>
 
       {/* Info Dialog - Products */}
       {selectedProduct && (

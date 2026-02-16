@@ -1,4 +1,50 @@
 {
+  "personaNav": {
+    "home": "Home",
+    "marketplace": "Marketplace",
+    "myProducts": "My Products",
+    "businessLineage": "Business Lineage",
+    "requests": "Requests",
+    "dataProducts": "Data Products",
+    "datasets": "Datasets",
+    "contracts": "Contracts",
+    "consumers": "Consumers",
+    "productHealth": "Product Health",
+    "catalogCommander": "Catalog Commander",
+    "complianceChecks": "Compliance Checks",
+    "assetReview": "Asset Reviews",
+    "domains": "Domains",
+    "teams": "Teams",
+    "projects": "Projects",
+    "policies": "Policies",
+    "tags": "Tags",
+    "workflows": "Workflows",
+    "collections": "Collections",
+    "glossaries": "Glossaries",
+    "concepts": "Concepts",
+    "properties": "Properties",
+    "ontologies": "Ontologies",
+    "knowledgeGraph": "Knowledge Graph",
+    "terms": "Terms",
+    "git": "Git",
+    "jobs": "Jobs",
+    "appRoles": "App Roles",
+    "searchSettings": "Search Settings",
+    "mcpSettings": "MCP Settings",
+    "uiCustomization": "UI Customization",
+    "audit": "Audit",
+    "connectors": "Connectors"
+  },
+  "personas": {
+    "data_consumer": "Data Consumer",
+    "data_producer": "Data Producer",
+    "data_product_owner": "Data Product Owner",
+    "data_steward": "Data Steward",
+    "data_governance_officer": "Data Governance Officer",
+    "ontology_engineer": "Ontology Engineer",
+    "business_term_owner": "Business Term Owner",
+    "administrator": "Administrator"
+  },
   "title": "Settings",
   "tabs": {
     "general": "General",
@@ -197,6 +243,10 @@
       "approvalPrivileges": {
         "title": "Approval Privileges",
         "description": "Grant this role the ability to approve specific types of requests."
+      },
+      "allowedPersonas": {
+        "title": "Personas this role can access",
+        "description": "Select which persona views users with this role can use in the UI."
       }
     },
     "permissions": {

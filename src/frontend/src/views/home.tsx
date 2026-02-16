@@ -20,6 +20,7 @@ import RecentActivity from '@/components/home/recent-activity';
 import MarketplaceView from '@/components/home/marketplace-view';
 import { useUserStore } from '@/stores/user-store';
 import { useViewModeStore, ViewMode } from '@/stores/view-mode-store';
+import { usePersonaStore } from '@/stores/persona-store';
 
 interface Stats {
   dataContracts: { count: number; loading: boolean; error: string | null };
@@ -358,18 +359,24 @@ export default function Home() {
     });
   }, [permissions, permissionsLoading]);
 
-  // If user only has consumer access, always show marketplace
+  // Persona-based home: when user has a selected persona, show that persona's home
+  const currentPersona = usePersonaStore((state) => state.currentPersona);
+  const hasPersona = !!currentPersona;
+  const isConsumerPersona = currentPersona === 'data_consumer';
+  // Fallback when no persona: use view mode (consumer vs management)
   const effectiveViewMode: ViewMode = hasAnyAccess && !hasManagementAccess ? 'consumer' : viewMode;
+  const showMarketplace = hasPersona ? isConsumerPersona : (effectiveViewMode === 'consumer' && hasAnyAccess);
+  const showManagementHome = hasPersona ? !isConsumerPersona : (effectiveViewMode === 'management');
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Consumer/Marketplace View */}
-      {effectiveViewMode === 'consumer' && hasAnyAccess && (
+      {/* Data Consumer persona (or legacy consumer view): Marketplace */}
+      {showMarketplace && hasAnyAccess && (
         <MarketplaceView />
       )}
 
-      {/* Management View - original home page content */}
-      {effectiveViewMode === 'management' && (
+      {/* Other personas / Management View: dedicated home with tiles and sections */}
+      {showManagementHome && (
         <>
           <div className="max-w-2xl mx-auto text-center mb-8">
             <div className="flex items-center justify-center mb-4">

@@ -1,8 +1,8 @@
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
 
 from src.common.dependencies import DBSessionDep, CurrentUserDep
 from src.common.authorization import ApprovalChecker, PermissionChecker
@@ -154,6 +154,48 @@ class SubmitStepBody(BaseModel):
     """Body for POST /api/approvals/sessions/{id}/steps."""
     step_id: str = Field(..., description="Step ID being submitted")
     payload: Dict[str, Any] = Field(default_factory=dict, description="Step payload (e.g. reason, acceptances)")
+
+
+class MyApprovalSessionResponse(BaseModel):
+    """One approval/subscription session for the current user."""
+    id: str
+    workflow_id: str
+    entity_type: str
+    entity_id: str
+    entity_name: Optional[str] = None
+    completion_action: Optional[str] = None
+    status: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class MyApprovalSessionsList(BaseModel):
+    """List of approval/subscription sessions for the current user."""
+    sessions: List[MyApprovalSessionResponse]
+    total: int
+
+
+@router.get('/approvals/my-sessions', response_model=MyApprovalSessionsList)
+async def get_my_approval_sessions(
+    db: DBSessionDep,
+    current_user: CurrentUserDep,
+    agreement_wizard_manager: AgreementWizardManager = Depends(get_agreement_wizard_manager),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+):
+    """List approval/subscription sessions created by the current user (in_progress, completed, abandoned)."""
+    if not current_user or not current_user.email:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    sessions, total = agreement_wizard_manager.get_my_sessions(
+        current_user.email, limit=limit, offset=offset
+    )
+    return MyApprovalSessionsList(
+        sessions=[MyApprovalSessionResponse.model_validate(s) for s in sessions],
+        total=total,
+    )
 
 
 @router.get('/approvals/workflows')

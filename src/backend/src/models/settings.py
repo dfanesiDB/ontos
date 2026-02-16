@@ -35,6 +35,18 @@ class ApprovalEntity(str, Enum):
     BUSINESS_TERMS = "BUSINESS_TERMS"
     ASSET_REVIEWS = "ASSET_REVIEWS"
 
+# Persona IDs for UI view selection (roles grant access to personas)
+ALL_PERSONA_IDS = [
+    "data_consumer",
+    "data_producer",
+    "data_product_owner",
+    "data_steward",
+    "data_governance_officer",
+    "ontology_engineer",
+    "business_term_owner",
+    "administrator",
+]
+
 # Deployment policy for catalog/schema restrictions
 class DeploymentPolicy(BaseModel):
     """Policy defining where users can deploy contracts.
@@ -89,6 +101,10 @@ class AppRoleBase(BaseModel):
         default_factory=list, 
         description="Role IDs that can approve access requests for this role."
     )
+    allowed_personas: List[str] = Field(
+        default_factory=list,
+        description="Persona IDs that users with this role can select in the UI (e.g. data_consumer, data_producer)."
+    )
 
 # Model for creating a new role (input)
 class AppRoleCreate(AppRoleBase):
@@ -108,6 +124,7 @@ class AppRoleUpdate(AppRoleBase):
     deployment_policy: Optional[DeploymentPolicy] = None
     requestable_by_roles: Optional[List[str]] = None
     approver_roles: Optional[List[str]] = None
+    allowed_personas: Optional[List[str]] = None
 
 # Model representing a role as returned by the API (output)
 class AppRole(AppRoleBase):

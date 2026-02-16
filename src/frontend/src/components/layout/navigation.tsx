@@ -8,28 +8,28 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { getNavigationGroups, FeatureConfig } from '@/config/features';
+import { PERSONA_NAV } from '@/config/persona-nav';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-// Import the Zustand store hook
 import { useFeatureVisibilityStore } from '@/stores/feature-visibility-store';
+import { usePersonaStore } from '@/stores/persona-store';
 import { Button } from '@/components/ui/button';
-// Import permissions hook and types
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
-// Add Home icon
-import { Home as HomeIcon, Loader2 } from 'lucide-react';
+import { Home as HomeIcon, Loader2, Layout } from 'lucide-react';
+import type { PersonaId } from '@/types/settings';
 
 interface NavigationProps {
   isCollapsed: boolean;
 }
 
 export function Navigation({ isCollapsed }: NavigationProps) {
-  const { t } = useTranslation(['navigation', 'features']);
+  const { t } = useTranslation(['navigation', 'features', 'settings']);
   const location = useLocation();
-  // Select only the allowedMaturities from the store
   const allowedMaturities = useFeatureVisibilityStore((state) => state.allowedMaturities);
-  // Get permissions state and checker
   const { permissions, isLoading: permissionsLoading, hasPermission } = usePermissions();
+  const currentPersona = usePersonaStore((state) => state.currentPersona);
+  const allowedPersonas = usePersonaStore((state) => state.allowedPersonas);
 
   // Get navigation groups based on maturity filters
   const rawNavigationGroups = getNavigationGroups(allowedMaturities);
@@ -110,10 +110,43 @@ export function Navigation({ isCollapsed }: NavigationProps) {
     return t(`features:${featureId}.name`, { defaultValue: defaultName });
   };
 
+  // Persona-based nav: when user has a selected persona, show only that persona's menu items
+  const usePersonaNav = currentPersona && allowedPersonas.length > 0 && PERSONA_NAV[currentPersona as PersonaId];
+  const personaNavItems = usePersonaNav
+    ? (PERSONA_NAV[currentPersona as PersonaId] || []).filter((item) => {
+        if (!item.featureId) return true;
+        return hasPermission(item.featureId, FeatureAccessLevel.READ_ONLY);
+      })
+    : [];
+
   return (
     <ScrollArea className="h-full py-2">
       <TooltipProvider delayDuration={0}>
         <nav className={cn("flex flex-col px-1 gap-1")}>
+          {usePersonaNav ? (
+            /* Persona-based navigation */
+            personaNavItems.map((item) => {
+              const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+              const label = t(`settings:${item.labelKey}`, { defaultValue: item.id });
+              const Icon = item.path === '/' ? HomeIcon : Layout;
+              return isCollapsed ? (
+                <Tooltip key={item.id}>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className={cn('flex items-center justify-center rounded-lg p-2 transition-colors', isActive ? 'bg-muted text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground')} aria-label={label} asChild>
+                      <NavLink to={item.path}><Icon className="h-5 w-5" /><span className="sr-only">{label}</span></NavLink>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{label}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <NavLink key={item.id} to={item.path} className={({ isActive: navIsActive }) => cn('flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors', navIsActive ? 'bg-muted text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span className="flex-1 min-w-0 truncate">{label}</span>
+                </NavLink>
+              );
+            })
+          ) : (
+            <>
           {/* Render Home Link First */}
           {
             isCollapsed ? (
@@ -304,6 +337,8 @@ export function Navigation({ isCollapsed }: NavigationProps) {
               })}
             </div>
           ))}
+            </>
+          )}
         </nav>
       </TooltipProvider>
     </ScrollArea>

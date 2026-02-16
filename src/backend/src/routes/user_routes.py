@@ -201,6 +201,22 @@ async def get_actual_role(
     return {"role": role.dict() if role else None}
 
 
+@router.get("/user/allowed-personas")
+async def get_allowed_personas(
+    user_details: UserInfo = Depends(get_user_details_from_sdk),
+    settings_manager: SettingsManager = Depends(get_settings_manager)
+):
+    """Return the list of persona IDs the current user is allowed to use (union across their roles, or single role if override)."""
+    try:
+        personas = settings_manager.get_allowed_personas_for_user(
+            user_details.groups, user_details.email
+        )
+        return {"personas": personas}
+    except Exception as e:
+        logger.error(f"Error getting allowed personas for user '{user_details.email}': {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error retrieving allowed personas.")
+
+
 # --- Requestable Roles Endpoint ---
 @router.get("/user/requestable-roles", response_model=List[AppRole])
 async def get_requestable_roles(

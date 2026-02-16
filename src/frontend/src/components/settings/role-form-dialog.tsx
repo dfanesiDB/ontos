@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { AppRole, FeatureConfig, FeatureAccessLevel, HomeSection, ApprovalEntity, NO_ROLE_SENTINEL } from '@/types/settings';
+import { AppRole, FeatureConfig, FeatureAccessLevel, HomeSection, ApprovalEntity, NO_ROLE_SENTINEL, ALL_PERSONA_IDS } from '@/types/settings';
+import { PERSONA_LABEL_KEYS } from '@/config/persona-nav';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { ACCESS_LEVEL_ORDER } from '../../lib/permissions';
@@ -102,6 +103,7 @@ const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
         feature_permissions: initialRole?.feature_permissions || getDefaultPermissions(featuresConfig),
         home_sections: initialRole?.home_sections || [],
         approval_privileges: normalizeApprovalPrivileges(initialRole?.approval_privileges),
+        allowed_personas: initialRole?.allowed_personas || [],
         deployment_policy: normalizeDeploymentPolicy(initialRole?.deployment_policy),
         requestable_by_roles: initialRole?.requestable_by_roles || [],
         approver_roles: initialRole?.approver_roles || [],
@@ -126,6 +128,7 @@ const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                 feature_permissions: initialRole.feature_permissions || getDefaultPermissions(featuresConfig),
                 home_sections: initialRole.home_sections || [],
                 approval_privileges: normalizeApprovalPrivileges(initialRole.approval_privileges),
+                allowed_personas: initialRole.allowed_personas || [],
                 deployment_policy: normalizeDeploymentPolicy(initialRole.deployment_policy),
                 requestable_by_roles: initialRole.requestable_by_roles || [],
                 approver_roles: initialRole.approver_roles || [],
@@ -137,6 +140,7 @@ const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                 feature_permissions: getDefaultPermissions(featuresConfig),
                 home_sections: [],
                 approval_privileges: {},
+                allowed_personas: [],
                 deployment_policy: null,
                 requestable_by_roles: [],
                 approver_roles: [],
@@ -171,6 +175,7 @@ const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                 feature_permissions: getDefaultPermissions(featuresConfig),
                 home_sections: [],
                 approval_privileges: {},
+                allowed_personas: [],
                 deployment_policy: null,
                 requestable_by_roles: [],
                 approver_roles: [],
@@ -230,10 +235,13 @@ const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
             };
         }
 
+        const allowedPersonasArray = Array.isArray(data.allowed_personas) ? data.allowed_personas : [];
+
         const basePayload: AppRole = {
             ...data,
             assigned_groups: assignedGroupsArray,
             approval_privileges: cleanedApprovalPrivileges,
+            allowed_personas: allowedPersonasArray,
             deployment_policy: cleanedDeploymentPolicy,
         } as AppRole;
 
@@ -384,6 +392,42 @@ const RoleFormDialog: React.FC<RoleFormDialogProps> = ({
                                                     <span>{entity.replace('_', ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}</span>
                                                 </label>
                                             ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Personas this role can access */}
+                                    <div className="space-y-3 pt-4 border-t">
+                                        <h4 className="font-medium">{t('roles.privileges.allowedPersonas.title')}</h4>
+                                        <p className="text-xs text-muted-foreground">{t('roles.privileges.allowedPersonas.description')}</p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            <Controller
+                                                name="allowed_personas"
+                                                control={control}
+                                                render={({ field }) => (
+                                                    <>
+                                                        {ALL_PERSONA_IDS.map((personaId) => {
+                                                            const checked = (field.value || []).includes(personaId);
+                                                            return (
+                                                                <label key={personaId} className="flex items-center gap-2 text-sm">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={checked}
+                                                                        onChange={(e) => {
+                                                                            const current = field.value || [];
+                                                                            if (e.target.checked) {
+                                                                                field.onChange([...current, personaId]);
+                                                                            } else {
+                                                                                field.onChange(current.filter((p: string) => p !== personaId));
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    <span>{t(PERSONA_LABEL_KEYS[personaId])}</span>
+                                                                </label>
+                                                            );
+                                                        })}
+                                                    </>
+                                                )}
+                                            />
                                         </div>
                                     </div>
                                 </div>

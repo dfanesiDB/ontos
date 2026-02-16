@@ -6,7 +6,7 @@ and on completion creates an agreement record and writes to entity change log
 (optional PDF via todo 5).
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,9 @@ from src.controller.change_log_manager import ChangeLogManager
 from src.models.process_workflows import ProcessWorkflow, WorkflowStep, StepType, WorkflowType
 from src.repositories.agreement_wizard_sessions_repository import agreement_wizard_sessions_repo
 from src.repositories.agreements_repository import agreements_repo
+from src.repositories.data_contracts_repository import data_contract_repo
+from src.repositories.data_products_repository import data_product_repo
+from src.repositories.datasets_repository import dataset_repo
 from src.common.logging import get_logger
 
 logger = get_logger(__name__)
@@ -37,6 +40,47 @@ class AgreementWizardManager:
             return None
         steps = workflow.steps or []
         return sorted(steps, key=lambda s: s.order if s.order is not None else 0)
+
+    def _get_entity_name(self, entity_type: str, entity_id: str) -> Optional[str]:
+        """Resolve display name for an entity by type and id via repositories."""
+        if not entity_type or not entity_id:
+            return None
+        et = (entity_type or "").strip().lower()
+        if et == "data_product":
+            row = data_product_repo.get(self._db, entity_id)
+            return row.name if row else None
+        if et == "dataset":
+            row = dataset_repo.get(self._db, entity_id)
+            return row.name if row else None
+        if et == "data_contract":
+            row = data_contract_repo.get(self._db, entity_id)
+            return row.name if row else None
+        return None
+
+    def get_my_sessions(
+        self,
+        created_by: str,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """Get sessions created by the user with entity_name resolved. Returns (sessions, total)."""
+        sessions, total = agreement_wizard_sessions_repo.get_by_created_by(
+            self._db, created_by, limit=limit, offset=offset
+        )
+        out = []
+        for s in sessions:
+            out.append({
+                "id": s.id,
+                "workflow_id": s.workflow_id,
+                "entity_type": s.entity_type,
+                "entity_id": s.entity_id,
+                "entity_name": self._get_entity_name(s.entity_type, s.entity_id),
+                "completion_action": s.completion_action,
+                "status": s.status,
+                "created_at": s.created_at,
+                "updated_at": s.updated_at,
+            })
+        return out, total
 
     def create_session(
         self,

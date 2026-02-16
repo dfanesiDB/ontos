@@ -7,6 +7,7 @@ import { Toaster } from './components/ui/toaster';
 import { useUserStore } from './stores/user-store';
 import { usePermissions } from './stores/permissions-store';
 import { useNotificationsStore } from './stores/notifications-store';
+import { usePersonaStore } from './stores/persona-store';
 import './i18n/config'; // Initialize i18n
 
 // Import views
@@ -41,6 +42,8 @@ import DocumentationViewer from './views/documentation-viewer';
 import DatabaseSchema from './views/database-schema';
 import NotFound from './views/not-found';
 import DataDomainDetailsView from "@/views/data-domain-details";
+import MyProducts from './views/my-products';
+import MyRequests from './views/my-requests';
 import SearchView from './views/search';
 import TeamsView from './views/teams';
 import ProjectsView from './views/projects';
@@ -52,12 +55,14 @@ export default function App() {
   const fetchUserInfo = useUserStore((state: any) => state.fetchUserInfo);
   const { fetchPermissions, fetchAvailableRoles } = usePermissions();
   const { startPolling: startNotificationPolling, stopPolling: stopNotificationPolling } = useNotificationsStore();
+  const fetchAllowedPersonas = usePersonaStore((state) => state.fetchAllowedPersonas);
 
   useEffect(() => {
     console.log("App component mounted, fetching initial user info and permissions...");
     fetchUserInfo();
     fetchPermissions();
     fetchAvailableRoles();
+    fetchAllowedPersonas();
 
     console.log("Starting notification polling...");
     startNotificationPolling();
@@ -66,7 +71,7 @@ export default function App() {
         console.log("App component unmounting, stopping notification polling...");
         stopNotificationPolling();
     };
-  }, [fetchUserInfo, fetchPermissions, fetchAvailableRoles, startNotificationPolling, stopNotificationPolling]);
+  }, [fetchUserInfo, fetchPermissions, fetchAvailableRoles, fetchAllowedPersonas, startNotificationPolling, stopNotificationPolling]);
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="ucapp-theme">
@@ -78,6 +83,8 @@ export default function App() {
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/my-products" element={<MyProducts />} />
+              <Route path="/my-requests" element={<MyRequests />} />
               <Route path="/data-domains" element={<DataDomainsView />} />
               <Route path="/data-domains/:domainId" element={<DataDomainDetailsView />} />
               <Route path="/data-products" element={<DataProducts />} />

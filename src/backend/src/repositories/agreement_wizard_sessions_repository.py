@@ -3,7 +3,7 @@ Repository for agreement wizard sessions.
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -47,6 +47,26 @@ class AgreementWizardSessionsRepository:
         return db.query(AgreementWizardSessionDb).filter(
             AgreementWizardSessionDb.id == session_id
         ).first()
+
+    def get_by_created_by(
+        self,
+        db: Session,
+        created_by: str,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Tuple[List[AgreementWizardSessionDb], int]:
+        """Get all sessions created by a user (any status), newest first."""
+        query = db.query(AgreementWizardSessionDb).filter(
+            AgreementWizardSessionDb.created_by == created_by
+        )
+        total = query.count()
+        sessions = (
+            query.order_by(AgreementWizardSessionDb.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+        return sessions, total
 
     def get_step_results(self, session: AgreementWizardSessionDb) -> List[Dict[str, Any]]:
         """Parse step_results JSON; return list of { step_id, payload }."""

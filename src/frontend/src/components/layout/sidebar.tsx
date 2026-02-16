@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Navigation } from './navigation';
+import { PersonaSwitcher } from './persona-switcher';
 import { UnityCatalogLogo } from '@/components/unity-catalog-logo';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,11 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
          <Link to="/" className="flex items-center gap-2 font-semibold">
             <UnityCatalogLogo className={cn("h-8 w-8 transition-all", isCollapsed ? "h-10 w-10" : "h-10 w-10")} />
          </Link>
+      </div>
+
+      {/* Persona switcher (when user has allowed personas) */}
+      <div className={cn("border-b px-2 py-2", isCollapsed ? "flex justify-center" : "")}>
+        <PersonaSwitcher compact={isCollapsed} />
       </div>
 
       {/* Navigation */}
