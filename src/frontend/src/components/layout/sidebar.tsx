@@ -24,7 +24,7 @@ export function Sidebar({ isCollapsed }: SidebarProps) {
       </div>
 
       {/* Persona switcher (when user has allowed personas) */}
-      <div className={cn("border-b px-2 py-2", isCollapsed ? "flex justify-center" : "")}>
+      <div className="border-b shrink-0">
         <PersonaSwitcher compact={isCollapsed} />
       </div>
 
