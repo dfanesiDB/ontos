@@ -54,6 +54,11 @@ import OntologySearchView from './views/ontology-search';
 import OntologyHomeView from './views/ontology-home';
 import CollectionsView from './views/collections';
 import BusinessTermsView from './views/business-terms';
+import PoliciesView from './views/policies';
+import AssetTypesView from './views/asset-types';
+import AssetsView from './views/assets';
+import BusinessRolesView from './views/business-roles';
+import BusinessOwnersView from './views/business-owners';
 
 export default function App() {
   const fetchUserInfo = useUserStore((state: any) => state.fetchUserInfo);
@@ -112,6 +117,7 @@ export default function App() {
               {/* === Persona: Data Steward /steward === */}
               <Route path="/steward" element={<Home />} />
               <Route path="/steward/commander" element={<CatalogCommander />} />
+              <Route path="/steward/assets" element={<AssetsView />} />
               <Route path="/steward/compliance" element={<Compliance />} />
               <Route path="/steward/reviews" element={<DataAssetReviews />} />
               <Route path="/steward/master-data" element={<MasterDataManagement />} />
@@ -121,7 +127,9 @@ export default function App() {
               <Route path="/governance/domains" element={<DataDomainsView />} />
               <Route path="/governance/teams" element={<TeamsView />} />
               <Route path="/governance/projects" element={<ProjectsView />} />
-              <Route path="/governance/policies" element={<Compliance />} />
+              <Route path="/governance/policies" element={<PoliciesView />} />
+              <Route path="/governance/asset-types" element={<AssetTypesView />} />
+              <Route path="/governance/assets" element={<AssetsView />} />
               <Route path="/governance/tags" element={<Settings />} />
               <Route path="/governance/workflows" element={<Workflows />} />
               <Route path="/governance/master-data" element={<MasterDataManagement />} />
@@ -153,6 +161,8 @@ export default function App() {
               <Route path="/admin/git" element={<Settings />} />
               <Route path="/admin/jobs" element={<Settings />} />
               <Route path="/admin/roles" element={<Settings />} />
+              <Route path="/admin/business-roles" element={<BusinessRolesView />} />
+              <Route path="/admin/business-owners" element={<BusinessOwnersView />} />
               <Route path="/admin/search" element={<Settings />} />
               <Route path="/admin/mcp" element={<Settings />} />
               <Route path="/admin/ui" element={<Settings />} />
@@ -201,6 +211,11 @@ export default function App() {
               <Route path="/data-catalog" element={<DataCatalog />} />
               <Route path="/data-catalog/*" element={<DataCatalogDetails />} />
               <Route path="/audit" element={<AuditTrail />} />
+              <Route path="/policies" element={<PoliciesView />} />
+              <Route path="/asset-types" element={<AssetTypesView />} />
+              <Route path="/assets" element={<AssetsView />} />
+              <Route path="/business-roles" element={<BusinessRolesView />} />
+              <Route path="/business-owners" element={<BusinessOwnersView />} />
 
               {/* === Backward-compat redirects === */}
               <Route path="/semantic-models/concepts" element={<Navigate to="/ontology/concepts" replace />} />

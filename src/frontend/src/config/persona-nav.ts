@@ -34,10 +34,12 @@ import {
   Plug,
   Briefcase,
   Users,
+  Users2,
   Lock,
   RefreshCw,
   Globe,
   Database,
+  Box,
 } from 'lucide-react';
 
 export interface PersonaNavItem {
@@ -86,6 +88,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
   data_steward: [
     { id: 'home', labelKey: 'personaNav.home', path: '/steward', icon: Home },
     { id: 'catalog-commander', labelKey: 'personaNav.catalogCommander', path: '/steward/commander', icon: FolderKanban, featureId: 'catalog-commander' },
+    { id: 'assets', labelKey: 'personaNav.assets', path: '/steward/assets', icon: Box, featureId: 'assets' },
     { id: 'compliance-checks', labelKey: 'personaNav.complianceChecks', path: '/steward/compliance', icon: CheckCircle, featureId: 'compliance' },
     { id: 'asset-review', labelKey: 'personaNav.assetReview', path: '/steward/reviews', icon: ClipboardCheck, featureId: 'data-asset-reviews' },
     { id: 'master-data', labelKey: 'personaNav.masterData', path: '/steward/master-data', icon: Database, featureId: 'master-data' },
@@ -95,7 +98,9 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'domains', labelKey: 'personaNav.domains', path: '/governance/domains', icon: BoxSelect, featureId: 'data-domains' },
     { id: 'teams', labelKey: 'personaNav.teams', path: '/governance/teams', icon: UserCheck, featureId: 'teams' },
     { id: 'projects', labelKey: 'personaNav.projects', path: '/governance/projects', icon: FolderOpen, featureId: 'projects' },
-    { id: 'policies', labelKey: 'personaNav.policies', path: '/governance/policies', icon: Shield, featureId: 'compliance' },
+    { id: 'policies', labelKey: 'personaNav.policies', path: '/governance/policies', icon: Shield, featureId: 'policies' },
+    { id: 'asset-types', labelKey: 'personaNav.assetTypes', path: '/governance/asset-types', icon: Shapes, featureId: 'assets' },
+    { id: 'assets', labelKey: 'personaNav.assets', path: '/governance/assets', icon: Box, featureId: 'assets' },
     { id: 'tags', labelKey: 'personaNav.tags', path: '/governance/tags', icon: Tag, featureId: 'settings' },
     { id: 'workflows', labelKey: 'personaNav.workflows', path: '/governance/workflows', icon: GitBranch, featureId: 'process-workflows' },
     { id: 'master-data', labelKey: 'personaNav.masterData', path: '/governance/master-data', icon: Database, featureId: 'master-data' },
@@ -127,6 +132,8 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'git', labelKey: 'personaNav.git', path: '/admin/git', icon: GitBranch, featureId: 'settings' },
     { id: 'jobs', labelKey: 'personaNav.jobs', path: '/admin/jobs', icon: Briefcase, featureId: 'settings' },
     { id: 'app-roles', labelKey: 'personaNav.appRoles', path: '/admin/roles', icon: Shield, featureId: 'settings' },
+    { id: 'business-roles', labelKey: 'personaNav.businessRoles', path: '/admin/business-roles', icon: Briefcase, featureId: 'business-roles' },
+    { id: 'business-owners', labelKey: 'personaNav.businessOwners', path: '/admin/business-owners', icon: Users2, featureId: 'business-owners' },
     { id: 'search-settings', labelKey: 'personaNav.searchSettings', path: '/admin/search', icon: Search, featureId: 'settings' },
     { id: 'mcp-settings', labelKey: 'personaNav.mcpSettings', path: '/admin/mcp', icon: Cpu, featureId: 'settings' },
     { id: 'ui-customization', labelKey: 'personaNav.uiCustomization', path: '/admin/ui', icon: Palette, featureId: 'settings' },

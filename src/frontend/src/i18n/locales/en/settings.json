@@ -38,7 +38,11 @@
     "entitlements": "Entitlements",
     "entitlementsSync": "Entitlements Sync",
     "masterData": "Master Data Management",
-    "estateManager": "Estate Manager"
+    "estateManager": "Estate Manager",
+    "assetTypes": "Asset Types",
+    "assets": "Assets",
+    "businessRoles": "Business Roles",
+    "businessOwners": "Business Owners"
   },
   "personas": {
     "data_consumer": "Data Consumer",

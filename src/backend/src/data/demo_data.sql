@@ -70,6 +70,13 @@
 --   02c = comments/ratings
 --   02d = data_profiling_runs
 --   02e = suggested_quality_checks
+--   0f0 = business_roles
+--   0f1 = policies
+--   0f2 = asset_types
+--   0f3 = assets
+--   0f4 = asset_relationships
+--   0f5 = policy_attachments
+--   0f6 = business_owners
 -- ============================================================================
 
 BEGIN;
@@ -1838,6 +1845,475 @@ INSERT INTO suggested_quality_checks (id, profile_run_id, contract_id, source, s
 
 -- Table-level row count check
 ('02e0000a-0000-4000-8000-000000000010', '02d00002-0000-4000-8000-000000000002', '00400004-0000-4000-8000-000000000004', 'dqx', 'devices', NULL, 'pending', 'Minimum Row Count', 'Ensure devices table has at least 1 row (not empty)', 'object', 'completeness', 'warning', 'library', 'row_count', '0.75', 'Table contains 25,000 rows. Recommend adding minimum row count check to detect empty table scenarios.', NOW() - INTERVAL '1 day')
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 22. BUSINESS ROLES (type=0f0)
+-- ============================================================================
+-- Named roles that can be assigned as ownership roles across all object types.
+
+INSERT INTO business_roles (id, name, description, category, is_system, status, created_by, created_at, updated_at) VALUES
+-- Governance roles
+('0f000001-0000-4000-8000-000000000001', 'Data Owner',           'Accountable for the quality, integrity, and lifecycle of a data asset or product.',                     'governance',   true,  'active', 'system@demo', NOW(), NOW()),
+('0f000002-0000-4000-8000-000000000002', 'Domain Owner',         'Responsible for all data products and standards within a data domain.',                                'governance',   true,  'active', 'system@demo', NOW(), NOW()),
+('0f000003-0000-4000-8000-000000000003', 'Data Steward',         'Maintains metadata quality, enforces governance policies, and resolves data issues.',                   'governance',   true,  'active', 'system@demo', NOW(), NOW()),
+('0f000004-0000-4000-8000-000000000004', 'Business Term Owner',  'Defines and maintains business glossary terms and their relationships.',                               'governance',   true,  'active', 'system@demo', NOW(), NOW()),
+
+-- Technical roles
+('0f000005-0000-4000-8000-000000000005', 'Technical Owner',      'Responsible for the technical implementation, pipelines, and infrastructure of a data product.',        'technical',    true,  'active', 'system@demo', NOW(), NOW()),
+('0f000006-0000-4000-8000-000000000006', 'Pipeline Owner',       'Owns and operates the ETL/ELT pipelines that produce or transform data.',                              'technical',    false, 'active', 'system@demo', NOW(), NOW()),
+
+-- Business roles
+('0f000007-0000-4000-8000-000000000007', 'Business Sponsor',     'Executive or senior stakeholder sponsoring a data product or initiative.',                              'business',     true,  'active', 'system@demo', NOW(), NOW()),
+('0f000008-0000-4000-8000-000000000008', 'Subject Matter Expert','Provides domain expertise for defining schemas, quality rules, and business logic.',                    'business',     false, 'active', 'system@demo', NOW(), NOW()),
+
+-- Operational roles
+('0f000009-0000-4000-8000-000000000009', 'SLA Manager',          'Monitors and enforces service-level agreements for data products.',                                    'operational',  false, 'active', 'system@demo', NOW(), NOW()),
+('0f00000a-0000-4000-8000-000000000010', 'Compliance Officer',   'Ensures data products and assets comply with regulatory and internal policies.',                       'operational',  true,  'active', 'system@demo', NOW(), NOW()),
+
+-- Deprecated example
+('0f00000b-0000-4000-8000-000000000011', 'Data Custodian',       'Legacy role replaced by Data Steward. Kept for historical ownership records.',                         'governance',   false, 'deprecated', 'system@demo', NOW(), NOW())
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 23. POLICIES (type=0f1)
+-- ============================================================================
+-- Formal, reusable rules for data access, usage, protection, and management.
+
+INSERT INTO policies (id, name, description, policy_type, status, content, enforcement_level, version, metadata, is_system, created_by, created_at, updated_at) VALUES
+
+-- Access / Privacy policies
+('0f100001-0000-4000-8000-000000000001',
+ 'Customer PII Protection Policy',
+ 'Customer personally identifiable information must not be visible in any external-facing output. Only users with the Customer Analytics role may view unmasked email and phone fields.',
+ 'access_privacy', 'active',
+ E'## Scope\nApplies to all assets and data products in the Customer domain.\n\n## Rules\n1. Columns classified as PII (email, phone, address, SSN) MUST be masked in external dashboards and APIs.\n2. Only users with the **Customer Analytics** group may access unmasked PII columns.\n3. Row-level security must filter customer data to the originating region.\n\n## Enforcement\n- Column masking policies in Unity Catalog.\n- Row-level filters on customer_region.',
+ 'mandatory', 'v1.0',
+ '{"applies_to": ["email", "phone", "address"], "regulation": "GDPR, CCPA"}',
+ true, 'system@demo', NOW() - INTERVAL '90 days', NOW() - INTERVAL '5 days'),
+
+('0f100002-0000-4000-8000-000000000002',
+ 'Employee Data Access Policy',
+ 'Employee HR data is restricted to HR department members and authorized managers.',
+ 'access_privacy', 'active',
+ E'## Scope\nHuman Resources domain.\n\n## Rules\n1. Salary, SSN, and performance review data are restricted to HR group members.\n2. Managers may view direct-report summaries only.\n3. No bulk export of employee PII without VP-level approval.',
+ 'mandatory', 'v1.1',
+ '{"regulation": "SOX, internal HR policy"}',
+ true, 'system@demo', NOW() - INTERVAL '120 days', NOW() - INTERVAL '10 days'),
+
+-- Data Quality policies
+('0f100003-0000-4000-8000-000000000003',
+ 'Finance Zero-Null Key Fields Policy',
+ 'For all Finance domain products, key fields (Invoice.Id, Booking.Amount) must have 0% nulls in production outputs, and data must be refreshed at least once per day.',
+ 'data_quality', 'active',
+ E'## Scope\nFinance domain — all production data products.\n\n## Rules\n1. Primary key fields must have null_rate = 0%.\n2. Amount/currency fields must have null_rate = 0%.\n3. Freshness SLA: data must be updated within 24 hours.\n4. Duplicate rate for key fields must be < 0.01%.\n\n## Enforcement\nEncoded as expectations in ODCS contracts. Validated by nightly compliance runs.',
+ 'automated', 'v2.0',
+ '{"freshness_hours": 24, "null_tolerance": 0}',
+ true, 'system@demo', NOW() - INTERVAL '60 days', NOW() - INTERVAL '2 days'),
+
+('0f100004-0000-4000-8000-000000000004',
+ 'Retail Transactions Completeness Policy',
+ 'POS transaction data must be complete — no missing store_id, transaction_id, or amount fields in curated layers.',
+ 'data_quality', 'active',
+ E'## Scope\nRetail Operations and Retail Analytics domains.\n\n## Rules\n1. store_id, transaction_id, timestamp, and amount are mandatory.\n2. Null rate for these fields must be 0% in curated/gold layers.\n3. Raw/bronze layers may have up to 0.1% nulls with alerting.\n\n## Enforcement\nGreat Expectations suites attached to pipeline output.',
+ 'automated', 'v1.0',
+ '{"layers": ["curated", "gold"], "mandatory_fields": ["store_id", "transaction_id", "timestamp", "amount"]}',
+ false, 'system@demo', NOW() - INTERVAL '45 days', NOW() - INTERVAL '7 days'),
+
+-- Retention / Lifecycle policies
+('0f100005-0000-4000-8000-000000000005',
+ 'Marketing Raw Events 90-Day Retention',
+ 'Raw event data in the Marketing domain must be retained for 90 days, then aggregated and anonymized.',
+ 'retention_lifecycle', 'active',
+ E'## Scope\nMarketing domain — raw/bronze event tables.\n\n## Rules\n1. Raw clickstream and campaign event data retained for 90 days.\n2. After 90 days, data must be aggregated to daily granularity and anonymized (remove user identifiers).\n3. Aggregated data retained for 3 years.\n4. Deletion jobs must run weekly.\n\n## Enforcement\nScheduled Databricks job manages TTL and aggregation.',
+ 'automated', 'v1.0',
+ '{"retention_days": 90, "aggregate_retention_years": 3}',
+ true, 'system@demo', NOW() - INTERVAL '30 days', NOW() - INTERVAL '3 days'),
+
+('0f100006-0000-4000-8000-000000000006',
+ 'IoT Telemetry Data Lifecycle',
+ 'IoT sensor readings retained at full resolution for 30 days, downsampled to 1-minute averages for 1 year, then purged.',
+ 'retention_lifecycle', 'draft',
+ E'## Scope\nIoT domain.\n\n## Rules\n1. Full-resolution telemetry: 30-day retention.\n2. 1-minute downsampled averages: 1-year retention.\n3. Device metadata retained indefinitely.\n4. Alert/anomaly events retained for 2 years.\n\n## Enforcement\nPending automation — currently manual.',
+ 'advisory', 'v0.9',
+ '{"full_resolution_days": 30, "downsampled_years": 1}',
+ false, 'system@demo', NOW() - INTERVAL '15 days', NOW() - INTERVAL '1 day'),
+
+-- Usage / Purpose limitation
+('0f100007-0000-4000-8000-000000000007',
+ 'EU Customer Data ML Training Restriction',
+ 'EU customer data may not be used to train models for targeted advertising without explicit consent.',
+ 'usage_purpose', 'active',
+ E'## Scope\nCustomer and Marketing domains — datasets labeled as "training datasets" or "ML outputs".\n\n## Rules\n1. Datasets containing EU customer records (country in EU member states) MUST NOT be fed into advertising ML pipelines.\n2. Exception: explicit opt-in consent flag (consent_marketing_ml = true) is present and validated.\n3. All ML training jobs must log data lineage for audit.\n\n## Enforcement\nPipeline pre-checks validate consent flags before training.',
+ 'mandatory', 'v1.0',
+ '{"regulation": "GDPR Art. 22", "regions": ["EU", "EEA"]}',
+ true, 'system@demo', NOW() - INTERVAL '75 days', NOW() - INTERVAL '20 days'),
+
+-- Custom policy
+('0f100008-0000-4000-8000-000000000008',
+ 'Cross-Domain Data Sharing Approval',
+ 'Any data product shared across domain boundaries requires written approval from both domain owners.',
+ 'custom', 'active',
+ E'## Scope\nAll domains.\n\n## Rules\n1. Cross-domain data product subscriptions require approval from the source domain owner AND the consuming domain owner.\n2. Approval must be recorded in the system with justification.\n3. Re-approval required annually or when the data product version changes significantly.\n\n## Enforcement\nWorkflow-based approval in Ontos.',
+ 'mandatory', 'v1.0',
+ NULL,
+ false, 'system@demo', NOW() - INTERVAL '40 days', NOW() - INTERVAL '8 days')
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 24. ASSET TYPES (type=0f2)
+-- ============================================================================
+-- Reusable templates defining how different kinds of assets are structured.
+
+INSERT INTO asset_types (id, name, description, category, icon, required_fields, optional_fields, allowed_relationships, is_system, status, created_by, created_at, updated_at) VALUES
+('0f200001-0000-4000-8000-000000000001', 'Table',
+ 'Database or lakehouse table — the most common physical data asset.',
+ 'data', 'Table2',
+ '{"catalog": "string", "schema": "string", "table_name": "string"}',
+ '{"row_count": "integer", "size_bytes": "integer", "partitioning": "string", "format": "string"}',
+ '["hasColumn", "belongsToSystem", "belongsToBusinessDataset", "implementsLogicalEntity", "isTargetOfContract"]',
+ true, 'active', 'system@demo', NOW(), NOW()),
+
+('0f200002-0000-4000-8000-000000000002', 'View',
+ 'SQL view or materialized view providing a logical layer over physical tables.',
+ 'data', 'Eye',
+ '{"catalog": "string", "schema": "string", "view_name": "string"}',
+ '{"is_materialized": "boolean", "refresh_schedule": "string"}',
+ '["hasColumn", "dependsOnTable", "implementsLogicalEntity"]',
+ true, 'active', 'system@demo', NOW(), NOW()),
+
+('0f200003-0000-4000-8000-000000000003', 'Column',
+ 'A column within a Table or View asset. Child asset.',
+ 'data', 'Columns2',
+ '{"name": "string", "data_type": "string"}',
+ '{"nullable": "boolean", "statistics": "object", "tags": "array"}',
+ '["mapsToLogicalAttribute", "governedByPolicy"]',
+ true, 'active', 'system@demo', NOW(), NOW()),
+
+('0f200004-0000-4000-8000-000000000004', 'Dashboard',
+ 'BI content — Power BI report, Databricks SQL dashboard, Tableau workbook, etc.',
+ 'analytics', 'LayoutDashboard',
+ '{"tool": "string", "name": "string"}',
+ '{"workspace": "string", "report_id": "string", "url": "string"}',
+ '["consumesDataProduct", "usesPhysicalAssets", "linkedToBusinessTerms"]',
+ true, 'active', 'system@demo', NOW(), NOW()),
+
+('0f200005-0000-4000-8000-000000000005', 'API Endpoint',
+ 'A data-serving REST or GraphQL endpoint.',
+ 'integration', 'Globe',
+ '{"method": "string", "path": "string"}',
+ '{"auth_scheme": "string", "version": "string", "producer_team": "string"}',
+ '["exposesDataProduct", "implementsDataContract", "subjectToPolicies"]',
+ true, 'active', 'system@demo', NOW(), NOW()),
+
+('0f200006-0000-4000-8000-000000000006', 'File Dataset',
+ 'A collection of files (Parquet, CSV, JSON) stored in object storage.',
+ 'data', 'FolderOpen',
+ '{"storage_path": "string", "format": "string"}',
+ '{"size_bytes": "integer", "partition_keys": "array"}',
+ '["belongsToSystem", "isSourceOfContract"]',
+ true, 'active', 'system@demo', NOW(), NOW()),
+
+('0f200007-0000-4000-8000-000000000007', 'ML Model',
+ 'A registered machine learning model (MLflow, Unity Catalog model, etc.).',
+ 'analytics', 'Brain',
+ '{"model_name": "string", "framework": "string"}',
+ '{"version": "string", "stage": "string", "metrics": "object"}',
+ '["consumesDataset", "producesDataset", "belongsToSystem"]',
+ false, 'active', 'system@demo', NOW(), NOW()),
+
+('0f200008-0000-4000-8000-000000000008', 'Stream',
+ 'A streaming data source or sink (Kafka topic, Kinesis stream, Event Hub, etc.).',
+ 'integration', 'Activity',
+ '{"stream_name": "string", "platform": "string"}',
+ '{"partitions": "integer", "retention_hours": "integer", "schema_registry": "string"}',
+ '["producesTo", "consumesFrom", "belongsToSystem"]',
+ false, 'active', 'system@demo', NOW(), NOW()),
+
+('0f200009-0000-4000-8000-000000000009', 'System',
+ 'An application or platform (Salesforce, SAP, Databricks, Power BI) that hosts assets.',
+ 'system', 'Server',
+ '{"name": "string", "type": "string"}',
+ '{"environment": "string", "owner_team": "string", "url": "string"}',
+ '["containsAssets", "isSourceInBusinessLineage", "isTargetInBusinessLineage"]',
+ true, 'active', 'system@demo', NOW(), NOW()),
+
+('0f20000a-0000-4000-8000-000000000010', 'Notebook',
+ 'A computational notebook (Databricks, Jupyter) used for data analysis or pipeline logic.',
+ 'analytics', 'FileCode',
+ '{"path": "string", "language": "string"}',
+ '{"cluster_id": "string", "schedule": "string"}',
+ '["readsFrom", "writesTo", "belongsToSystem"]',
+ false, 'active', 'system@demo', NOW(), NOW())
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 25. ASSETS (type=0f3)
+-- ============================================================================
+-- Concrete cataloged objects linked to asset types, domains, and data products.
+
+INSERT INTO assets (id, name, description, asset_type_id, platform, location, domain_id, properties, tags, status, created_by, created_at, updated_at) VALUES
+
+-- Systems
+('0f300001-0000-4000-8000-000000000001',
+ 'Databricks Lakehouse',
+ 'Primary Databricks workspace for all lakehouse tables and pipelines.',
+ '0f200009-0000-4000-8000-000000000009', 'Databricks', 'https://adb-1234567890.azuredatabricks.net',
+ '00000001-0000-4000-8000-000000000001',
+ '{"type": "lakehouse", "environment": "production", "cloud": "Azure"}',
+ '["production", "primary"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+('0f300002-0000-4000-8000-000000000002',
+ 'Power BI Service',
+ 'Enterprise Power BI tenant for dashboards and reports.',
+ '0f200009-0000-4000-8000-000000000009', 'Power BI', 'https://app.powerbi.com/groups/retail-analytics',
+ '00000001-0000-4000-8000-000000000001',
+ '{"type": "bi_platform", "environment": "production"}',
+ '["analytics", "reporting"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+-- Tables (Retail)
+('0f300003-0000-4000-8000-000000000003',
+ 'lakehouse.retail.curated.pos_transactions',
+ 'Curated POS transaction table with validated, deduplicated retail transactions.',
+ '0f200001-0000-4000-8000-000000000001', 'Databricks', 'lakehouse.retail.curated.pos_transactions',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"catalog": "lakehouse", "schema": "retail_curated", "table_name": "pos_transactions", "row_count": 12500000, "format": "delta"}',
+ '["curated", "retail", "pii-free"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+('0f300004-0000-4000-8000-000000000004',
+ 'lakehouse.retail.curated.inventory_levels',
+ 'Current and historical inventory levels by store, SKU, and date.',
+ '0f200001-0000-4000-8000-000000000001', 'Databricks', 'lakehouse.retail.curated.inventory_levels',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"catalog": "lakehouse", "schema": "retail_curated", "table_name": "inventory_levels", "row_count": 3200000, "format": "delta"}',
+ '["curated", "supply-chain"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+-- Tables (Customer)
+('0f300005-0000-4000-8000-000000000005',
+ 'lakehouse.customer.curated.customer360',
+ 'Unified customer profile combining CRM, web, and transaction data.',
+ '0f200001-0000-4000-8000-000000000001', 'Databricks', 'lakehouse.customer.curated.customer360',
+ '00000007-0000-4000-8000-000000000007',
+ '{"catalog": "lakehouse", "schema": "customer_curated", "table_name": "customer360", "row_count": 850000, "format": "delta"}',
+ '["curated", "pii", "customer"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+-- Tables (Finance)
+('0f300006-0000-4000-8000-000000000006',
+ 'lakehouse.finance.curated.invoices',
+ 'Validated invoice records for financial reporting and compliance.',
+ '0f200001-0000-4000-8000-000000000001', 'Databricks', 'lakehouse.finance.curated.invoices',
+ '00000002-0000-4000-8000-000000000002',
+ '{"catalog": "lakehouse", "schema": "finance_curated", "table_name": "invoices", "row_count": 2100000, "format": "delta"}',
+ '["curated", "finance", "sox-compliant"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+-- Dashboard
+('0f300007-0000-4000-8000-000000000007',
+ 'Retail Performance Overview',
+ 'Executive dashboard showing daily KPIs: revenue, transactions, basket size, conversion.',
+ '0f200004-0000-4000-8000-000000000004', 'Power BI', 'https://app.powerbi.com/groups/retail-analytics/reports/rpt-001',
+ '0000000d-0000-4000-8000-000000000013',
+ '{"tool": "Power BI", "workspace": "retail-analytics", "report_id": "rpt-001"}',
+ '["executive", "kpi", "retail"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+('0f300008-0000-4000-8000-000000000008',
+ 'Customer Lifetime Value Overview',
+ 'Dashboard showing CLV metrics, segmentation, and churn prediction outputs.',
+ '0f200004-0000-4000-8000-000000000004', 'Power BI', 'https://app.powerbi.com/groups/customer-analytics/reports/rpt-002',
+ '00000007-0000-4000-8000-000000000007',
+ '{"tool": "Power BI", "workspace": "customer-analytics", "report_id": "rpt-002"}',
+ '["analytics", "customer", "ml-driven"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+-- API Endpoint
+('0f300009-0000-4000-8000-000000000009',
+ 'POST /v1/customers/search',
+ 'Customer search API endpoint for internal applications.',
+ '0f200005-0000-4000-8000-000000000005', 'Internal API', 'https://api.internal.example.com/v1/customers/search',
+ '00000007-0000-4000-8000-000000000007',
+ '{"method": "POST", "path": "/v1/customers/search", "auth_scheme": "OAuth2", "version": "v1"}',
+ '["api", "customer", "internal"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+-- File Dataset
+('0f30000a-0000-4000-8000-000000000010',
+ 'Marketing Raw Clickstream Events',
+ 'Raw clickstream parquet files from web analytics, partitioned by date.',
+ '0f200006-0000-4000-8000-000000000006', 'Azure ADLS', 'abfss://raw@datalake.dfs.core.windows.net/marketing/clickstream/',
+ '00000004-0000-4000-8000-000000000004',
+ '{"storage_path": "abfss://raw@datalake.dfs.core.windows.net/marketing/clickstream/", "format": "parquet", "partition_keys": ["date"]}',
+ '["raw", "marketing", "clickstream"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+-- Stream
+('0f30000b-0000-4000-8000-000000000011',
+ 'iot-device-telemetry',
+ 'Kafka topic receiving real-time IoT device sensor readings.',
+ '0f200008-0000-4000-8000-000000000008', 'Confluent Kafka', 'kafka://broker.internal:9092/iot-device-telemetry',
+ '0000000a-0000-4000-8000-000000000010',
+ '{"stream_name": "iot-device-telemetry", "platform": "Confluent Kafka", "partitions": 12, "retention_hours": 168}',
+ '["streaming", "iot", "real-time"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+-- ML Model
+('0f30000c-0000-4000-8000-000000000012',
+ 'demand-forecast-v3',
+ 'XGBoost demand forecasting model registered in Unity Catalog.',
+ '0f200007-0000-4000-8000-000000000007', 'Databricks', 'models:/demand-forecast-v3/Production',
+ '0000000d-0000-4000-8000-000000000013',
+ '{"model_name": "demand-forecast-v3", "framework": "xgboost", "version": "3", "stage": "Production", "metrics": {"rmse": 12.4, "mape": 0.08}}',
+ '["ml", "forecasting", "production"]',
+ 'active', 'system@demo', NOW(), NOW()),
+
+-- Deprecated asset
+('0f30000d-0000-4000-8000-000000000013',
+ 'legacy.sales.raw.transactions_v1',
+ 'Deprecated raw sales table from legacy ETL pipeline. Replaced by POS Transaction Stream.',
+ '0f200001-0000-4000-8000-000000000001', 'Databricks', 'legacy.sales.raw.transactions_v1',
+ '00000003-0000-4000-8000-000000000003',
+ '{"catalog": "legacy", "schema": "sales_raw", "table_name": "transactions_v1", "row_count": 0, "format": "delta"}',
+ '["deprecated", "legacy"]',
+ 'deprecated', 'system@demo', NOW() - INTERVAL '180 days', NOW() - INTERVAL '30 days')
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 26. ASSET RELATIONSHIPS (type=0f4)
+-- ============================================================================
+-- Directed relationships between assets (lineage, containment, consumption).
+
+INSERT INTO asset_relationships (id, source_asset_id, target_asset_id, relationship_type, properties, created_by, created_at) VALUES
+-- Tables belong to Databricks Lakehouse system
+('0f400001-0000-4000-8000-000000000001', '0f300003-0000-4000-8000-000000000003', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400002-0000-4000-8000-000000000002', '0f300004-0000-4000-8000-000000000004', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400003-0000-4000-8000-000000000003', '0f300005-0000-4000-8000-000000000005', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400004-0000-4000-8000-000000000004', '0f300006-0000-4000-8000-000000000006', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+
+-- Dashboards belong to Power BI system
+('0f400005-0000-4000-8000-000000000005', '0f300007-0000-4000-8000-000000000007', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400006-0000-4000-8000-000000000006', '0f300008-0000-4000-8000-000000000008', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
+
+-- Dashboard consumes table data (business lineage)
+('0f400007-0000-4000-8000-000000000007', '0f300007-0000-4000-8000-000000000007', '0f300003-0000-4000-8000-000000000003', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
+('0f400008-0000-4000-8000-000000000008', '0f300008-0000-4000-8000-000000000008', '0f300005-0000-4000-8000-000000000005', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
+
+-- ML model consumes table, produces to another
+('0f400009-0000-4000-8000-000000000009', '0f30000c-0000-4000-8000-000000000012', '0f300003-0000-4000-8000-000000000003', 'consumesDataset', '{"purpose": "training"}', 'system@demo', NOW()),
+('0f40000a-0000-4000-8000-000000000010', '0f30000c-0000-4000-8000-000000000012', '0f300004-0000-4000-8000-000000000004', 'consumesDataset', '{"purpose": "feature_store"}', 'system@demo', NOW()),
+
+-- Stream feeds into table
+('0f40000b-0000-4000-8000-000000000011', '0f30000b-0000-4000-8000-000000000011', '0f300003-0000-4000-8000-000000000003', 'producesTo', '{"processing": "streaming_ingest"}', 'system@demo', NOW()),
+
+-- Deprecated table replaced by new one
+('0f40000c-0000-4000-8000-000000000012', '0f30000d-0000-4000-8000-000000000013', '0f300003-0000-4000-8000-000000000003', 'replacedBy', '{"reason": "legacy migration"}', 'system@demo', NOW())
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 27. POLICY ATTACHMENTS (type=0f5)
+-- ============================================================================
+-- Link policies to domains, data products, assets, and attributes.
+
+INSERT INTO policy_attachments (id, policy_id, target_type, target_id, target_name, notes, created_by, created_at) VALUES
+-- Customer PII Policy → Customer domain
+('0f500001-0000-4000-8000-000000000001', '0f100001-0000-4000-8000-000000000001', 'domain', '00000007-0000-4000-8000-000000000007', 'Customer', 'Applies to all assets in the Customer domain', 'system@demo', NOW()),
+-- Customer PII Policy → Customer360 table
+('0f500002-0000-4000-8000-000000000002', '0f100001-0000-4000-8000-000000000001', 'asset', '0f300005-0000-4000-8000-000000000005', 'customer360', 'PII masking required for email, phone columns', 'system@demo', NOW()),
+-- Customer PII Policy → Customer search API
+('0f500003-0000-4000-8000-000000000003', '0f100001-0000-4000-8000-000000000001', 'asset', '0f300009-0000-4000-8000-000000000009', 'POST /v1/customers/search', 'API must enforce PII filtering', 'system@demo', NOW()),
+
+-- Employee Data Access Policy → HR domain
+('0f500004-0000-4000-8000-000000000004', '0f100002-0000-4000-8000-000000000002', 'domain', '00000009-0000-4000-8000-000000000009', 'Human Resources', NULL, 'system@demo', NOW()),
+
+-- Finance Zero-Null Policy → Finance domain
+('0f500005-0000-4000-8000-000000000005', '0f100003-0000-4000-8000-000000000003', 'domain', '00000002-0000-4000-8000-000000000002', 'Finance', NULL, 'system@demo', NOW()),
+-- Finance Zero-Null Policy → Invoices table
+('0f500006-0000-4000-8000-000000000006', '0f100003-0000-4000-8000-000000000003', 'asset', '0f300006-0000-4000-8000-000000000006', 'invoices', 'Invoice.Id and Booking.Amount must be non-null', 'system@demo', NOW()),
+
+-- Retail Completeness Policy → Retail Operations domain
+('0f500007-0000-4000-8000-000000000007', '0f100004-0000-4000-8000-000000000004', 'domain', '0000000c-0000-4000-8000-000000000012', 'Retail Operations', NULL, 'system@demo', NOW()),
+-- Retail Completeness Policy → POS Transactions table
+('0f500008-0000-4000-8000-000000000008', '0f100004-0000-4000-8000-000000000004', 'asset', '0f300003-0000-4000-8000-000000000003', 'pos_transactions', NULL, 'system@demo', NOW()),
+-- Retail Completeness Policy → POS Transaction Stream data product
+('0f500009-0000-4000-8000-000000000009', '0f100004-0000-4000-8000-000000000004', 'data_product', '00700001-0000-4000-8000-000000000001', 'POS Transaction Stream v1', 'Completeness validation on output port', 'system@demo', NOW()),
+
+-- Marketing Retention Policy → Marketing domain
+('0f50000a-0000-4000-8000-000000000010', '0f100005-0000-4000-8000-000000000005', 'domain', '00000004-0000-4000-8000-000000000004', 'Marketing', NULL, 'system@demo', NOW()),
+-- Marketing Retention Policy → Clickstream file dataset
+('0f50000b-0000-4000-8000-000000000011', '0f100005-0000-4000-8000-000000000005', 'asset', '0f30000a-0000-4000-8000-000000000010', 'Marketing Raw Clickstream Events', 'Subject to 90-day TTL', 'system@demo', NOW()),
+
+-- EU ML Training Restriction → Customer domain
+('0f50000c-0000-4000-8000-000000000012', '0f100007-0000-4000-8000-000000000007', 'domain', '00000007-0000-4000-8000-000000000007', 'Customer', 'EU customer data subject to consent checks', 'system@demo', NOW()),
+-- EU ML Training Restriction → Marketing domain
+('0f50000d-0000-4000-8000-000000000013', '0f100007-0000-4000-8000-000000000007', 'domain', '00000004-0000-4000-8000-000000000004', 'Marketing', 'Training datasets in Marketing must check consent', 'system@demo', NOW()),
+
+-- Cross-Domain Sharing → applies broadly (Core domain as top-level)
+('0f50000e-0000-4000-8000-000000000014', '0f100008-0000-4000-8000-000000000008', 'domain', '00000001-0000-4000-8000-000000000001', 'Core', 'Applies to all cross-domain data product subscriptions', 'system@demo', NOW())
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 28. BUSINESS OWNERS (type=0f6)
+-- ============================================================================
+-- Ownership assignments linking users (with a business role) to various objects.
+-- Includes both active and historical (removed) assignments.
+
+INSERT INTO business_owners (id, object_type, object_id, user_email, user_name, role_id, is_active, assigned_at, removed_at, removal_reason, created_by, created_at, updated_at) VALUES
+
+-- Data Domain owners
+('0f600001-0000-4000-8000-000000000001', 'data_domain', '00000007-0000-4000-8000-000000000007', 'alice.chen@example.com',    'Alice Chen',    '0f000002-0000-4000-8000-000000000002', true,  NOW() - INTERVAL '180 days', NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600002-0000-4000-8000-000000000002', 'data_domain', '00000002-0000-4000-8000-000000000002', 'bob.martinez@example.com',  'Bob Martinez',  '0f000002-0000-4000-8000-000000000002', true,  NOW() - INTERVAL '200 days', NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600003-0000-4000-8000-000000000003', 'data_domain', '0000000c-0000-4000-8000-000000000012', 'carol.wu@example.com',      'Carol Wu',      '0f000002-0000-4000-8000-000000000002', true,  NOW() - INTERVAL '150 days', NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600004-0000-4000-8000-000000000004', 'data_domain', '00000004-0000-4000-8000-000000000004', 'dave.johnson@example.com',  'Dave Johnson',  '0f000002-0000-4000-8000-000000000002', true,  NOW() - INTERVAL '90 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+
+-- Data Product owners
+('0f600005-0000-4000-8000-000000000005', 'data_product', '00700001-0000-4000-8000-000000000001', 'carol.wu@example.com',     'Carol Wu',      '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '120 days', NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600006-0000-4000-8000-000000000006', 'data_product', '00700001-0000-4000-8000-000000000001', 'frank.lee@example.com',    'Frank Lee',     '0f000005-0000-4000-8000-000000000005', true,  NOW() - INTERVAL '120 days', NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600007-0000-4000-8000-000000000007', 'data_product', '00700002-0000-4000-8000-000000000002', 'carol.wu@example.com',     'Carol Wu',      '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '100 days', NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600008-0000-4000-8000-000000000008', 'data_product', '00700003-0000-4000-8000-000000000003', 'grace.kim@example.com',    'Grace Kim',     '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '80 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600009-0000-4000-8000-000000000009', 'data_product', '00700006-0000-4000-8000-000000000006', 'dave.johnson@example.com', 'Dave Johnson',  '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '60 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+
+-- Data Product — Business Sponsor
+('0f60000a-0000-4000-8000-000000000010', 'data_product', '00700001-0000-4000-8000-000000000001', 'eva.director@example.com', 'Eva Director',  '0f000007-0000-4000-8000-000000000007', true,  NOW() - INTERVAL '120 days', NULL, NULL, 'system@demo', NOW(), NOW()),
+
+-- Policy owners
+('0f60000b-0000-4000-8000-000000000011', 'policy', '0f100001-0000-4000-8000-000000000001', 'alice.chen@example.com',   'Alice Chen',   '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '90 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f60000c-0000-4000-8000-000000000012', 'policy', '0f100003-0000-4000-8000-000000000003', 'bob.martinez@example.com', 'Bob Martinez', '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '60 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f60000d-0000-4000-8000-000000000013', 'policy', '0f100007-0000-4000-8000-000000000007', 'alice.chen@example.com',   'Alice Chen',   '0f00000a-0000-4000-8000-000000000010', true,  NOW() - INTERVAL '75 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+
+-- Asset owners
+('0f60000e-0000-4000-8000-000000000014', 'asset', '0f300005-0000-4000-8000-000000000005', 'alice.chen@example.com',    'Alice Chen',    '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '60 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f60000f-0000-4000-8000-000000000015', 'asset', '0f300005-0000-4000-8000-000000000005', 'frank.lee@example.com',     'Frank Lee',     '0f000005-0000-4000-8000-000000000005', true,  NOW() - INTERVAL '60 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600010-0000-4000-8000-000000000016', 'asset', '0f300006-0000-4000-8000-000000000006', 'bob.martinez@example.com',  'Bob Martinez',  '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '45 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600011-0000-4000-8000-000000000017', 'asset', '0f300007-0000-4000-8000-000000000007', 'hank.analyst@example.com',  'Hank Analyst',  '0f000008-0000-4000-8000-000000000008', true,  NOW() - INTERVAL '30 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+
+-- Data Steward assignments
+('0f600012-0000-4000-8000-000000000018', 'data_domain', '00000007-0000-4000-8000-000000000007', 'iris.steward@example.com', 'Iris Steward',  '0f000003-0000-4000-8000-000000000003', true,  NOW() - INTERVAL '150 days', NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f600013-0000-4000-8000-000000000019', 'data_domain', '0000000c-0000-4000-8000-000000000012', 'iris.steward@example.com', 'Iris Steward',  '0f000003-0000-4000-8000-000000000003', true,  NOW() - INTERVAL '100 days', NULL, NULL, 'system@demo', NOW(), NOW()),
+
+-- Historical / removed owners (tracking ownership changes)
+('0f600014-0000-4000-8000-000000000020', 'data_product', '00700001-0000-4000-8000-000000000001', 'old.owner@example.com',    'Old Owner',     '0f000001-0000-4000-8000-000000000001', false, NOW() - INTERVAL '300 days', NOW() - INTERVAL '120 days', 'Transferred ownership to Carol Wu upon team restructuring', 'system@demo', NOW() - INTERVAL '300 days', NOW() - INTERVAL '120 days'),
+('0f600015-0000-4000-8000-000000000021', 'data_domain', '00000004-0000-4000-8000-000000000004', 'prev.owner@example.com',   'Prev Owner',    '0f000002-0000-4000-8000-000000000002', false, NOW() - INTERVAL '365 days', NOW() - INTERVAL '90 days',  'Left the company — domain ownership reassigned to Dave Johnson', 'system@demo', NOW() - INTERVAL '365 days', NOW() - INTERVAL '90 days'),
+
+-- SLA Manager on a data product
+('0f600016-0000-4000-8000-000000000022', 'data_product', '00700002-0000-4000-8000-000000000002', 'jack.ops@example.com',     'Jack Ops',      '0f000009-0000-4000-8000-000000000009', true,  NOW() - INTERVAL '50 days',  NULL, NULL, 'system@demo', NOW(), NOW())
 
 ON CONFLICT (id) DO NOTHING;
 

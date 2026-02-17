@@ -164,6 +164,23 @@ APP_FEATURES: Dict[str, Dict[str, str | List[FeatureAccessLevel]]] = {
         'name': 'Comments & Ratings',
         'allowed_levels': READ_WRITE_ADMIN_LEVELS  # READ_WRITE to add, ADMIN to manage all
     },
+    # Reference Data
+    'policies': {
+        'name': 'Policies',
+        'allowed_levels': READ_WRITE_ADMIN_LEVELS
+    },
+    'assets': {
+        'name': 'Assets',
+        'allowed_levels': READ_WRITE_ADMIN_LEVELS
+    },
+    'business-roles': {
+        'name': 'Business Roles',
+        'allowed_levels': READ_WRITE_ADMIN_LEVELS
+    },
+    'business-owners': {
+        'name': 'Business Owners',
+        'allowed_levels': READ_WRITE_ADMIN_LEVELS
+    },
     # 'about': { ... } # About page doesn't need explicit permissions here
 
 }

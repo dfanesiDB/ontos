@@ -5,17 +5,21 @@ This module provides platform-agnostic asset type definitions and metadata model
 for the pluggable connector architecture. It enables Datasets and Contracts to
 reference any asset type uniformly across Unity Catalog, Snowflake, Kafka, PowerBI,
 and other platforms.
+
+It also contains the reference-data models for persisted Asset Types and Assets
+(the cataloged "things" that Ontos governs, stored in the database).
 """
 
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
 # ============================================================================
-# Asset Categories
+# Asset Categories (Connector-level)
 # ============================================================================
 
 class AssetCategory(str, Enum):
@@ -29,7 +33,7 @@ class AssetCategory(str, Enum):
 
 
 # ============================================================================
-# Unified Asset Types
+# Unified Asset Types (Connector-level)
 # ============================================================================
 
 class UnifiedAssetType(str, Enum):
@@ -297,7 +301,7 @@ class SchemaInfo(BaseModel):
 
 
 # ============================================================================
-# Asset Metadata Models
+# Asset Metadata Models (Connector-level)
 # ============================================================================
 
 class AssetOwnership(BaseModel):
@@ -463,3 +467,153 @@ class SampleData(BaseModel):
         """Return the number of sample rows."""
         return len(self.rows)
 
+
+# ============================================================================
+# Reference Data: Persisted Asset Types and Assets (Database-backed)
+# ============================================================================
+# These models represent the cataloged "things" Ontos governs, stored in the
+# database. They complement the connector-level models above.
+
+class AssetTypeStatus(str, Enum):
+    ACTIVE = "active"
+    DEPRECATED = "deprecated"
+
+
+class AssetTypeCategory(str, Enum):
+    """Category for persisted asset type definitions."""
+    DATA = "data"
+    ANALYTICS = "analytics"
+    INTEGRATION = "integration"
+    SYSTEM = "system"
+    CUSTOM = "custom"
+
+
+class AssetStatus(str, Enum):
+    ACTIVE = "active"
+    DEPRECATED = "deprecated"
+    ARCHIVED = "archived"
+
+
+# --- Persisted Asset Type Models ---
+
+class AssetTypeBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255, description="Unique asset type name (e.g., Table, Dashboard, API)")
+    description: Optional[str] = Field(None, description="Human-readable description")
+    category: Optional[AssetTypeCategory] = Field(None, description="High-level category")
+    icon: Optional[str] = Field(None, description="Icon identifier for UI display")
+    required_fields: Optional[Dict[str, Any]] = Field(None, description="JSON schema for required metadata fields")
+    optional_fields: Optional[Dict[str, Any]] = Field(None, description="JSON schema for optional metadata fields")
+    allowed_relationships: Optional[List[str]] = Field(None, description="Valid relationship types for assets of this type")
+    is_system: bool = Field(False, description="Whether this is a built-in asset type")
+    status: AssetTypeStatus = Field(AssetTypeStatus.ACTIVE, description="Lifecycle status")
+
+
+class AssetTypeCreate(AssetTypeBase):
+    pass
+
+
+class AssetTypeUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: Optional[AssetTypeCategory] = None
+    icon: Optional[str] = None
+    required_fields: Optional[Dict[str, Any]] = None
+    optional_fields: Optional[Dict[str, Any]] = None
+    allowed_relationships: Optional[List[str]] = None
+    is_system: Optional[bool] = None
+    status: Optional[AssetTypeStatus] = None
+
+
+class AssetTypeRead(AssetTypeBase):
+    id: UUID
+    asset_count: int = Field(0, description="Number of assets of this type")
+    created_by: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AssetTypeSummary(BaseModel):
+    """Lightweight representation for dropdowns."""
+    id: UUID
+    name: str
+    category: Optional[AssetTypeCategory] = None
+    icon: Optional[str] = None
+    status: AssetTypeStatus
+
+    model_config = {"from_attributes": True}
+
+
+# --- Asset Relationship Models ---
+
+class AssetRelationshipBase(BaseModel):
+    source_asset_id: UUID = Field(..., description="ID of the source asset")
+    target_asset_id: UUID = Field(..., description="ID of the target asset")
+    relationship_type: str = Field(..., description="Type of relationship (hasColumn, belongsToSystem, consumesFrom, etc.)")
+    properties: Optional[Dict[str, Any]] = Field(None, description="Additional relationship metadata")
+
+
+class AssetRelationshipCreate(AssetRelationshipBase):
+    pass
+
+
+class AssetRelationshipRead(AssetRelationshipBase):
+    id: UUID
+    created_by: Optional[str] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# --- Persisted Asset Models ---
+
+class AssetBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=500, description="Asset name")
+    description: Optional[str] = Field(None, description="Human-readable description")
+    asset_type_id: UUID = Field(..., description="ID of the persisted asset type")
+    platform: Optional[str] = Field(None, description="Platform (e.g., Databricks, Power BI)")
+    location: Optional[str] = Field(None, description="FQDN, URL, or path")
+    domain_id: Optional[str] = Field(None, description="Data domain ID")
+    properties: Optional[Dict[str, Any]] = Field(None, description="Type-specific metadata")
+    tags: Optional[List[str]] = Field(None, description="Quick tags/classifications")
+    status: AssetStatus = Field(AssetStatus.ACTIVE, description="Lifecycle status")
+
+
+class AssetCreate(AssetBase):
+    pass
+
+
+class AssetUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=500)
+    description: Optional[str] = None
+    asset_type_id: Optional[UUID] = None
+    platform: Optional[str] = None
+    location: Optional[str] = None
+    domain_id: Optional[str] = None
+    properties: Optional[Dict[str, Any]] = None
+    tags: Optional[List[str]] = None
+    status: Optional[AssetStatus] = None
+
+
+class AssetRead(AssetBase):
+    id: UUID
+    asset_type_name: Optional[str] = Field(None, description="Resolved asset type name")
+    relationships: List[AssetRelationshipRead] = Field(default_factory=list)
+    created_by: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AssetSummary(BaseModel):
+    """Lightweight representation for lists."""
+    id: UUID
+    name: str
+    asset_type_id: UUID
+    asset_type_name: Optional[str] = None
+    platform: Optional[str] = None
+    status: AssetStatus
+
+    model_config = {"from_attributes": True}

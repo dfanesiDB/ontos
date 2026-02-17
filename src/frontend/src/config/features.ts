@@ -2,10 +2,11 @@ import {
     FileTextIcon,
     Network,
     Users, // Using Users icon from About for MDM for now
+    Users2, // Icon for Business Owners
     CheckCircle, // Using CheckCircle icon from About for Compliance for now
     Globe,
     Lock, // Using Lock icon from About for Security for now
-    Shield,
+    Shield, // Icon for Policies
     RefreshCw, // Using RefreshCw icon from About for Entitlements Sync for now
     FolderKanban, // Icon for Catalog Commander
     Settings,
@@ -20,6 +21,9 @@ import {
     Package, // Icon for Data Products (matching marketplace)
     GitBranch, // Icon for Process Workflows
     BookOpen, // Icon for Data Catalog
+    Box, // Icon for Assets
+    Shapes, // Icon for Asset Types
+    Briefcase, // Icon for Business Roles
     type LucideIcon, // Import LucideIcon type
   } from 'lucide-react';
   
@@ -129,6 +133,56 @@ import {
       group: 'Governance',
       maturity: 'beta',
       showInLanding: true,
+    },
+    {
+      id: 'policies',
+      name: 'Policies',
+      path: '/policies',
+      description: 'Define formal, reusable rules for data access, usage, protection, and management.',
+      icon: Shield,
+      group: 'Governance',
+      maturity: 'beta',
+      showInLanding: true,
+    },
+    {
+      id: 'assets',
+      name: 'Assets',
+      path: '/assets',
+      description: 'Catalog and manage data and analytics assets with identity, metadata, and relationships.',
+      icon: Box,
+      group: 'Governance',
+      maturity: 'beta',
+      showInLanding: true,
+    },
+    {
+      id: 'asset-types',
+      name: 'Asset Types',
+      path: '/asset-types',
+      description: 'Define reusable templates for structuring different kinds of assets.',
+      icon: Shapes,
+      group: 'Governance',
+      maturity: 'beta',
+      showInLanding: false,
+    },
+    {
+      id: 'business-roles',
+      name: 'Business Roles',
+      path: '/business-roles',
+      description: 'Manage named roles (e.g., Data Owner) for ownership assignments.',
+      icon: Briefcase,
+      group: 'Governance',
+      maturity: 'beta',
+      showInLanding: false,
+    },
+    {
+      id: 'business-owners',
+      name: 'Business Owners',
+      path: '/business-owners',
+      description: 'Track ownership assignments and history across all objects.',
+      icon: Users2,
+      group: 'Governance',
+      maturity: 'beta',
+      showInLanding: false,
     },
     // Operations - Ongoing monitoring and technical management
     {

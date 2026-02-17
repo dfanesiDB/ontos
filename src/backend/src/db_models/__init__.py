@@ -32,6 +32,10 @@ from . import semantic_models
 from . import settings
 from . import tags
 from . import teams
+from . import policies
+from . import assets
+from . import business_roles
+from . import business_owners
 from . import workflow_configurations
 from . import workflow_installations
 from . import workflow_job_runs

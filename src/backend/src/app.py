@@ -59,6 +59,10 @@ from src.routes import (
     projects_routes,
     costs_routes,
     workflows_routes,
+    policies_routes,
+    assets_routes,
+    business_roles_routes,
+    business_owners_routes,
 )
 
 from src.common.database import init_db, get_session_factory, SQLAlchemySession
@@ -292,6 +296,12 @@ data_contracts_routes.register_routes(app)
 data_product_routes.register_routes(app)
 from src.routes import approvals_routes
 approvals_routes.register_routes(app)
+
+# Reference Data - Policies, Assets, Business Roles & Owners
+policies_routes.register_routes(app)
+assets_routes.register_routes(app)
+business_roles_routes.register_routes(app)
+business_owners_routes.register_routes(app)
 
 # Governance - Standards and approval workflows
 semantic_models_routes.register_routes(app)
