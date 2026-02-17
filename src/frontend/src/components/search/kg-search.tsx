@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
@@ -46,8 +47,8 @@ const AppEntityHover: React.FC<{ iri: string; children: React.ReactNode }> = ({ 
         const url = info.entityType === 'data_product'
           ? `/api/data-products/${info.entityId}`
           : info.entityType === 'data_domain'
-          ? `/api/data-domains/${info.entityId}`
-          : `/api/data-contracts/${info.entityId}`;
+            ? `/api/data-domains/${info.entityId}`
+            : `/api/data-contracts/${info.entityId}`;
         const resp = await fetch(url);
         if (resp.ok) setDetails(await resp.json());
       } catch { /* ignore */ }
@@ -79,8 +80,8 @@ const AppEntityHover: React.FC<{ iri: string; children: React.ReactNode }> = ({ 
                 const path = info.entityType === 'data_product'
                   ? `/data-products/${info.entityId}`
                   : info.entityType === 'data_domain'
-                  ? `/data-domains/${info.entityId}`
-                  : `/data-contracts/${info.entityId}`;
+                    ? `/data-domains/${info.entityId}`
+                    : `/data-contracts/${info.entityId}`;
                 window.location.href = path;
               }}>Open</Button>
           </div>
@@ -115,6 +116,14 @@ export default function KGSearch({
   const [neighbors, setNeighbors] = useState<Neighbor[]>([]);
   const [sparql, setSparql] = useState(initialSparql);
   const [sparqlRows, setSparqlRows] = useState<any[]>([]);
+  const sparqlTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const resizeSparqlTextarea = () => {
+    const el = sparqlTextareaRef.current;
+    if (!el) return;
+    el.style.height = '0';
+    el.style.height = `${el.scrollHeight}px`;
+  };
 
   // New filter states
   const [directionFilter, setDirectionFilter] = useState<DirectionFilter>(initialDirectionFilter);
@@ -132,7 +141,7 @@ export default function KGSearch({
 
     // Get current values from URL for params we're not updating
     const currentParams = new URLSearchParams(location.search);
-    
+
     const newPrefix = updates.prefix !== undefined ? updates.prefix : currentParams.get('prefix') || '';
     const newPath = updates.path !== undefined ? updates.path : (currentParams.get('path')?.split('|').filter(Boolean) || []);
     const newSparql = updates.sparql !== undefined ? updates.sparql : currentParams.get('sparql') || 'SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 10';
@@ -188,6 +197,10 @@ export default function KGSearch({
     if (urlDirection && urlDirection !== initialDirectionFilter) setDirectionFilter(urlDirection);
     if (urlConceptsOnly !== initialShowConceptsOnly) setShowConceptsOnly(urlConceptsOnly);
   }, [location.search]);
+
+  useEffect(() => {
+    resizeSparqlTextarea();
+  }, [sparql]);
 
   // Load neighbors when path changes
   useEffect(() => {
@@ -259,10 +272,10 @@ export default function KGSearch({
       // Show only resources that are likely concepts/classes
       const isConceptOrClass = neighbor.displayType === 'resource' &&
         (neighbor.predicate.includes('type') ||
-         neighbor.predicate.includes('subClassOf') ||
-         neighbor.predicate.includes('Class') ||
-         neighbor.display.includes('Class') ||
-         neighbor.display.includes('concept'));
+          neighbor.predicate.includes('subClassOf') ||
+          neighbor.predicate.includes('Class') ||
+          neighbor.display.includes('Class') ||
+          neighbor.display.includes('concept'));
       if (!isConceptOrClass) return false;
     }
 
@@ -412,7 +425,15 @@ export default function KGSearch({
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Input value={sparql} onChange={(e) => setSparql(e.target.value)} />
+          <Textarea
+            ref={sparqlTextareaRef}
+            value={sparql}
+            onChange={(e) => {
+              setSparql(e.target.value);
+              resizeSparqlTextarea();
+            }}
+            className="min-h-[4rem] max-h-[50vh] overflow-y-auto resize-none"
+          />
           <Button onClick={runSparql}>{t('search:kg.runSparql')}</Button>
           <div className="space-y-1 text-sm">
             {sparqlRows.map((row, idx) => (
