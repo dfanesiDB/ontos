@@ -28,17 +28,15 @@ import {
   } from 'lucide-react';
   
   export type FeatureMaturity = 'ga' | 'beta' | 'alpha';
-  export type FeatureGroup = 'Data Products' | 'Governance' | 'Operations' | 'Security' | 'System';
   
   export interface FeatureConfig {
-    id: string; // Unique identifier, e.g., 'data-products'
+    id: string;
     name: string;
     path: string;
     description: string;
-    icon: LucideIcon; // Use LucideIcon type
-    group: FeatureGroup;
+    icon: LucideIcon;
     maturity: FeatureMaturity;
-    showInLanding?: boolean; // Show on Home/About pages?
+    showInLanding?: boolean;
   }
   
   export const features: FeatureConfig[] = [
@@ -49,7 +47,6 @@ import {
       path: '/data-domains',
       description: 'Organize data products and assets into logical domains.',
       icon: BoxSelect,
-      group: 'Data Products',
       maturity: 'ga',
       showInLanding: true,
     },
@@ -59,7 +56,6 @@ import {
       path: '/teams',
       description: 'Manage teams and team members with role overrides.',
       icon: UserCheck,
-      group: 'Data Products',
       maturity: 'ga',
       showInLanding: false,
     },
@@ -69,7 +65,6 @@ import {
       path: '/projects',
       description: 'Manage projects and assign teams for workspace isolation.',
       icon: FolderOpen,
-      group: 'Data Products',
       maturity: 'ga',
       showInLanding: false,
     },
@@ -79,7 +74,6 @@ import {
       path: '/datasets',
       description: 'Physical implementations of data contracts (tables, views).',
       icon: Table2,
-      group: 'Data Products',
       maturity: 'ga',
       showInLanding: true,
     },
@@ -89,7 +83,6 @@ import {
       path: '/data-contracts',
       description: 'Define and enforce technical metadata standards.',
       icon: FileTextIcon,
-      group: 'Data Products',
       maturity: 'ga',
       showInLanding: true,
     },
@@ -99,7 +92,6 @@ import {
       path: '/data-products',
       description: 'Group and manage related Databricks assets with tags.',
       icon: Package,
-      group: 'Data Products',
       maturity: 'ga',
       showInLanding: true,
     },
@@ -110,7 +102,6 @@ import {
     path: '/semantic-models',
     description: 'Explore business glossary terms, concepts, and their relationships.',
     icon: Network,
-    group: 'Governance',
     maturity: 'ga',
     showInLanding: true,
   },
@@ -120,7 +111,6 @@ import {
       path: '/data-asset-reviews',
       description: 'Review and approve Databricks assets like tables, views, and functions.',
       icon: ClipboardCheck,
-      group: 'Governance',
       maturity: 'beta',
       showInLanding: true,
     },
@@ -130,7 +120,6 @@ import {
       path: '/data-catalog',
       description: 'Browse Unity Catalog assets, search columns, and analyze lineage.',
       icon: BookOpen,
-      group: 'Governance',
       maturity: 'beta',
       showInLanding: true,
     },
@@ -140,7 +129,6 @@ import {
       path: '/policies',
       description: 'Define formal, reusable rules for data access, usage, protection, and management.',
       icon: Shield,
-      group: 'Governance',
       maturity: 'beta',
       showInLanding: true,
     },
@@ -150,7 +138,6 @@ import {
       path: '/assets',
       description: 'Catalog and manage data and analytics assets with identity, metadata, and relationships.',
       icon: Box,
-      group: 'Governance',
       maturity: 'beta',
       showInLanding: true,
     },
@@ -160,7 +147,6 @@ import {
       path: '/asset-types',
       description: 'Define reusable templates for structuring different kinds of assets.',
       icon: Shapes,
-      group: 'Governance',
       maturity: 'beta',
       showInLanding: false,
     },
@@ -170,7 +156,6 @@ import {
       path: '/business-roles',
       description: 'Manage named roles (e.g., Data Owner) for ownership assignments.',
       icon: Briefcase,
-      group: 'Governance',
       maturity: 'beta',
       showInLanding: false,
     },
@@ -180,7 +165,6 @@ import {
       path: '/business-owners',
       description: 'Track ownership assignments and history across all objects.',
       icon: Users2,
-      group: 'Governance',
       maturity: 'beta',
       showInLanding: false,
     },
@@ -191,7 +175,6 @@ import {
       path: '/compliance',
       description: 'Create, verify compliance rules, and calculate scores.',
       icon: CheckCircle,
-      group: 'Operations',
       maturity: 'beta',
       showInLanding: true,
     },
@@ -201,7 +184,6 @@ import {
       path: '/workflows',
       description: 'Configure automated workflows for validation, approval, and notifications.',
       icon: GitBranch,
-      group: 'Operations',
       maturity: 'ga',
       showInLanding: true,
     },
@@ -211,7 +193,6 @@ import {
       path: '/estate-manager',
       description: 'Manage multiple Databricks instances across regions and clouds.',
       icon: Globe,
-      group: 'Operations',
       maturity: 'alpha',
       showInLanding: true,
     },
@@ -221,7 +202,6 @@ import {
       path: '/master-data',
       description: 'Build a golden record of your data.',
       icon: Users,
-      group: 'Operations',
       maturity: 'beta',
       showInLanding: true,
     },
@@ -231,7 +211,6 @@ import {
       path: '/catalog-commander',
       description: 'Side-by-side catalog explorer for asset management.',
       icon: FolderKanban,
-      group: 'Operations',
       maturity: 'ga',
       showInLanding: true,
     },
@@ -242,7 +221,6 @@ import {
       path: '/security',
       description: 'Enable advanced security like differential privacy.',
       icon: Lock,
-      group: 'Security',
       maturity: 'alpha',
       showInLanding: true,
     },
@@ -252,7 +230,6 @@ import {
       path: '/entitlements',
       description: 'Manage access privileges through personas and groups.',
       icon: Shield,
-      group: 'Security',
       maturity: 'alpha',
       showInLanding: true,
     },
@@ -262,7 +239,6 @@ import {
       path: '/entitlements-sync',
       description: 'Synchronize entitlements with external systems.',
       icon: RefreshCw,
-      group: 'Security',
       maturity: 'alpha',
       showInLanding: true,
     },
@@ -273,7 +249,6 @@ import {
       path: '/search',
       description: 'Search across data products, contracts, and knowledge graph.',
       icon: Search,
-      group: 'System',
       maturity: 'ga',
       showInLanding: false,
     },
@@ -283,7 +258,6 @@ import {
       path: '/audit',
       description: 'View and filter application audit logs.',
       icon: ScrollText,
-      group: 'System',
       maturity: 'ga',
       showInLanding: false,
     },
@@ -293,7 +267,6 @@ import {
       path: '/settings',
       description: 'Configure application settings, jobs, and integrations.',
       icon: Settings,
-      group: 'System',
       maturity: 'ga',
       showInLanding: false,
     },
@@ -303,7 +276,6 @@ import {
       path: '/about',
       description: 'Information about the application and its features.',
       icon: Info,
-      group: 'System',
       maturity: 'ga',
       showInLanding: false,
     },
@@ -333,32 +305,6 @@ import {
       return feature?.name || pathSegment; // Return name or segment itself if not found
   };
   
-  // Helper function to group features for navigation
-  export const getNavigationGroups = (
-      allowedMaturities: FeatureMaturity[] = ['ga'] // Default to GA only
-    ): { name: FeatureGroup; items: FeatureConfig[] }[] => {
-      const grouped: { [key in FeatureGroup]?: FeatureConfig[] } = {};
-  
-      features
-        .filter((feature) => allowedMaturities.includes(feature.maturity))
-        .forEach((feature) => {
-          if (!grouped[feature.group]) {
-            grouped[feature.group] = [];
-          }
-          grouped[feature.group]?.push(feature);
-        });
-  
-      // Define the desired order of groups
-      const groupOrder: FeatureGroup[] = ['Data Products', 'Governance', 'Operations', 'Security', 'System'];
-  
-      // Sort groups according to the defined order
-      return groupOrder
-          .map(groupName => ({
-              name: groupName,
-              items: grouped[groupName] || [] // Get items or empty array if group is missing
-          }))
-          .filter(group => group.items.length > 0); // Remove empty groups
-    };
   
   // Helper function to get features for landing pages (Home, About)
   export const getLandingPageFeatures = (
