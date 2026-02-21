@@ -2262,7 +2262,111 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
  '00000003-0000-4000-8000-000000000003',
  '{"catalog": "legacy", "schema": "sales_raw", "table_name": "transactions_v1", "row_count": 0, "format": "delta"}',
  '["deprecated", "legacy"]',
- 'deprecated', 'system@demo', NOW() - INTERVAL '180 days', NOW() - INTERVAL '30 days')
+ 'deprecated', 'system@demo', NOW() - INTERVAL '180 days', NOW() - INTERVAL '30 days'),
+
+-- PhysicalColumn assets for pos_transactions table (0f300003)
+('0f500001-0000-4000-8000-000000000001',
+ 'transaction_id', 'Unique transaction identifier',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.curated.pos_transactions.transaction_id',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "STRING", "nullable": false, "is_primary_key": true}',
+ '["retail"]', 'active', 'system@demo', NOW(), NOW()),
+('0f500002-0000-4000-8000-000000000002',
+ 'store_id', 'Store where the transaction occurred',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.curated.pos_transactions.store_id',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "STRING", "nullable": false}',
+ '["retail"]', 'active', 'system@demo', NOW(), NOW()),
+('0f500003-0000-4000-8000-000000000003',
+ 'transaction_amount', 'Total transaction amount in local currency',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.curated.pos_transactions.transaction_amount',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "DECIMAL(10,2)", "nullable": false}',
+ '["retail", "financial"]', 'active', 'system@demo', NOW(), NOW()),
+('0f500004-0000-4000-8000-000000000004',
+ 'transaction_timestamp', 'When the transaction was recorded',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.curated.pos_transactions.transaction_timestamp',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "TIMESTAMP", "nullable": false}',
+ '["retail"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- PhysicalColumn assets for inventory_levels table (0f300004)
+('0f500005-0000-4000-8000-000000000005',
+ 'product_id', 'SKU identifier for the product',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.curated.inventory_levels.product_id',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "STRING", "nullable": false, "is_primary_key": true}',
+ '["supply-chain"]', 'active', 'system@demo', NOW(), NOW()),
+('0f500006-0000-4000-8000-000000000006',
+ 'warehouse_id', 'Warehouse or distribution center identifier',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.curated.inventory_levels.warehouse_id',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "STRING", "nullable": false}',
+ '["supply-chain"]', 'active', 'system@demo', NOW(), NOW()),
+('0f500007-0000-4000-8000-000000000007',
+ 'quantity', 'Current inventory quantity on hand',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.curated.inventory_levels.quantity',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "INT", "nullable": false}',
+ '["supply-chain"]', 'active', 'system@demo', NOW(), NOW()),
+('0f500008-0000-4000-8000-000000000008',
+ 'last_updated', 'Timestamp of last inventory update',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.curated.inventory_levels.last_updated',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "TIMESTAMP", "nullable": true}',
+ '["supply-chain"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- PhysicalColumn assets for Retail Events Stream table (0250000e)
+('0f500009-0000-4000-8000-000000000009',
+ 'event_id', 'Unique event identifier',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.events.retail_events_stream.event_id',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "STRING", "nullable": false, "is_primary_key": true}',
+ '["retail", "streaming"]', 'active', 'system@demo', NOW(), NOW()),
+('0f50000a-0000-4000-8000-000000000010',
+ 'store_id', 'Originating store for the retail event',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.events.retail_events_stream.store_id',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "STRING", "nullable": false}',
+ '["retail", "streaming"]', 'active', 'system@demo', NOW(), NOW()),
+('0f50000b-0000-4000-8000-000000000011',
+ 'transaction_amount', 'Event transaction amount',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.events.retail_events_stream.transaction_amount',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "DECIMAL(10,2)", "nullable": false}',
+ '["retail", "streaming", "financial"]', 'active', 'system@demo', NOW(), NOW()),
+('0f50000c-0000-4000-8000-000000000012',
+ 'event_timestamp', 'When the retail event occurred',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.events.retail_events_stream.event_timestamp',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "TIMESTAMP", "nullable": false}',
+ '["retail", "streaming"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- PhysicalColumn assets for Sales Metrics MV view (0250000f)
+('0f50000d-0000-4000-8000-000000000013',
+ 'total_revenue', 'Aggregated total revenue',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.analytics.sales_metrics_mv.total_revenue',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "DECIMAL(15,2)", "nullable": false}',
+ '["retail", "analytics", "kpi"]', 'active', 'system@demo', NOW(), NOW()),
+('0f50000e-0000-4000-8000-000000000014',
+ 'avg_order_value', 'Average order value metric',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.analytics.sales_metrics_mv.avg_order_value',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "DECIMAL(10,2)", "nullable": false}',
+ '["retail", "analytics", "kpi"]', 'active', 'system@demo', NOW(), NOW()),
+('0f50000f-0000-4000-8000-000000000015',
+ 'transaction_count', 'Total number of transactions',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.analytics.sales_metrics_mv.transaction_count',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "BIGINT", "nullable": false}',
+ '["retail", "analytics"]', 'active', 'system@demo', NOW(), NOW()),
+('0f500010-0000-4000-8000-000000000016',
+ 'period_start', 'Start of the aggregation period',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Column' LIMIT 1), '0f20000a-0000-4000-8000-000000000010'), 'Databricks', 'lakehouse.retail.analytics.sales_metrics_mv.period_start',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"data_type": "DATE", "nullable": false}',
+ '["retail", "analytics"]', 'active', 'system@demo', NOW(), NOW())
 
 ON CONFLICT (id) DO NOTHING;
 
@@ -2274,28 +2378,75 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO entity_relationships (id, source_type, source_id, target_type, target_id, relationship_type, properties, created_by, created_at) VALUES
 -- Tables belong to Databricks Lakehouse system
-('0f400001-0000-4000-8000-000000000001', 'asset', '0f300003-0000-4000-8000-000000000003', 'asset', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
-('0f400002-0000-4000-8000-000000000002', 'asset', '0f300004-0000-4000-8000-000000000004', 'asset', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
-('0f400003-0000-4000-8000-000000000003', 'asset', '0f300005-0000-4000-8000-000000000005', 'asset', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
-('0f400004-0000-4000-8000-000000000004', 'asset', '0f300006-0000-4000-8000-000000000006', 'asset', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400001-0000-4000-8000-000000000001', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400002-0000-4000-8000-000000000002', 'PhysicalTable', '0f300004-0000-4000-8000-000000000004', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400003-0000-4000-8000-000000000003', 'PhysicalTable', '0f300005-0000-4000-8000-000000000005', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400004-0000-4000-8000-000000000004', 'PhysicalTable', '0f300006-0000-4000-8000-000000000006', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
 
 -- Dashboards belong to Power BI system
-('0f400005-0000-4000-8000-000000000005', 'asset', '0f300007-0000-4000-8000-000000000007', 'asset', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
-('0f400006-0000-4000-8000-000000000006', 'asset', '0f300008-0000-4000-8000-000000000008', 'asset', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400005-0000-4000-8000-000000000005', 'Dashboard', '0f300007-0000-4000-8000-000000000007', 'System', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400006-0000-4000-8000-000000000006', 'Dashboard', '0f300008-0000-4000-8000-000000000008', 'System', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
 
 -- Dashboard consumes table data (business lineage)
-('0f400007-0000-4000-8000-000000000007', 'asset', '0f300007-0000-4000-8000-000000000007', 'asset', '0f300003-0000-4000-8000-000000000003', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
-('0f400008-0000-4000-8000-000000000008', 'asset', '0f300008-0000-4000-8000-000000000008', 'asset', '0f300005-0000-4000-8000-000000000005', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
+('0f400007-0000-4000-8000-000000000007', 'Dashboard', '0f300007-0000-4000-8000-000000000007', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
+('0f400008-0000-4000-8000-000000000008', 'Dashboard', '0f300008-0000-4000-8000-000000000008', 'PhysicalTable', '0f300005-0000-4000-8000-000000000005', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
 
 -- ML model consumes table
-('0f400009-0000-4000-8000-000000000009', 'asset', '0f30000c-0000-4000-8000-000000000012', 'asset', '0f300003-0000-4000-8000-000000000003', 'consumesFrom', '{"purpose": "training"}', 'system@demo', NOW()),
-('0f40000a-0000-4000-8000-000000000010', 'asset', '0f30000c-0000-4000-8000-000000000012', 'asset', '0f300004-0000-4000-8000-000000000004', 'consumesFrom', '{"purpose": "feature_store"}', 'system@demo', NOW()),
+('0f400009-0000-4000-8000-000000000009', 'MLModel', '0f30000c-0000-4000-8000-000000000012', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'consumesFrom', '{"purpose": "training"}', 'system@demo', NOW()),
+('0f40000a-0000-4000-8000-000000000010', 'MLModel', '0f30000c-0000-4000-8000-000000000012', 'PhysicalTable', '0f300004-0000-4000-8000-000000000004', 'consumesFrom', '{"purpose": "feature_store"}', 'system@demo', NOW()),
 
 -- Stream feeds into table
-('0f40000b-0000-4000-8000-000000000011', 'asset', '0f30000b-0000-4000-8000-000000000011', 'asset', '0f300003-0000-4000-8000-000000000003', 'producesTo', '{"processing": "streaming_ingest"}', 'system@demo', NOW()),
+('0f40000b-0000-4000-8000-000000000011', 'Stream', '0f30000b-0000-4000-8000-000000000011', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'producesTo', '{"processing": "streaming_ingest"}', 'system@demo', NOW()),
 
 -- Deprecated table replaced by new one
-('0f40000c-0000-4000-8000-000000000012', 'asset', '0f30000d-0000-4000-8000-000000000013', 'asset', '0f300003-0000-4000-8000-000000000003', 'replacedBy', '{"reason": "legacy migration"}', 'system@demo', NOW())
+('0f40000c-0000-4000-8000-000000000012', 'PhysicalTable', '0f30000d-0000-4000-8000-000000000013', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'replacedBy', '{"reason": "legacy migration"}', 'system@demo', NOW()),
+
+-- DataProducts deployed on systems
+('0f40000d-0000-4000-8000-000000000013', 'DataProduct', '00700001-0000-4000-8000-000000000001', 'System', '0f300001-0000-4000-8000-000000000001', 'deployedOnSystem', NULL, 'system@demo', NOW()),
+('0f40000e-0000-4000-8000-000000000014', 'DataProduct', '00700002-0000-4000-8000-000000000002', 'System', '0f300001-0000-4000-8000-000000000001', 'deployedOnSystem', NULL, 'system@demo', NOW()),
+('0f40000f-0000-4000-8000-000000000015', 'DataProduct', '00700003-0000-4000-8000-000000000003', 'System', '0f300001-0000-4000-8000-000000000001', 'deployedOnSystem', NULL, 'system@demo', NOW()),
+('0f400010-0000-4000-8000-000000000016', 'DataProduct', '00700004-0000-4000-8000-000000000004', 'System', '0f300001-0000-4000-8000-000000000001', 'deployedOnSystem', NULL, 'system@demo', NOW()),
+('0f400011-0000-4000-8000-000000000017', 'DataProduct', '00700005-0000-4000-8000-000000000005', 'System', '0f300001-0000-4000-8000-000000000001', 'deployedOnSystem', NULL, 'system@demo', NOW()),
+('0f400012-0000-4000-8000-000000000018', 'DataProduct', '00700006-0000-4000-8000-000000000006', 'System', '0f300001-0000-4000-8000-000000000001', 'deployedOnSystem', NULL, 'system@demo', NOW()),
+('0f400013-0000-4000-8000-000000000019', 'DataProduct', '00700007-0000-4000-8000-000000000007', 'System', '0f300002-0000-4000-8000-000000000002', 'deployedOnSystem', NULL, 'system@demo', NOW()),
+
+-- Datasets belong to Databricks Lakehouse system
+('0f400014-0000-4000-8000-000000000020', 'Dataset', '02100001-0000-4000-8000-000000000001', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400015-0000-4000-8000-000000000021', 'Dataset', '02100004-0000-4000-8000-000000000004', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400016-0000-4000-8000-000000000022', 'Dataset', '02100007-0000-4000-8000-000000000007', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+
+-- Stream belongs to Databricks Lakehouse system
+('0f400017-0000-4000-8000-000000000023', 'Stream', '0f30000b-0000-4000-8000-000000000011', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+
+-- ML Model belongs to Databricks Lakehouse system
+('0f400018-0000-4000-8000-000000000024', 'MLModel', '0f30000c-0000-4000-8000-000000000012', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+
+-- API Endpoint belongs to Databricks Lakehouse system
+('0f400019-0000-4000-8000-000000000025', 'APIEndpoint', '0f300009-0000-4000-8000-000000000009', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+
+-- hasColumn: pos_transactions (0f300003) columns
+('0f600001-0000-4000-8000-000000000001', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'PhysicalColumn', '0f500001-0000-4000-8000-000000000001', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f600002-0000-4000-8000-000000000002', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'PhysicalColumn', '0f500002-0000-4000-8000-000000000002', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f600003-0000-4000-8000-000000000003', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'PhysicalColumn', '0f500003-0000-4000-8000-000000000003', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f600004-0000-4000-8000-000000000004', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'PhysicalColumn', '0f500004-0000-4000-8000-000000000004', 'hasColumn', NULL, 'system@demo', NOW()),
+
+-- hasColumn: inventory_levels (0f300004) columns
+('0f600005-0000-4000-8000-000000000005', 'PhysicalTable', '0f300004-0000-4000-8000-000000000004', 'PhysicalColumn', '0f500005-0000-4000-8000-000000000005', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f600006-0000-4000-8000-000000000006', 'PhysicalTable', '0f300004-0000-4000-8000-000000000004', 'PhysicalColumn', '0f500006-0000-4000-8000-000000000006', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f600007-0000-4000-8000-000000000007', 'PhysicalTable', '0f300004-0000-4000-8000-000000000004', 'PhysicalColumn', '0f500007-0000-4000-8000-000000000007', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f600008-0000-4000-8000-000000000008', 'PhysicalTable', '0f300004-0000-4000-8000-000000000004', 'PhysicalColumn', '0f500008-0000-4000-8000-000000000008', 'hasColumn', NULL, 'system@demo', NOW()),
+
+-- hasColumn: Retail Events Stream (0250000e) columns
+('0f600009-0000-4000-8000-000000000009', 'PhysicalTable', '0250000e-0000-4000-8000-000000000014', 'PhysicalColumn', '0f500009-0000-4000-8000-000000000009', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f60000a-0000-4000-8000-000000000010', 'PhysicalTable', '0250000e-0000-4000-8000-000000000014', 'PhysicalColumn', '0f50000a-0000-4000-8000-000000000010', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f60000b-0000-4000-8000-000000000011', 'PhysicalTable', '0250000e-0000-4000-8000-000000000014', 'PhysicalColumn', '0f50000b-0000-4000-8000-000000000011', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f60000c-0000-4000-8000-000000000012', 'PhysicalTable', '0250000e-0000-4000-8000-000000000014', 'PhysicalColumn', '0f50000c-0000-4000-8000-000000000012', 'hasColumn', NULL, 'system@demo', NOW()),
+
+-- hasColumn: Sales Metrics MV (0250000f) columns
+('0f60000d-0000-4000-8000-000000000013', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'PhysicalColumn', '0f50000d-0000-4000-8000-000000000013', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f60000e-0000-4000-8000-000000000014', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'PhysicalColumn', '0f50000e-0000-4000-8000-000000000014', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f60000f-0000-4000-8000-000000000015', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'PhysicalColumn', '0f50000f-0000-4000-8000-000000000015', 'hasColumn', NULL, 'system@demo', NOW()),
+('0f600010-0000-4000-8000-000000000016', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'PhysicalColumn', '0f500010-0000-4000-8000-000000000016', 'hasColumn', NULL, 'system@demo', NOW())
 
 ON CONFLICT (id) DO NOTHING;
 

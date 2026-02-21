@@ -123,6 +123,11 @@ ontos:inverseLabel a owl:AnnotationProperty ;
     rdfs:comment "Label shown on the target side of a relationship (e.g. 'Datasets' on a DataProduct, 'Data Product' on a Dataset)" ;
     rdfs:range xsd:string .
 
+ontos:isHierarchical a owl:AnnotationProperty ;
+    rdfs:label "is hierarchical" ;
+    rdfs:comment "Marks a relationship as hierarchical/containment (parent-child) for hierarchy browser navigation" ;
+    rdfs:range xsd:boolean .
+
 
 # ############################################################################
 #
@@ -509,7 +514,8 @@ ontos:hasDataset a owl:ObjectProperty ;
     ontos:uiLabel "Datasets" ;
     ontos:inverseLabel "Data Product" ;
     ontos:cardinality "0..*" ;
-    ontos:uiDisplayContext "tab" .
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
 
 ontos:hasTable a owl:ObjectProperty ;
     rdfs:label "has table" ;
@@ -519,7 +525,8 @@ ontos:hasTable a owl:ObjectProperty ;
     ontos:uiLabel "Tables" ;
     ontos:inverseLabel "Dataset" ;
     ontos:cardinality "0..*" ;
-    ontos:uiDisplayContext "tab" .
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
 
 ontos:hasView a owl:ObjectProperty ;
     rdfs:label "has view" ;
@@ -529,7 +536,8 @@ ontos:hasView a owl:ObjectProperty ;
     ontos:uiLabel "Views" ;
     ontos:inverseLabel "Dataset" ;
     ontos:cardinality "0..*" ;
-    ontos:uiDisplayContext "tab" .
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
 
 ontos:hasColumn a owl:ObjectProperty ;
     rdfs:label "has column" ;
@@ -539,7 +547,8 @@ ontos:hasColumn a owl:ObjectProperty ;
     ontos:uiLabel "Columns" ;
     ontos:inverseLabel "Table" ;
     ontos:cardinality "0..*" ;
-    ontos:uiDisplayContext "tab" .
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
 
 # --- Governance relationships ---
 
@@ -608,7 +617,8 @@ ontos:hasParentDomain a owl:ObjectProperty ;
     ontos:uiLabel "Parent Domain" ;
     ontos:inverseLabel "Sub-Domains" ;
     ontos:cardinality "0..1" ;
-    ontos:uiDisplayContext "detail-page" .
+    ontos:uiDisplayContext "detail-page" ;
+    ontos:isHierarchical true .
 
 ontos:containsProduct a owl:ObjectProperty ;
     rdfs:label "contains product" ;
@@ -618,7 +628,8 @@ ontos:containsProduct a owl:ObjectProperty ;
     ontos:uiLabel "Data Products" ;
     ontos:inverseLabel "Domain" ;
     ontos:cardinality "0..*" ;
-    ontos:uiDisplayContext "tab" .
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
 
 ontos:ownedByTeam a owl:ObjectProperty ;
     rdfs:label "owned by team" ;
@@ -692,7 +703,19 @@ ontos:belongsToSystem a owl:ObjectProperty ;
     ontos:uiLabel "System" ;
     ontos:inverseLabel "Contains" ;
     ontos:cardinality "0..1" ;
-    ontos:uiDisplayContext "detail-page" .
+    ontos:uiDisplayContext "detail-page" ;
+    ontos:isHierarchical true .
+
+ontos:deployedOnSystem a owl:ObjectProperty ;
+    rdfs:label "deployed on system" ;
+    rdfs:comment "Links a data product to the system or platform where it is deployed" ;
+    rdfs:domain ontos:DataProduct ;
+    rdfs:range ontos:System ;
+    ontos:uiLabel "Deployed On" ;
+    ontos:inverseLabel "Hosts Product" ;
+    ontos:cardinality "0..1" ;
+    ontos:uiDisplayContext "detail-page" ;
+    ontos:isHierarchical true .
 
 ontos:replacedBy a owl:ObjectProperty ;
     rdfs:label "replaced by" ;
