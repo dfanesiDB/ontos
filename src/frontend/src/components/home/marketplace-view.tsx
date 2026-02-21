@@ -503,13 +503,13 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   // Handle opening product in details view
   const handleOpenProductDetails = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
-    navigate(`/data-products/${productId}`);
+    navigate(`/consumer/my-products/${productId}`);
   };
 
   // Handle opening dataset in details view
   const handleOpenDatasetDetails = (e: React.MouseEvent, datasetId: string) => {
     e.stopPropagation();
-    navigate(`/datasets/${datasetId}`);
+    navigate(`/consumer/datasets/${datasetId}`);
   };
 
   // Render product card

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -11,18 +11,21 @@ from src.models.assets import (
     AssetRelationshipCreate, AssetRelationshipRead,
 )
 from src.db_models.assets import AssetTypeDb, AssetDb, AssetRelationshipDb
-from src.common.errors import ConflictError, NotFoundError
+from src.common.errors import ConflictError, NotFoundError, ValidationError
 from src.common.logging import get_logger
 
 logger = get_logger(__name__)
 
+ONTOS_NS = "http://ontos.app/ontology#"
+
 
 class AssetsManager:
-    def __init__(self):
+    def __init__(self, ontology_schema_manager=None):
         self._type_repo = asset_type_repo
         self._asset_repo = asset_repo
         self._rel_repo = asset_relationship_repo
-        logger.debug("AssetsManager initialized.")
+        self._ontology = ontology_schema_manager
+        logger.debug("AssetsManager initialized (ontology validation=%s).", self._ontology is not None)
 
     # --- Helpers ---
 
@@ -53,6 +56,35 @@ class AssetsManager:
         if db_asset.asset_type:
             summary.asset_type_name = db_asset.asset_type.name
         return summary
+
+    # --- JSON Schema validation ---
+
+    def _validate_properties(self, db: Session, asset_type_id: UUID, properties: Optional[Dict[str, Any]]) -> None:
+        """Validate asset properties against ontology-derived JSON Schema."""
+        if not self._ontology or not properties:
+            return
+
+        db_type = self._type_repo.get(db, asset_type_id)
+        if not db_type:
+            return
+
+        type_iri = f"{ONTOS_NS}{db_type.name}"
+        try:
+            schema_def = self._ontology.get_entity_type_schema(type_iri)
+        except Exception:
+            return
+
+        json_schema = schema_def.json_schema
+        if not json_schema:
+            return
+
+        try:
+            import jsonschema
+            jsonschema.validate(instance=properties, schema=json_schema)
+        except jsonschema.ValidationError as e:
+            raise ValidationError(
+                f"Asset properties validation failed for type '{db_type.name}': {e.message}"
+            )
 
     # --- Asset Type CRUD ---
 
@@ -137,10 +169,11 @@ class AssetsManager:
 
     def create_asset(self, db: Session, *, asset_in: AssetCreate, current_user_id: str) -> AssetRead:
         """Creates a new asset."""
-        # Validate that asset type exists
         db_type = self._type_repo.get(db, asset_in.asset_type_id)
         if not db_type:
             raise NotFoundError(f"Asset type '{asset_in.asset_type_id}' not found.")
+
+        self._validate_properties(db, asset_in.asset_type_id, asset_in.properties)
 
         data = asset_in.model_dump()
         data["created_by"] = current_user_id
@@ -188,6 +221,10 @@ class AssetsManager:
             db_type = self._type_repo.get(db, asset_in.asset_type_id)
             if not db_type:
                 raise NotFoundError(f"Asset type '{asset_in.asset_type_id}' not found.")
+
+        effective_type_id = asset_in.asset_type_id or db_asset.asset_type_id
+        if asset_in.properties is not None:
+            self._validate_properties(db, effective_type_id, asset_in.properties)
 
         update_data = asset_in.model_dump(exclude_unset=True)
         try:

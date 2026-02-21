@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -174,6 +174,10 @@ export default function DataContractDetails() {
   const { t } = useTranslation(['data-contracts', 'common'])
   const { contractId } = useParams<{ contractId: string }>()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const listPath = pathname.replace(/\/[^/]+$/, '')
+  const personaPrefix = pathname.match(/^\/[a-z]+/)?.[0] || ''
+  const productBasePath = personaPrefix ? `${personaPrefix}/products` : '/producer/products'
   const { toast } = useToast()
   const { getDomainName } = useDomains()
   const { getPermissionLevel } = usePermissions()
@@ -556,7 +560,7 @@ export default function DataContractDetails() {
   }, [viewMode])
 
   useEffect(() => {
-    setStaticSegments([{ label: 'Data Contracts', path: '/data-contracts' }])
+    setStaticSegments([{ label: 'Data Contracts', path: listPath }])
     fetchDetails()
     fetchLinkedProducts()
     fetchLinkedDatasets()
@@ -600,7 +604,7 @@ export default function DataContractDetails() {
       const res = await fetch(`/api/data-contracts/${contractId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Delete failed')
       toast({ title: 'Deleted', description: 'Contract deleted.' })
-      navigate('/data-contracts')
+      navigate(listPath)
     } catch (e) {
       toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to delete', variant: 'destructive' })
     }
@@ -623,7 +627,7 @@ export default function DataContractDetails() {
         description: 'You can now edit this draft. It will only be visible to you until committed.',
       })
       // Navigate to the new draft
-      navigate(`/data-contracts/${data.id}`)
+      navigate(`${listPath}/${data.id}`)
     } catch (e) {
       toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to clone', variant: 'destructive' })
     }
@@ -641,9 +645,9 @@ export default function DataContractDetails() {
       toast({ title: 'Draft Discarded', description: 'Your personal draft has been deleted.' })
       // Navigate back to contracts list or parent contract
       if (contract?.parentContractId) {
-        navigate(`/data-contracts/${contract.parentContractId}`)
+        navigate(`${listPath}/${contract.parentContractId}`)
       } else {
-        navigate('/data-contracts')
+        navigate(listPath)
       }
     } catch (e) {
       toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to discard', variant: 'destructive' })
@@ -734,7 +738,7 @@ export default function DataContractDetails() {
       if (!newId) throw new Error('Invalid response when creating version.')
       toast({ title: 'Success', description: `Version ${newVersionString} created successfully!` })
       setIsVersionDialogOpen(false)
-      navigate(`/data-contracts/${newId}`)
+      navigate(`${listPath}/${newId}`)
     } catch (e: any) {
       toast({ title: 'Error', description: e?.message || 'Failed to create new version.', variant: 'destructive' })
     }
@@ -1430,7 +1434,7 @@ export default function DataContractDetails() {
     <div className="py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/data-contracts')} size="sm">
+          <Button variant="outline" onClick={() => navigate(listPath)} size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to List
           </Button>
@@ -1443,7 +1447,7 @@ export default function DataContractDetails() {
                 size="icon"
                 className="h-8 w-8"
                 disabled={!prevVersion}
-                onClick={() => prevVersion && navigate(`/data-contracts/${prevVersion.id}`)}
+                onClick={() => prevVersion && navigate(`${listPath}/${prevVersion.id}`)}
                 title={prevVersion ? `Previous version: ${prevVersion.version}` : 'No previous version'}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -1451,14 +1455,14 @@ export default function DataContractDetails() {
               <VersionSelector
                 currentContractId={contractId!}
                 currentVersion={contract?.version}
-                onVersionChange={(id) => navigate(`/data-contracts/${id}`)}
+                onVersionChange={(id) => navigate(`${listPath}/${id}`)}
               />
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
                 disabled={!nextVersion}
-                onClick={() => nextVersion && navigate(`/data-contracts/${nextVersion.id}`)}
+                onClick={() => nextVersion && navigate(`${listPath}/${nextVersion.id}`)}
                 title={nextVersion ? `Next version: ${nextVersion.version}` : 'No next version'}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -1555,7 +1559,7 @@ export default function DataContractDetails() {
             {contract?.parentContractId && (
               <span className="ml-2 text-sm">
                 Based on{' '}
-                <Button variant="link" className="h-auto p-0 text-amber-700 dark:text-amber-300" onClick={() => navigate(`/data-contracts/${contract.parentContractId}`)}>
+                <Button variant="link" className="h-auto p-0 text-amber-700 dark:text-amber-300" onClick={() => navigate(`${listPath}/${contract.parentContractId}`)}>
                   v{contract?.version?.replace('-draft', '') || 'parent'}
                 </Button>
               </span>
@@ -2335,7 +2339,7 @@ export default function DataContractDetails() {
                   <div
                     key={product.id}
                     className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/data-products/${product.id}`)}
+                    onClick={() => navigate(`${productBasePath}/${product.id}`)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -2994,7 +2998,7 @@ export default function DataContractDetails() {
           contractName={contract.name}
           onSuccess={(productId) => {
             fetchLinkedProducts()
-            navigate(`/data-products/${productId}`)
+            navigate(`${productBasePath}/${productId}`)
           }}
         />
       )}

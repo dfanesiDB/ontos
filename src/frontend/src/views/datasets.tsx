@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
@@ -48,6 +48,7 @@ export default function Datasets() {
   const { t } = useTranslation(['datasets', 'common']);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { currentProject, hasProjectContext } = useProjectContext();
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
@@ -145,7 +146,7 @@ export default function Datasets() {
         <div className="flex flex-col">
           <span
             className="font-medium text-primary hover:underline cursor-pointer"
-            onClick={() => navigate(`/datasets/${row.original.id}`)}
+            onClick={() => navigate(`${pathname}/${row.original.id}`)}
           >
             {row.original.name}
           </span>
@@ -373,7 +374,7 @@ export default function Datasets() {
               </Button>
             </>
           }
-          onRowClick={(row) => navigate(`/datasets/${row.original.id}`)}
+          onRowClick={(row) => navigate(`${pathname}/${row.original.id}`)}
         />
       )}
 

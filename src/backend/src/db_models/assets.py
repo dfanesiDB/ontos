@@ -76,7 +76,7 @@ class AssetDb(Base):
 
 
 class AssetRelationshipDb(Base):
-    """Directed relationship between two assets (lineage, containment, consumption, etc.)."""
+    """DEPRECATED: Use EntityRelationshipDb instead. Kept for migration compatibility."""
     __tablename__ = "asset_relationships"
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

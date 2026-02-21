@@ -489,6 +489,7 @@ class AssetTypeCategory(str, Enum):
 
 
 class AssetStatus(str, Enum):
+    DRAFT = "draft"
     ACTIVE = "active"
     DEPRECATED = "deprecated"
     ARCHIVED = "archived"

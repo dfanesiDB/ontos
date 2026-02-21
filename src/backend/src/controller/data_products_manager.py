@@ -56,6 +56,8 @@ from src.common.logging import get_logger
 from src.common.database import get_session_factory
 from src.common import genie_client
 from src.common.delivery_mixin import DeliveryMixin
+from src.repositories.entity_relationships_repository import entity_relationship_repo
+from src.repositories.assets_repository import asset_repo
 
 logger = get_logger(__name__)
 
@@ -2361,6 +2363,218 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
         except Exception as e:
             logger.error(f"Error fetching contracts for ODPS product {product_id}: {e}")
             raise
+
+    # ------------------------------------------------------------------
+    # Dataset hierarchy (Phase 5 — asset-backed datasets)
+    # ------------------------------------------------------------------
+
+    def get_product_datasets(
+        self,
+        product_id: str,
+        db: Optional[Session] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return Dataset assets linked to this product via hasDataset relationships.
+
+        Each entry contains the asset summary plus the relationship ID.
+        """
+        session = db or self._db
+        rels = entity_relationship_repo.query_filtered(
+            session,
+            source_type="DataProduct",
+            source_id=product_id,
+            relationship_type="hasDataset",
+        )
+        results = []
+        for r in rels:
+            asset = asset_repo.get(session, r.target_id)
+            if asset:
+                results.append({
+                    "relationship_id": str(r.id),
+                    "dataset_id": str(asset.id),
+                    "name": asset.name,
+                    "description": asset.description,
+                    "status": asset.status,
+                    "properties": asset.properties or {},
+                    "tags": asset.tags or [],
+                    "created_at": asset.created_at.isoformat() if asset.created_at else None,
+                })
+        return results
+
+    def get_product_hierarchy(
+        self,
+        product_id: str,
+        db: Optional[Session] = None,
+    ) -> Dict[str, Any]:
+        """Resolve the full DP > Dataset > Table/View > Column hierarchy.
+
+        Returns a nested dict:
+        {
+          "product_id": "...",
+          "product_name": "...",
+          "datasets": [
+            {
+              "dataset_id": "...", "name": "...", "status": "...",
+              "tables": [ { "id", "name", "location", "columns": [...] } ],
+              "views": [ { "id", "name", "location", "columns": [...] } ],
+              "contract": { "id", "type" } | null
+            }, ...
+          ]
+        }
+        """
+        session = db or self._db
+
+        product = self.get_product(product_id)
+        if not product:
+            raise ValueError(f"Product {product_id} not found")
+
+        datasets_out = []
+        ds_rels = entity_relationship_repo.query_filtered(
+            session,
+            source_type="DataProduct",
+            source_id=product_id,
+            relationship_type="hasDataset",
+        )
+
+        for ds_rel in ds_rels:
+            ds_asset = asset_repo.get(session, ds_rel.target_id)
+            if not ds_asset:
+                continue
+
+            ds_entry: Dict[str, Any] = {
+                "dataset_id": str(ds_asset.id),
+                "name": ds_asset.name,
+                "description": ds_asset.description,
+                "status": ds_asset.status,
+                "properties": ds_asset.properties or {},
+                "tables": [],
+                "views": [],
+                "contract": None,
+            }
+
+            child_rels = entity_relationship_repo.query_filtered(
+                session,
+                source_type="Dataset",
+                source_id=str(ds_asset.id),
+            )
+
+            for child_rel in child_rels:
+                if child_rel.relationship_type == "governedBy":
+                    ds_entry["contract"] = {
+                        "id": child_rel.target_id,
+                        "type": child_rel.target_type,
+                    }
+                    continue
+
+                child_asset = asset_repo.get(session, child_rel.target_id)
+                if not child_asset:
+                    continue
+
+                child_entry = {
+                    "id": str(child_asset.id),
+                    "name": child_asset.name,
+                    "location": child_asset.location,
+                    "status": child_asset.status,
+                    "properties": child_asset.properties or {},
+                    "columns": [],
+                }
+
+                col_rels = entity_relationship_repo.query_filtered(
+                    session,
+                    source_type=child_rel.target_type,
+                    source_id=child_rel.target_id,
+                    relationship_type="hasColumn",
+                )
+                for col_rel in col_rels:
+                    col_asset = asset_repo.get(session, col_rel.target_id)
+                    if col_asset:
+                        child_entry["columns"].append({
+                            "id": str(col_asset.id),
+                            "name": col_asset.name,
+                            "properties": col_asset.properties or {},
+                        })
+
+                if child_rel.relationship_type == "hasTable":
+                    ds_entry["tables"].append(child_entry)
+                elif child_rel.relationship_type == "hasView":
+                    ds_entry["views"].append(child_entry)
+
+            datasets_out.append(ds_entry)
+
+        return {
+            "product_id": product_id,
+            "product_name": product.name or product_id,
+            "datasets": datasets_out,
+        }
+
+    def link_dataset(
+        self,
+        product_id: str,
+        dataset_asset_id: str,
+        current_user: str,
+        db: Optional[Session] = None,
+    ) -> Dict[str, Any]:
+        """Link a Dataset asset to this product via hasDataset relationship."""
+        from src.db_models.entity_relationships import EntityRelationshipDb
+
+        session = db or self._db
+        product = self.get_product(product_id)
+        if not product:
+            raise ValueError(f"Product {product_id} not found")
+
+        ds_asset = asset_repo.get(session, dataset_asset_id)
+        if not ds_asset:
+            raise ValueError(f"Dataset asset {dataset_asset_id} not found")
+
+        existing = entity_relationship_repo.find_existing(
+            session,
+            source_type="DataProduct",
+            source_id=product_id,
+            target_type="Dataset",
+            target_id=dataset_asset_id,
+            relationship_type="hasDataset",
+        )
+        if existing:
+            raise ValueError("Dataset is already linked to this product")
+
+        rel = EntityRelationshipDb(
+            source_type="DataProduct",
+            source_id=product_id,
+            target_type="Dataset",
+            target_id=dataset_asset_id,
+            relationship_type="hasDataset",
+            created_by=current_user,
+        )
+        session.add(rel)
+        session.commit()
+        session.refresh(rel)
+
+        return {
+            "relationship_id": str(rel.id),
+            "dataset_id": dataset_asset_id,
+            "dataset_name": ds_asset.name,
+        }
+
+    def unlink_dataset(
+        self,
+        product_id: str,
+        dataset_asset_id: str,
+        db: Optional[Session] = None,
+    ) -> bool:
+        """Remove a hasDataset relationship between a product and a dataset."""
+        session = db or self._db
+        existing = entity_relationship_repo.find_existing(
+            session,
+            source_type="DataProduct",
+            source_id=product_id,
+            target_type="Dataset",
+            target_id=dataset_asset_id,
+            relationship_type="hasDataset",
+        )
+        if not existing:
+            return False
+        session.delete(existing)
+        session.commit()
+        return True
 
     def get_team_members_for_import(
         self,

@@ -181,6 +181,19 @@ APP_FEATURES: Dict[str, Dict[str, str | List[FeatureAccessLevel]]] = {
         'name': 'Business Owners',
         'allowed_levels': READ_WRITE_ADMIN_LEVELS
     },
+    # Ontology-driven model
+    'ontology': {
+        'name': 'Ontology Schema',
+        'allowed_levels': READ_WRITE_ADMIN_LEVELS
+    },
+    'entity_relationships': {
+        'name': 'Entity Relationships',
+        'allowed_levels': READ_WRITE_ADMIN_LEVELS
+    },
+    'entity_subscriptions': {
+        'name': 'Entity Subscriptions',
+        'allowed_levels': READ_WRITE_ADMIN_LEVELS
+    },
     # 'about': { ... } # About page doesn't need explicit permissions here
 
 }

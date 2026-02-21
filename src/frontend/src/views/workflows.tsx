@@ -31,7 +31,7 @@ import {
   Power,
   PowerOff,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -99,6 +99,7 @@ export default function Workflows() {
   const { t } = useTranslation(['common']);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { get: apiGet, post: apiPost, delete: apiDeleteApi } = useApi();
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
@@ -277,7 +278,7 @@ export default function Workflows() {
   };
 
   const handleEditWorkflow = (workflow: ProcessWorkflow) => {
-    navigate(`/workflows/${workflow.id}`);
+    navigate(`${pathname}/${workflow.id}`);
   };
 
   const handleLoadDefaultWorkflows = async (updateExisting: boolean = false) => {
@@ -748,7 +749,7 @@ export default function Workflows() {
         <div className="flex items-center gap-2">
           <GitBranch className="h-4 w-4 text-muted-foreground" />
           <button
-            onClick={() => navigate(`/workflows/${row.original.id}`)}
+            onClick={() => navigate(`${pathname}/${row.original.id}`)}
             className="font-medium hover:underline hover:text-primary text-left"
           >
             {row.original.name}
@@ -1080,7 +1081,7 @@ export default function Workflows() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={() => navigate('/workflows/new')}>
+            <Button onClick={() => navigate(`${pathname}/new`)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Workflow
             </Button>

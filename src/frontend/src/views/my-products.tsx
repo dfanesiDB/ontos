@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ type AssetType = 'products' | 'datasets';
 export default function MyProducts() {
   const { t } = useTranslation('home');
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { domains, loading: domainsLoading, getDomainName } = useDomains();
   const { domainBrowserStyle, setDomainBrowserStyle, tilesPerRow, setTilesPerRow } = useViewModeStore();
   const api = useApi();
@@ -228,7 +229,7 @@ export default function MyProducts() {
 
   const handleOpenProduct = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
-    navigate(`/data-products/${productId}`);
+    navigate(`${pathname}/${productId}`);
   };
 
   const handleOpenDataset = (e: React.MouseEvent, datasetId: string) => {
@@ -446,7 +447,7 @@ export default function MyProducts() {
                 <Card
                   key={product.id || product.name}
                   className={cn('cursor-pointer transition-all hover:shadow-md hover:border-primary/30 border-primary/20 bg-primary/5')}
-                  onClick={() => product.id && navigate(`/data-products/${product.id}`)}
+                  onClick={() => product.id && navigate(`${pathname}/${product.id}`)}
                 >
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between gap-2">

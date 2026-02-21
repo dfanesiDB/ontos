@@ -820,13 +820,13 @@ INSERT INTO entity_semantic_links (id, entity_id, entity_type, iri, label, creat
 ('0150002b-0000-4000-8000-000000000043', '00400004-0000-4000-8000-000000000004#devices#device_type', 'data_contract_property', 'http://demo.ontos.app/glossary#DeviceType', 'deviceType', 'system@demo', NOW()),
 ('0150002c-0000-4000-8000-000000000044', '00400004-0000-4000-8000-000000000004#devices#status', 'data_contract_property', 'http://demo.ontos.app/glossary#DeviceStatus', 'deviceStatus', 'system@demo', NOW()),
 
--- Datasets (link to demo.ontos.app concepts)
-('0150002d-0000-4000-8000-000000000045', '02100001-0000-4000-8000-000000000001', 'dataset', 'http://demo.ontos.app/concepts#CustomerDomain', 'Customer Domain', 'system@demo', NOW()),
-('0150002e-0000-4000-8000-000000000046', '02100001-0000-4000-8000-000000000001', 'dataset', 'http://demo.ontos.app/glossary#CustomerProfile', 'Customer Profile', 'system@demo', NOW()),
-('0150002f-0000-4000-8000-000000000047', '02100004-0000-4000-8000-000000000004', 'dataset', 'http://demo.ontos.app/glossary#IoTDevice', 'IoT Device', 'system@demo', NOW()),
-('01500030-0000-4000-8000-000000000048', '02100005-0000-4000-8000-000000000005', 'dataset', 'http://demo.ontos.app/glossary#Telemetry', 'Telemetry', 'system@demo', NOW()),
-('01500031-0000-4000-8000-000000000049', '02100007-0000-4000-8000-000000000007', 'dataset', 'http://demo.ontos.app/concepts#SalesDomain', 'Sales Domain', 'system@demo', NOW()),
-('01500032-0000-4000-8000-000000000050', '02100007-0000-4000-8000-000000000007', 'dataset', 'http://demo.ontos.app/concepts#RetailDomain', 'Retail Domain', 'system@demo', NOW())
+-- Datasets (link to demo.ontos.app concepts) — entity_type='Dataset' (asset-backed)
+('0150002d-0000-4000-8000-000000000045', '02100001-0000-4000-8000-000000000001', 'Dataset', 'http://demo.ontos.app/concepts#CustomerDomain', 'Customer Domain', 'system@demo', NOW()),
+('0150002e-0000-4000-8000-000000000046', '02100001-0000-4000-8000-000000000001', 'Dataset', 'http://demo.ontos.app/glossary#CustomerProfile', 'Customer Profile', 'system@demo', NOW()),
+('0150002f-0000-4000-8000-000000000047', '02100004-0000-4000-8000-000000000004', 'Dataset', 'http://demo.ontos.app/glossary#IoTDevice', 'IoT Device', 'system@demo', NOW()),
+('01500030-0000-4000-8000-000000000048', '02100005-0000-4000-8000-000000000005', 'Dataset', 'http://demo.ontos.app/glossary#Telemetry', 'Telemetry', 'system@demo', NOW()),
+('01500031-0000-4000-8000-000000000049', '02100007-0000-4000-8000-000000000007', 'Dataset', 'http://demo.ontos.app/concepts#SalesDomain', 'Sales Domain', 'system@demo', NOW()),
+('01500032-0000-4000-8000-000000000050', '02100007-0000-4000-8000-000000000007', 'Dataset', 'http://demo.ontos.app/concepts#RetailDomain', 'Retail Domain', 'system@demo', NOW())
 
 ON CONFLICT (id) DO NOTHING;
 
@@ -840,9 +840,9 @@ INSERT INTO rich_text_metadata (id, entity_id, entity_type, title, short_descrip
 ('01600001-0000-4000-8000-000000000001', '00000004-0000-4000-8000-000000000004', 'data_domain', 'About the Marketing Domain', 'Scope, key concepts, and stakeholders for Marketing.', E'# Marketing Domain\n\nThe Marketing domain focuses on customer engagement, personalization, and campaign\neffectiveness. Typical assets include customer profiles, segmentation models,\npropensity and uplift scores, and activation datasets for outbound channels.\n\nCore concepts often used across data products:\n- Customer identity and householding\n- Consent and channel preferences\n- Campaign taxonomy and lifecycle\n- Response and attribution measures\n\nGovernance highlights include consent management and PII handling standards.', false, 50, true, 'system@demo', NOW(), NOW()),
 ('01600002-0000-4000-8000-000000000002', '00700006-0000-4000-8000-000000000006', 'data_product', 'Overview', 'What this product offers and who should use it.', E'# Customer Marketing Recommendations v1\n\nThis product provides targeted customer recommendations to support lifecycle and\npromotional campaigns. It merges prepared sales signals, customer profile\nattributes, and model outputs to produce actionable target lists.\n\nService levels and ownership:\n- Data Owner: Marketing Team\n- SLOs: Daily build by 06:00 UTC; refresh-on-demand supported\n- Data Quality: Monitored via rules on coverage, deduplication, and eligibility', false, 50, true, 'system@demo', NOW(), NOW()),
 ('01600003-0000-4000-8000-000000000003', '00700006-0000-4000-8000-000000000006', 'data_product', 'Architecture & Flow', 'Inputs, transformations, and outputs at a glance.', E'## Architecture and Flow\n\nInputs include prepared sales transactions and CRM profile data. Core steps:\n1. Feature assembly and feature freshness checks\n2. Inference using latest recommendation model\n3. Eligibility filtering (consent, channel, recency)\n4. Packaging outputs for activation channels', false, 50, true, 'system@demo', NOW(), NOW()),
--- Dataset metadata
-('01600004-0000-4000-8000-000000000004', '02100001-0000-4000-8000-000000000001', 'dataset', 'Customer Profile Dataset', 'Production-ready customer profile data.', E'# Customer Profile Dataset\n\nThis dataset contains production customer profile data consolidated from multiple source systems.\n\n## Key Features\n- Unified customer identifiers across channels\n- Enriched with demographic attributes\n- Daily refresh cycle\n- PII masking applied\n\n## Usage Notes\nConsumers should use the `customer_id` column as the primary key for joins.', false, 50, true, 'system@demo', NOW(), NOW()),
-('01600005-0000-4000-8000-000000000005', '02100005-0000-4000-8000-000000000005', 'dataset', 'IoT Telemetry Overview', 'Real-time telemetry from IoT devices.', E'# IoT Device Telemetry\n\nThis dataset captures streaming telemetry from connected IoT devices.\n\n## Data Characteristics\n- Near real-time ingestion (latency < 5s)\n- Partitioned by device_id and event_date\n- Retention policy: 90 days hot, 2 years cold storage\n\n## Schema Notes\nThe `payload` column contains device-specific JSON data.', false, 50, true, 'system@demo', NOW(), NOW())
+-- Dataset metadata (entity_type='Dataset' — asset-backed)
+('01600004-0000-4000-8000-000000000004', '02100001-0000-4000-8000-000000000001', 'Dataset', 'Customer Profile Dataset', 'Production-ready customer profile data.', E'# Customer Profile Dataset\n\nThis dataset contains production customer profile data consolidated from multiple source systems.\n\n## Key Features\n- Unified customer identifiers across channels\n- Enriched with demographic attributes\n- Daily refresh cycle\n- PII masking applied\n\n## Usage Notes\nConsumers should use the `customer_id` column as the primary key for joins.', false, 50, true, 'system@demo', NOW(), NOW()),
+('01600005-0000-4000-8000-000000000005', '02100005-0000-4000-8000-000000000005', 'Dataset', 'IoT Telemetry Overview', 'Real-time telemetry from IoT devices.', E'# IoT Device Telemetry\n\nThis dataset captures streaming telemetry from connected IoT devices.\n\n## Data Characteristics\n- Near real-time ingestion (latency < 5s)\n- Partitioned by device_id and event_date\n- Retention policy: 90 days hot, 2 years cold storage\n\n## Schema Notes\nThe `payload` column contains device-specific JSON data.', false, 50, true, 'system@demo', NOW(), NOW())
 
 ON CONFLICT (id) DO NOTHING;
 
@@ -853,10 +853,10 @@ INSERT INTO link_metadata (id, entity_id, entity_type, title, short_description,
 ('01700002-0000-4000-8000-000000000002', '00700006-0000-4000-8000-000000000006', 'data_product', 'Runbook', 'Operational procedures and on-call.', 'https://runbooks.example.com/marketing/customer-recs-v1', false, 50, true, 'system@demo', NOW(), NOW()),
 ('01700003-0000-4000-8000-000000000003', '00700006-0000-4000-8000-000000000006', 'data_product', 'Dashboard', 'Quality and volume tracking.', 'https://bi.example.com/dashboards/customer-recs-quality', false, 50, true, 'system@demo', NOW(), NOW()),
 ('01700004-0000-4000-8000-000000000004', '00700006-0000-4000-8000-000000000006', 'data_product', 'Design Doc', 'Detailed design and decisions.', 'https://docs.example.com/design/customer-recs-v1', false, 50, true, 'system@demo', NOW(), NOW()),
--- Dataset links
-('01700005-0000-4000-8000-000000000005', '02100001-0000-4000-8000-000000000001', 'dataset', 'Data Catalog Entry', 'View in Unity Catalog.', 'https://catalog.example.com/prod/customer/profiles', false, 50, true, 'system@demo', NOW(), NOW()),
-('01700006-0000-4000-8000-000000000006', '02100001-0000-4000-8000-000000000001', 'dataset', 'Data Lineage', 'Explore upstream and downstream dependencies.', 'https://lineage.example.com/datasets/customer-profile-prod', false, 50, true, 'system@demo', NOW(), NOW()),
-('01700007-0000-4000-8000-000000000007', '02100005-0000-4000-8000-000000000005', 'dataset', 'IoT Device Dashboard', 'Real-time device monitoring.', 'https://iot.example.com/dashboards/telemetry', false, 50, true, 'system@demo', NOW(), NOW())
+-- Dataset links (entity_type='Dataset' — asset-backed)
+('01700005-0000-4000-8000-000000000005', '02100001-0000-4000-8000-000000000001', 'Dataset', 'Data Catalog Entry', 'View in Unity Catalog.', 'https://catalog.example.com/prod/customer/profiles', false, 50, true, 'system@demo', NOW(), NOW()),
+('01700006-0000-4000-8000-000000000006', '02100001-0000-4000-8000-000000000001', 'Dataset', 'Data Lineage', 'Explore upstream and downstream dependencies.', 'https://lineage.example.com/datasets/customer-profile-prod', false, 50, true, 'system@demo', NOW(), NOW()),
+('01700007-0000-4000-8000-000000000007', '02100005-0000-4000-8000-000000000005', 'Dataset', 'IoT Device Dashboard', 'Real-time device monitoring.', 'https://iot.example.com/dashboards/telemetry', false, 50, true, 'system@demo', NOW(), NOW())
 
 ON CONFLICT (id) DO NOTHING;
 
@@ -865,8 +865,8 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO document_metadata (id, entity_id, entity_type, title, short_description, original_filename, storage_path, is_shared, level, inheritable, created_by, created_at, updated_at) VALUES
 ('01800001-0000-4000-8000-000000000001', '00700006-0000-4000-8000-000000000006', 'data_product', 'Overview', 'Product overview visual.', 'customer_recs_overview.svg', 'images/customer_marketing_recos/overview.svg', false, 50, true, 'system@demo', NOW(), NOW()),
 ('01800002-0000-4000-8000-000000000002', '00700006-0000-4000-8000-000000000006', 'data_product', 'Data Flow', 'High-level data flow.', 'customer_recs_flow.svg', 'images/customer_marketing_recos/flow.svg', false, 50, true, 'system@demo', NOW(), NOW()),
--- Dataset documents
-('01800003-0000-4000-8000-000000000003', '02100001-0000-4000-8000-000000000001', 'dataset', 'ERD Diagram', 'Entity relationship diagram.', 'customer_profile_erd.svg', 'images/datasets/customer_profile_erd.svg', false, 50, true, 'system@demo', NOW(), NOW())
+-- Dataset documents (entity_type='Dataset' — asset-backed)
+('01800003-0000-4000-8000-000000000003', '02100001-0000-4000-8000-000000000001', 'Dataset', 'ERD Diagram', 'Entity relationship diagram.', 'customer_profile_erd.svg', 'images/datasets/customer_profile_erd.svg', false, 50, true, 'system@demo', NOW(), NOW())
 
 ON CONFLICT (id) DO NOTHING;
 
@@ -1106,143 +1106,302 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================================
--- 15. DATASETS (type=021)
+-- 15. DATASETS → ASSETS (type=021, migrated to asset system)
 -- ============================================================================
--- Logical groupings of related data assets
--- Physical fields (asset_type, catalog_name, schema_name, object_name, environment) are deprecated
--- and set to NULL. Physical implementations are now managed via dataset_instances.
+-- Datasets are now stored as Asset rows with asset_type = 'Dataset'.
+-- Custom properties are merged into the properties JSON.
+-- IDs are preserved from the original dataset IDs for backward compatibility
+-- with polymorphic references (semantic_links, metadata, tags).
 
-INSERT INTO datasets (id, name, description, asset_type, catalog_name, schema_name, object_name, environment, contract_id, owner_team_id, project_id, status, version, published, max_level_inheritance, created_by, updated_by, created_at, updated_at) VALUES
+INSERT INTO assets (id, name, description, asset_type_id, platform, location, domain_id, properties, tags, status, created_by, created_at, updated_at) VALUES
 -- Customer datasets
-('02100001-0000-4000-8000-000000000001', 'Customer Master Data', 'Customer master data including profiles, preferences, and segmentation', NULL, NULL, NULL, NULL, NULL, '00400001-0000-4000-8000-000000000001', '00100001-0000-4000-8000-000000000001', '00300001-0000-4000-8000-000000000001', 'active', '1.0.0', true, 99, 'system@demo', 'system@demo', NOW(), NOW()),
-('02100002-0000-4000-8000-000000000002', 'Customer Engagement Analytics', 'Customer engagement metrics and preferences aggregation', NULL, NULL, NULL, NULL, NULL, '00400001-0000-4000-8000-000000000001', '00100001-0000-4000-8000-000000000001', '00300001-0000-4000-8000-000000000001', 'active', '2.0.0', false, 99, 'system@demo', 'system@demo', NOW(), NOW()),
-('02100003-0000-4000-8000-000000000003', 'Customer Preferences', 'Aggregated customer preferences across channels', NULL, NULL, NULL, NULL, NULL, '00400001-0000-4000-8000-000000000001', '00100002-0000-4000-8000-000000000002', '00300001-0000-4000-8000-000000000001', 'active', '1.0.0', true, 99, 'system@demo', 'system@demo', NOW(), NOW()),
+('02100001-0000-4000-8000-000000000001', 'Customer Master Data',
+ 'Customer master data including profiles, preferences, and segmentation',
+ (SELECT id FROM asset_types WHERE name = 'Dataset' LIMIT 1), NULL, NULL, NULL,
+ '{"version": "1.0.0", "published": true, "contract_id": "00400001-0000-4000-8000-000000000001", "owner_team_id": "00100001-0000-4000-8000-000000000001", "project_id": "00300001-0000-4000-8000-000000000001", "data_classification": "confidential", "retention_days": "2555", "refresh_schedule": "daily"}',
+ '["customer", "master-data", "pii"]', 'active', 'system@demo', NOW(), NOW()),
+
+('02100002-0000-4000-8000-000000000002', 'Customer Engagement Analytics',
+ 'Customer engagement metrics and preferences aggregation',
+ (SELECT id FROM asset_types WHERE name = 'Dataset' LIMIT 1), NULL, NULL, NULL,
+ '{"version": "2.0.0", "published": false, "contract_id": "00400001-0000-4000-8000-000000000001", "owner_team_id": "00100001-0000-4000-8000-000000000001", "project_id": "00300001-0000-4000-8000-000000000001"}',
+ '["customer", "analytics"]', 'active', 'system@demo', NOW(), NOW()),
+
+('02100003-0000-4000-8000-000000000003', 'Customer Preferences',
+ 'Aggregated customer preferences across channels',
+ (SELECT id FROM asset_types WHERE name = 'Dataset' LIMIT 1), NULL, NULL, NULL,
+ '{"version": "1.0.0", "published": true, "contract_id": "00400001-0000-4000-8000-000000000001", "owner_team_id": "00100002-0000-4000-8000-000000000002", "project_id": "00300001-0000-4000-8000-000000000001"}',
+ '["customer", "preferences"]', 'active', 'system@demo', NOW(), NOW()),
 
 -- IoT datasets
-('02100004-0000-4000-8000-000000000004', 'IoT Device Management', 'Registry and management of all IoT devices and configurations', NULL, NULL, NULL, NULL, NULL, '00400004-0000-4000-8000-000000000004', '00100003-0000-4000-8000-000000000003', '00300003-0000-4000-8000-000000000003', 'active', '1.1.0', true, 99, 'system@demo', 'system@demo', NOW(), NOW()),
-('02100005-0000-4000-8000-000000000005', 'IoT Telemetry', 'Real-time and historical telemetry data from IoT devices', NULL, NULL, NULL, NULL, NULL, '00400004-0000-4000-8000-000000000004', '00100003-0000-4000-8000-000000000003', '00300003-0000-4000-8000-000000000003', 'active', '1.1.0', true, 99, 'system@demo', 'system@demo', NOW(), NOW()),
+('02100004-0000-4000-8000-000000000004', 'IoT Device Management',
+ 'Registry and management of all IoT devices and configurations',
+ (SELECT id FROM asset_types WHERE name = 'Dataset' LIMIT 1), NULL, NULL, NULL,
+ '{"version": "1.1.0", "published": true, "contract_id": "00400004-0000-4000-8000-000000000004", "owner_team_id": "00100003-0000-4000-8000-000000000003", "project_id": "00300003-0000-4000-8000-000000000003"}',
+ '["iot", "devices"]', 'active', 'system@demo', NOW(), NOW()),
+
+('02100005-0000-4000-8000-000000000005', 'IoT Telemetry',
+ 'Real-time and historical telemetry data from IoT devices',
+ (SELECT id FROM asset_types WHERE name = 'Dataset' LIMIT 1), NULL, NULL, NULL,
+ '{"version": "1.1.0", "published": true, "contract_id": "00400004-0000-4000-8000-000000000004", "owner_team_id": "00100003-0000-4000-8000-000000000003", "project_id": "00300003-0000-4000-8000-000000000003", "partition_by": "date", "retention_days": "730", "compression": "zstd"}',
+ '["iot", "telemetry", "streaming"]', 'active', 'system@demo', NOW(), NOW()),
 
 -- Financial datasets
-('02100006-0000-4000-8000-000000000006', 'Financial Transactions', 'Daily financial transactions for analytics and reporting', NULL, NULL, NULL, NULL, NULL, '00400006-0000-4000-8000-000000000006', '00100004-0000-4000-8000-000000000004', '00300002-0000-4000-8000-000000000002', 'draft', '1.0.0-alpha', false, 99, 'system@demo', 'system@demo', NOW(), NOW()),
+('02100006-0000-4000-8000-000000000006', 'Financial Transactions',
+ 'Daily financial transactions for analytics and reporting',
+ (SELECT id FROM asset_types WHERE name = 'Dataset' LIMIT 1), NULL, NULL, NULL,
+ '{"version": "1.0.0-alpha", "published": false, "contract_id": "00400006-0000-4000-8000-000000000006", "owner_team_id": "00100004-0000-4000-8000-000000000004", "project_id": "00300002-0000-4000-8000-000000000002"}',
+ '["finance", "transactions"]', 'draft', 'system@demo', NOW(), NOW()),
 
 -- Retail/Analytics datasets
-('02100007-0000-4000-8000-000000000007', 'Sales Analytics', 'Aggregated sales analytics for BI dashboards and reporting', NULL, NULL, NULL, NULL, NULL, NULL, '00100002-0000-4000-8000-000000000002', '00300005-0000-4000-8000-000000000005', 'active', '2.0.0', true, 99, 'system@demo', 'system@demo', NOW(), NOW()),
-('02100008-0000-4000-8000-000000000008', 'Inventory Levels', 'Current inventory levels across warehouses and regions', NULL, NULL, NULL, NULL, NULL, '00400007-0000-4000-8000-000000000007', '00100001-0000-4000-8000-000000000001', '00300005-0000-4000-8000-000000000005', 'deprecated', '1.2.0', false, 99, 'system@demo', 'system@demo', NOW(), NOW())
+('02100007-0000-4000-8000-000000000007', 'Sales Analytics',
+ 'Aggregated sales analytics for BI dashboards and reporting',
+ (SELECT id FROM asset_types WHERE name = 'Dataset' LIMIT 1), NULL, NULL, NULL,
+ '{"version": "2.0.0", "published": true, "owner_team_id": "00100002-0000-4000-8000-000000000002", "project_id": "00300005-0000-4000-8000-000000000005", "materialized": "true", "refresh_schedule": "hourly"}',
+ '["sales", "analytics", "retail"]', 'active', 'system@demo', NOW(), NOW()),
+
+('02100008-0000-4000-8000-000000000008', 'Inventory Levels',
+ 'Current inventory levels across warehouses and regions',
+ (SELECT id FROM asset_types WHERE name = 'Dataset' LIMIT 1), NULL, NULL, NULL,
+ '{"version": "1.2.0", "published": false, "contract_id": "00400007-0000-4000-8000-000000000007", "owner_team_id": "00100001-0000-4000-8000-000000000001", "project_id": "00300005-0000-4000-8000-000000000005"}',
+ '["inventory", "supply-chain"]', 'deprecated', 'system@demo', NOW(), NOW())
 
 ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================================
--- 15b. DATASET SUBSCRIPTIONS (type=022)
+-- 15b. DATASET INSTANCES → ASSETS (PhysicalTable / PhysicalView)
+-- ============================================================================
+-- Physical implementations are now stored as Asset rows with the appropriate
+-- physical type. Relationships to parent Dataset assets are in entity_relationships.
+
+INSERT INTO assets (id, name, description, asset_type_id, platform, location, domain_id, properties, tags, status, created_by, created_at, updated_at) VALUES
+-- Customer Master - Production instances (tables)
+('02500001-0000-4000-8000-000000000001', 'Customers Master Table',
+ 'Primary production instance in Unity Catalog',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'prod_catalog.crm.customers_master', NULL,
+ '{"environment": "prod", "tableRole": "main", "physicalPath": "prod_catalog.crm.customers_master", "originalAssetType": "uc_table"}',
+ '["production", "crm"]', 'active', 'system@demo', NOW(), NOW()),
+
+('02500002-0000-4000-8000-000000000002', 'Snowflake Customers Replica',
+ 'Snowflake replica for analytics workloads',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Snowflake', 'ANALYTICS_DB.CRM.CUSTOMERS_MASTER', NULL,
+ '{"environment": "prod", "tableRole": "main", "physicalPath": "ANALYTICS_DB.CRM.CUSTOMERS_MASTER", "originalAssetType": "snowflake_table"}',
+ '["production", "snowflake"]', 'active', 'system@demo', NOW(), NOW()),
+
+('0250000a-0000-4000-8000-000000000010', 'Customer Addresses',
+ 'Customer address dimension table',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'prod_catalog.crm.customer_addresses', NULL,
+ '{"environment": "prod", "tableRole": "dimension", "physicalPath": "prod_catalog.crm.customer_addresses", "originalAssetType": "uc_table"}',
+ '["dimension", "crm"]', 'active', 'system@demo', NOW(), NOW()),
+
+('0250000b-0000-4000-8000-000000000011', 'Countries Lookup',
+ 'Country reference/lookup table',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'prod_catalog.reference.countries', NULL,
+ '{"environment": "prod", "tableRole": "lookup", "physicalPath": "prod_catalog.reference.countries", "originalAssetType": "uc_table"}',
+ '["lookup", "reference"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- Customer Master - Development
+('02500003-0000-4000-8000-000000000003', 'Dev Customers Table',
+ 'Development instance for testing new features',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'dev_catalog.crm.customers_master', NULL,
+ '{"environment": "dev", "tableRole": "main", "physicalPath": "dev_catalog.crm.customers_master", "originalAssetType": "uc_table"}',
+ '["development", "crm"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- Customer Preferences View
+('02500004-0000-4000-8000-000000000004', 'Customer Preferences View',
+ 'Production view aggregating customer preferences',
+ (SELECT id FROM asset_types WHERE name = 'View' LIMIT 1), 'Databricks', 'prod_catalog.crm.v_customer_preferences', NULL,
+ '{"environment": "prod", "tableRole": "main", "physicalPath": "prod_catalog.crm.v_customer_preferences", "originalAssetType": "uc_view"}',
+ '["production", "view", "crm"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- IoT Device Registry instances
+('02500005-0000-4000-8000-000000000005', 'Device Registry',
+ 'Production IoT device registry',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'iot_catalog.devices.device_registry', NULL,
+ '{"environment": "prod", "tableRole": "main", "physicalPath": "iot_catalog.devices.device_registry", "originalAssetType": "uc_table"}',
+ '["production", "iot"]', 'active', 'system@demo', NOW(), NOW()),
+
+('02500006-0000-4000-8000-000000000006', 'Dev Device Registry',
+ 'Development IoT device registry for testing',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'iot_dev.devices.device_registry', NULL,
+ '{"environment": "dev", "tableRole": "main", "physicalPath": "iot_dev.devices.device_registry", "originalAssetType": "uc_table"}',
+ '["development", "iot"]', 'active', 'system@demo', NOW(), NOW()),
+
+('0250000c-0000-4000-8000-000000000012', 'Device Types',
+ 'Device type dimension table',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'iot_catalog.devices.device_types', NULL,
+ '{"environment": "prod", "tableRole": "dimension", "physicalPath": "iot_catalog.devices.device_types", "originalAssetType": "uc_table"}',
+ '["dimension", "iot"]', 'active', 'system@demo', NOW(), NOW()),
+
+('0250000d-0000-4000-8000-000000000013', 'Raw Device Data',
+ 'Staging streaming table for incoming device data',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'iot_staging.devices.device_raw', NULL,
+ '{"environment": "prod", "tableRole": "staging", "physicalPath": "iot_staging.devices.device_raw", "originalAssetType": "uc_streaming_table"}',
+ '["staging", "iot", "streaming"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- IoT Telemetry
+('02500007-0000-4000-8000-000000000007', 'Device Readings',
+ 'Production streaming telemetry data',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'iot_catalog.telemetry.device_readings', NULL,
+ '{"environment": "prod", "tableRole": "main", "physicalPath": "iot_catalog.telemetry.device_readings", "originalAssetType": "uc_streaming_table"}',
+ '["production", "telemetry", "streaming"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- Financial Transactions
+('02500008-0000-4000-8000-000000000008', 'Daily Transactions',
+ 'Development instance for financial testing',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'finance_dev.transactions.daily_transactions', NULL,
+ '{"environment": "dev", "tableRole": "main", "physicalPath": "finance_dev.transactions.daily_transactions", "originalAssetType": "uc_table"}',
+ '["development", "finance"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- Inventory Levels (deprecated)
+('02500009-0000-4000-8000-000000000009', 'Current Inventory',
+ 'Legacy inventory table - migrating to new schema',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Databricks', 'analytics_catalog.supply_chain.inventory_current', NULL,
+ '{"environment": "prod", "tableRole": "main", "physicalPath": "analytics_catalog.supply_chain.inventory_current", "originalAssetType": "uc_table"}',
+ '["legacy", "supply-chain"]', 'deprecated', 'system@demo', NOW(), NOW()),
+
+-- Additional multi-platform examples
+('0250000e-0000-4000-8000-000000000014', 'Retail Events Stream',
+ 'Kafka topic for real-time retail events',
+ (SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), 'Kafka', 'retail-events', NULL,
+ '{"environment": "prod", "tableRole": "main", "physicalPath": "retail-events", "originalAssetType": "kafka_topic"}',
+ '["streaming", "retail"]', 'active', 'system@demo', NOW(), NOW()),
+
+('0250000f-0000-4000-8000-000000000015', 'Sales Metrics MV',
+ 'Materialized view for sales KPIs',
+ (SELECT id FROM asset_types WHERE name = 'View' LIMIT 1), 'Databricks', 'prod_catalog.analytics.sales_metrics', NULL,
+ '{"environment": "prod", "tableRole": "reference", "physicalPath": "prod_catalog.analytics.sales_metrics", "originalAssetType": "uc_materialized_view"}',
+ '["materialized-view", "analytics"]', 'active', 'system@demo', NOW(), NOW()),
+
+('02500010-0000-4000-8000-000000000016', 'Customer 360 Dashboard',
+ 'Lakeview dashboard for customer insights',
+ (SELECT id FROM asset_types WHERE name = 'View' LIMIT 1), 'Databricks', 'prod_catalog.crm.customer_360_dashboard', NULL,
+ '{"environment": "prod", "tableRole": "reference", "physicalPath": "prod_catalog.crm.customer_360_dashboard", "originalAssetType": "uc_dashboard"}',
+ '["dashboard", "customer"]', 'active', 'system@demo', NOW(), NOW()),
+
+('02500011-0000-4000-8000-000000000017', 'PowerBI Customer Dataset',
+ 'Power BI semantic model for customer analytics',
+ (SELECT id FROM asset_types WHERE name = 'View' LIMIT 1), 'Power BI', 'workspace://Workspaces/Analytics/Customer_Analysis', NULL,
+ '{"environment": "prod", "tableRole": "reference", "physicalPath": "workspace://Workspaces/Analytics/Customer_Analysis", "originalAssetType": "powerbi_dataset"}',
+ '["powerbi", "analytics"]', 'active', 'system@demo', NOW(), NOW())
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 15c. DATASET → TABLE/VIEW RELATIONSHIPS (entity_relationships)
+-- ============================================================================
+-- Connect Dataset assets to their PhysicalTable/PhysicalView children
+
+INSERT INTO entity_relationships (id, source_type, source_id, target_type, target_id, relationship_type, created_by, created_at) VALUES
+-- Customer Master Data → tables
+('02150001-0000-4000-8000-000000000001', 'Dataset', '02100001-0000-4000-8000-000000000001', 'PhysicalTable', '02500001-0000-4000-8000-000000000001', 'hasTable', 'system@demo', NOW()),
+('02150002-0000-4000-8000-000000000002', 'Dataset', '02100001-0000-4000-8000-000000000001', 'PhysicalTable', '02500002-0000-4000-8000-000000000002', 'hasTable', 'system@demo', NOW()),
+('02150003-0000-4000-8000-000000000003', 'Dataset', '02100001-0000-4000-8000-000000000001', 'PhysicalTable', '0250000a-0000-4000-8000-000000000010', 'hasTable', 'system@demo', NOW()),
+('02150004-0000-4000-8000-000000000004', 'Dataset', '02100001-0000-4000-8000-000000000001', 'PhysicalTable', '0250000b-0000-4000-8000-000000000011', 'hasTable', 'system@demo', NOW()),
+('02150020-0000-4000-8000-000000000020', 'Dataset', '02100001-0000-4000-8000-000000000001', 'PhysicalView', '02500010-0000-4000-8000-000000000016', 'hasView', 'system@demo', NOW()),
+('02150021-0000-4000-8000-000000000021', 'Dataset', '02100001-0000-4000-8000-000000000001', 'PhysicalView', '02500011-0000-4000-8000-000000000017', 'hasView', 'system@demo', NOW()),
+
+-- Customer Engagement Analytics → tables
+('02150005-0000-4000-8000-000000000005', 'Dataset', '02100002-0000-4000-8000-000000000002', 'PhysicalTable', '02500003-0000-4000-8000-000000000003', 'hasTable', 'system@demo', NOW()),
+
+-- Customer Preferences → views
+('02150006-0000-4000-8000-000000000006', 'Dataset', '02100003-0000-4000-8000-000000000003', 'PhysicalView', '02500004-0000-4000-8000-000000000004', 'hasView', 'system@demo', NOW()),
+
+-- IoT Device Management → tables
+('02150007-0000-4000-8000-000000000007', 'Dataset', '02100004-0000-4000-8000-000000000004', 'PhysicalTable', '02500005-0000-4000-8000-000000000005', 'hasTable', 'system@demo', NOW()),
+('02150008-0000-4000-8000-000000000008', 'Dataset', '02100004-0000-4000-8000-000000000004', 'PhysicalTable', '02500006-0000-4000-8000-000000000006', 'hasTable', 'system@demo', NOW()),
+('02150009-0000-4000-8000-000000000009', 'Dataset', '02100004-0000-4000-8000-000000000004', 'PhysicalTable', '0250000c-0000-4000-8000-000000000012', 'hasTable', 'system@demo', NOW()),
+('02150010-0000-4000-8000-000000000010', 'Dataset', '02100004-0000-4000-8000-000000000004', 'PhysicalTable', '0250000d-0000-4000-8000-000000000013', 'hasTable', 'system@demo', NOW()),
+
+-- IoT Telemetry → tables
+('02150011-0000-4000-8000-000000000011', 'Dataset', '02100005-0000-4000-8000-000000000005', 'PhysicalTable', '02500007-0000-4000-8000-000000000007', 'hasTable', 'system@demo', NOW()),
+
+-- Financial Transactions → tables
+('02150012-0000-4000-8000-000000000012', 'Dataset', '02100006-0000-4000-8000-000000000006', 'PhysicalTable', '02500008-0000-4000-8000-000000000008', 'hasTable', 'system@demo', NOW()),
+
+-- Inventory Levels → tables
+('02150013-0000-4000-8000-000000000013', 'Dataset', '02100008-0000-4000-8000-000000000008', 'PhysicalTable', '02500009-0000-4000-8000-000000000009', 'hasTable', 'system@demo', NOW()),
+
+-- Sales Analytics → tables
+('02150014-0000-4000-8000-000000000014', 'Dataset', '02100007-0000-4000-8000-000000000007', 'PhysicalTable', '0250000e-0000-4000-8000-000000000014', 'hasTable', 'system@demo', NOW()),
+('02150015-0000-4000-8000-000000000015', 'Dataset', '02100007-0000-4000-8000-000000000007', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'hasView', 'system@demo', NOW()),
+
+-- Dataset → DataContract (governedBy) relationships
+('02150030-0000-4000-8000-000000000030', 'Dataset', '02100001-0000-4000-8000-000000000001', 'DataContract', '00400001-0000-4000-8000-000000000001', 'governedBy', 'system@demo', NOW()),
+('02150031-0000-4000-8000-000000000031', 'Dataset', '02100002-0000-4000-8000-000000000002', 'DataContract', '00400001-0000-4000-8000-000000000001', 'governedBy', 'system@demo', NOW()),
+('02150032-0000-4000-8000-000000000032', 'Dataset', '02100003-0000-4000-8000-000000000003', 'DataContract', '00400001-0000-4000-8000-000000000001', 'governedBy', 'system@demo', NOW()),
+('02150033-0000-4000-8000-000000000033', 'Dataset', '02100004-0000-4000-8000-000000000004', 'DataContract', '00400004-0000-4000-8000-000000000004', 'governedBy', 'system@demo', NOW()),
+('02150034-0000-4000-8000-000000000034', 'Dataset', '02100005-0000-4000-8000-000000000005', 'DataContract', '00400004-0000-4000-8000-000000000004', 'governedBy', 'system@demo', NOW()),
+('02150035-0000-4000-8000-000000000035', 'Dataset', '02100006-0000-4000-8000-000000000006', 'DataContract', '00400006-0000-4000-8000-000000000006', 'governedBy', 'system@demo', NOW()),
+('02150036-0000-4000-8000-000000000036', 'Dataset', '02100008-0000-4000-8000-000000000008', 'DataContract', '00400007-0000-4000-8000-000000000007', 'governedBy', 'system@demo', NOW())
+
+ON CONFLICT DO NOTHING;
+
+
+-- ============================================================================
+-- 15c2. DATA PRODUCT → DATASET RELATIONSHIPS (entity_relationships)
+-- ============================================================================
+-- Connect Data Products to their Dataset assets via hasDataset.
+-- This establishes the DP > Dataset > Table > Column hierarchy.
+-- Mapping based on domain context and data product purpose.
+
+INSERT INTO entity_relationships (id, source_type, source_id, target_type, target_id, relationship_type, created_by, created_at) VALUES
+-- Customer Marketing Recommendations (007...006) → Customer Master Data + Customer Preferences
+('02150040-0000-4000-8000-000000000040', 'DataProduct', '00700006-0000-4000-8000-000000000006', 'Dataset', '02100001-0000-4000-8000-000000000001', 'hasDataset', 'system@demo', NOW()),
+('02150041-0000-4000-8000-000000000041', 'DataProduct', '00700006-0000-4000-8000-000000000006', 'Dataset', '02100003-0000-4000-8000-000000000003', 'hasDataset', 'system@demo', NOW()),
+('02150042-0000-4000-8000-000000000042', 'DataProduct', '00700006-0000-4000-8000-000000000006', 'Dataset', '02100002-0000-4000-8000-000000000002', 'hasDataset', 'system@demo', NOW()),
+
+-- Retail Performance Dashboard Data (007...007) → Sales Analytics
+('02150043-0000-4000-8000-000000000043', 'DataProduct', '00700007-0000-4000-8000-000000000007', 'Dataset', '02100007-0000-4000-8000-000000000007', 'hasDataset', 'system@demo', NOW()),
+
+-- POS Transaction Stream (007...001) → Sales Analytics
+('02150044-0000-4000-8000-000000000044', 'DataProduct', '00700001-0000-4000-8000-000000000001', 'Dataset', '02100007-0000-4000-8000-000000000007', 'hasDataset', 'system@demo', NOW()),
+
+-- Prepared Sales Transactions (007...002) → Sales Analytics
+('02150045-0000-4000-8000-000000000045', 'DataProduct', '00700002-0000-4000-8000-000000000002', 'Dataset', '02100007-0000-4000-8000-000000000007', 'hasDataset', 'system@demo', NOW()),
+
+-- Demand Forecast Model Output (007...003) → Inventory Levels + IoT Telemetry
+('02150046-0000-4000-8000-000000000046', 'DataProduct', '00700003-0000-4000-8000-000000000003', 'Dataset', '02100008-0000-4000-8000-000000000008', 'hasDataset', 'system@demo', NOW()),
+('02150047-0000-4000-8000-000000000047', 'DataProduct', '00700003-0000-4000-8000-000000000003', 'Dataset', '02100005-0000-4000-8000-000000000005', 'hasDataset', 'system@demo', NOW()),
+
+-- Inventory Optimization Recommendations (007...004) → Inventory Levels + IoT Device Management
+('02150048-0000-4000-8000-000000000048', 'DataProduct', '00700004-0000-4000-8000-000000000004', 'Dataset', '02100008-0000-4000-8000-000000000008', 'hasDataset', 'system@demo', NOW()),
+('02150049-0000-4000-8000-000000000049', 'DataProduct', '00700004-0000-4000-8000-000000000004', 'Dataset', '02100004-0000-4000-8000-000000000004', 'hasDataset', 'system@demo', NOW()),
+
+-- Price Optimization Model Output (007...005) → Sales Analytics + Financial Transactions
+('0215004a-0000-4000-8000-000000000050', 'DataProduct', '00700005-0000-4000-8000-000000000005', 'Dataset', '02100007-0000-4000-8000-000000000007', 'hasDataset', 'system@demo', NOW()),
+('0215004b-0000-4000-8000-000000000051', 'DataProduct', '00700005-0000-4000-8000-000000000005', 'Dataset', '02100006-0000-4000-8000-000000000006', 'hasDataset', 'system@demo', NOW())
+
+ON CONFLICT DO NOTHING;
+
+
+-- ============================================================================
+-- 15d. DATASET SUBSCRIPTIONS → ENTITY SUBSCRIPTIONS
 -- ============================================================================
 
-INSERT INTO dataset_subscriptions (id, dataset_id, subscriber_email, subscribed_at, subscription_reason) VALUES
--- Customer Master - Production subscribers
-('02200001-0000-4000-8000-000000000001', '02100001-0000-4000-8000-000000000001', 'alice.johnson@company.com', NOW() - INTERVAL '30 days', 'Analytics team lead - need updates for customer 360 project'),
-('02200002-0000-4000-8000-000000000002', '02100001-0000-4000-8000-000000000001', 'marketing-lead@example.com', NOW() - INTERVAL '20 days', 'Campaign targeting use case'),
-('02200003-0000-4000-8000-000000000003', '02100001-0000-4000-8000-000000000001', 'data.steward@example.com', NOW() - INTERVAL '15 days', 'Governance oversight'),
+INSERT INTO entity_subscriptions (id, entity_type, entity_id, subscriber_email, subscription_reason, created_at) VALUES
+-- Customer Master Data subscribers
+('02200001-0000-4000-8000-000000000001', 'Dataset', '02100001-0000-4000-8000-000000000001', 'alice.johnson@company.com', 'Analytics team lead - need updates for customer 360 project', NOW() - INTERVAL '30 days'),
+('02200002-0000-4000-8000-000000000002', 'Dataset', '02100001-0000-4000-8000-000000000001', 'marketing-lead@example.com', 'Campaign targeting use case', NOW() - INTERVAL '20 days'),
+('02200003-0000-4000-8000-000000000003', 'Dataset', '02100001-0000-4000-8000-000000000001', 'data.steward@example.com', 'Governance oversight', NOW() - INTERVAL '15 days'),
+('02600001-0000-4000-8000-000000000001', 'Dataset', '02100001-0000-4000-8000-000000000001', 'alice.analyst@example.com', 'Needed for marketing dashboards', NOW() - INTERVAL '30 days'),
+('02600002-0000-4000-8000-000000000002', 'Dataset', '02100001-0000-4000-8000-000000000001', 'bob.scientist@example.com', 'ML model training data', NOW() - INTERVAL '25 days'),
+('02600003-0000-4000-8000-000000000003', 'Dataset', '02100001-0000-4000-8000-000000000001', 'carol.engineer@example.com', 'Data pipeline integration', NOW() - INTERVAL '20 days'),
 
--- IoT datasets subscribers
-('02200004-0000-4000-8000-000000000004', '02100004-0000-4000-8000-000000000004', 'bob.wilson@company.com', NOW() - INTERVAL '10 days', 'ML model training data source'),
-('02200005-0000-4000-8000-000000000005', '02100005-0000-4000-8000-000000000005', 'bob.wilson@company.com', NOW() - INTERVAL '10 days', 'Anomaly detection pipeline'),
+-- IoT dataset subscribers
+('02200004-0000-4000-8000-000000000004', 'Dataset', '02100004-0000-4000-8000-000000000004', 'bob.wilson@company.com', 'ML model training data source', NOW() - INTERVAL '10 days'),
+('02200005-0000-4000-8000-000000000005', 'Dataset', '02100005-0000-4000-8000-000000000005', 'bob.wilson@company.com', 'Anomaly detection pipeline', NOW() - INTERVAL '10 days'),
+('02600004-0000-4000-8000-000000000004', 'Dataset', '02100005-0000-4000-8000-000000000005', 'david.ops@example.com', 'Real-time monitoring dashboards', NOW() - INTERVAL '15 days'),
+('02600005-0000-4000-8000-000000000005', 'Dataset', '02100005-0000-4000-8000-000000000005', 'eve.developer@example.com', 'IoT analytics application', NOW() - INTERVAL '10 days'),
 
 -- Sales Analytics subscribers
-('02200006-0000-4000-8000-000000000006', '02100007-0000-4000-8000-000000000007', 'analyst@example.com', NOW() - INTERVAL '5 days', 'Weekly reporting')
+('02200006-0000-4000-8000-000000000006', 'Dataset', '02100007-0000-4000-8000-000000000007', 'analyst@example.com', 'Weekly reporting', NOW() - INTERVAL '5 days'),
+('02600006-0000-4000-8000-000000000006', 'Dataset', '02100007-0000-4000-8000-000000000007', 'frank.finance@example.com', 'Revenue reporting', NOW() - INTERVAL '5 days'),
+('02600007-0000-4000-8000-000000000007', 'Dataset', '02100007-0000-4000-8000-000000000007', 'alice.analyst@example.com', 'Sales trend analysis', NOW() - INTERVAL '3 days')
 
-ON CONFLICT (id) DO NOTHING;
-
-
--- ============================================================================
--- 15c. DATASET TAGS
--- ============================================================================
--- NOTE: Dataset tags are now stored in entity_tag_associations (section 19)
--- with entity_type='dataset'. The separate dataset_tags table has been removed.
-
-
--- ============================================================================
--- 15d. DATASET CUSTOM PROPERTIES (type=024)
--- ============================================================================
-
-INSERT INTO dataset_custom_properties (id, dataset_id, property, value) VALUES
--- Customer Master - Production properties
-('02400001-0000-4000-8000-000000000001', '02100001-0000-4000-8000-000000000001', 'data_classification', 'confidential'),
-('02400002-0000-4000-8000-000000000002', '02100001-0000-4000-8000-000000000001', 'retention_days', '2555'),
-('02400003-0000-4000-8000-000000000003', '02100001-0000-4000-8000-000000000001', 'refresh_schedule', 'daily'),
-
--- IoT Telemetry properties
-('02400004-0000-4000-8000-000000000004', '02100005-0000-4000-8000-000000000005', 'partition_by', 'date'),
-('02400005-0000-4000-8000-000000000005', '02100005-0000-4000-8000-000000000005', 'retention_days', '730'),
-('02400006-0000-4000-8000-000000000006', '02100005-0000-4000-8000-000000000005', 'compression', 'zstd'),
-
--- Sales Analytics properties
-('02400007-0000-4000-8000-000000000007', '02100007-0000-4000-8000-000000000007', 'materialized', 'true'),
-('02400008-0000-4000-8000-000000000008', '02100007-0000-4000-8000-000000000007', 'refresh_schedule', 'hourly')
-
-ON CONFLICT (id) DO NOTHING;
-
-
--- ============================================================================
--- 15e. DATASET INSTANCES (type=025)
--- ============================================================================
--- Physical implementations of datasets across different systems/environments
--- Fields: role (main/dimension/lookup/reference/staging), display_name, environment
--- asset_type uses UnifiedAssetType enum values for platform-agnostic asset classification
-
-INSERT INTO dataset_instances (id, dataset_id, contract_id, contract_server_id, physical_path, asset_type, role, display_name, environment, status, notes, created_by, created_at, updated_at) VALUES
--- Customer Master - Production instances (multi-table dataset)
-('02500001-0000-4000-8000-000000000001', '02100001-0000-4000-8000-000000000001', '00400001-0000-4000-8000-000000000001', 'srv00002-0000-4000-8000-000000000002', 'prod_catalog.crm.customers_master', 'uc_table', 'main', 'Customers Master Table', 'prod', 'active', 'Primary production instance in Unity Catalog', 'system@demo', NOW(), NOW()),
-('02500002-0000-4000-8000-000000000002', '02100001-0000-4000-8000-000000000001', '00400001-0000-4000-8000-000000000001', 'srv00003-0000-4000-8000-000000000003', 'ANALYTICS_DB.CRM.CUSTOMERS_MASTER', 'snowflake_table', 'main', 'Snowflake Customers Replica', 'prod', 'active', 'Snowflake replica for analytics workloads', 'system@demo', NOW(), NOW()),
-('0250000a-0000-4000-8000-000000000010', '02100001-0000-4000-8000-000000000001', '00400001-0000-4000-8000-000000000001', NULL, 'prod_catalog.crm.customer_addresses', 'uc_table', 'dimension', 'Customer Addresses', 'prod', 'active', 'Customer address dimension table', 'system@demo', NOW(), NOW()),
-('0250000b-0000-4000-8000-000000000011', '02100001-0000-4000-8000-000000000001', NULL, NULL, 'prod_catalog.reference.countries', 'uc_table', 'lookup', 'Countries Lookup', 'prod', 'active', 'Country reference/lookup table', 'system@demo', NOW(), NOW()),
-
--- Customer Master - Development instances
-('02500003-0000-4000-8000-000000000003', '02100002-0000-4000-8000-000000000002', '00400001-0000-4000-8000-000000000001', 'srv00001-0000-4000-8000-000000000001', 'dev_catalog.crm.customers_master', 'uc_table', 'main', 'Dev Customers Table', 'dev', 'active', 'Development instance for testing new features', 'system@demo', NOW(), NOW()),
-
--- Customer Preferences View instances
-('02500004-0000-4000-8000-000000000004', '02100003-0000-4000-8000-000000000003', '00400001-0000-4000-8000-000000000001', 'srv00002-0000-4000-8000-000000000002', 'prod_catalog.crm.v_customer_preferences', 'uc_view', 'main', 'Customer Preferences View', 'prod', 'active', 'Production view aggregating customer preferences', 'system@demo', NOW(), NOW()),
-
--- IoT Device Registry instances (multi-table dataset with staging)
-('02500005-0000-4000-8000-000000000005', '02100004-0000-4000-8000-000000000004', '00400004-0000-4000-8000-000000000004', 'srv00005-0000-4000-8000-000000000005', 'iot_catalog.devices.device_registry', 'uc_table', 'main', 'Device Registry', 'prod', 'active', 'Production IoT device registry', 'system@demo', NOW(), NOW()),
-('02500006-0000-4000-8000-000000000006', '02100004-0000-4000-8000-000000000004', '00400004-0000-4000-8000-000000000004', 'srv00004-0000-4000-8000-000000000004', 'iot_dev.devices.device_registry', 'uc_table', 'main', 'Dev Device Registry', 'dev', 'active', 'Development IoT device registry for testing', 'system@demo', NOW(), NOW()),
-('0250000c-0000-4000-8000-000000000012', '02100004-0000-4000-8000-000000000004', NULL, NULL, 'iot_catalog.devices.device_types', 'uc_table', 'dimension', 'Device Types', 'prod', 'active', 'Device type dimension table', 'system@demo', NOW(), NOW()),
-('0250000d-0000-4000-8000-000000000013', '02100004-0000-4000-8000-000000000004', NULL, NULL, 'iot_staging.devices.device_raw', 'uc_streaming_table', 'staging', 'Raw Device Data', 'prod', 'active', 'Staging streaming table for incoming device data', 'system@demo', NOW(), NOW()),
-
--- IoT Telemetry instances
-('02500007-0000-4000-8000-000000000007', '02100005-0000-4000-8000-000000000005', '00400004-0000-4000-8000-000000000004', 'srv00005-0000-4000-8000-000000000005', 'iot_catalog.telemetry.device_readings', 'uc_streaming_table', 'main', 'Device Readings', 'prod', 'active', 'Production streaming telemetry data', 'system@demo', NOW(), NOW()),
-
--- Financial Transactions instances
-('02500008-0000-4000-8000-000000000008', '02100006-0000-4000-8000-000000000006', '00400006-0000-4000-8000-000000000006', 'srv00006-0000-4000-8000-000000000006', 'finance_dev.transactions.daily_transactions', 'uc_table', 'main', 'Daily Transactions', 'dev', 'active', 'Development instance for financial testing', 'system@demo', NOW(), NOW()),
-
--- Inventory Levels - deprecated dataset instance
-('02500009-0000-4000-8000-000000000009', '02100008-0000-4000-8000-000000000008', '00400007-0000-4000-8000-000000000007', NULL, 'analytics_catalog.supply_chain.inventory_current', 'uc_table', 'main', 'Current Inventory', 'prod', 'deprecated', 'Legacy inventory table - migrating to new schema', 'system@demo', NOW(), NOW()),
-
--- Additional multi-platform examples to showcase asset type diversity
-('0250000e-0000-4000-8000-000000000014', '02100007-0000-4000-8000-000000000007', NULL, NULL, 'retail-events', 'kafka_topic', 'main', 'Retail Events Stream', 'prod', 'active', 'Kafka topic for real-time retail events', 'system@demo', NOW(), NOW()),
-('0250000f-0000-4000-8000-000000000015', '02100007-0000-4000-8000-000000000007', NULL, NULL, 'prod_catalog.analytics.sales_metrics', 'uc_materialized_view', 'reference', 'Sales Metrics MV', 'prod', 'active', 'Materialized view for sales KPIs', 'system@demo', NOW(), NOW()),
-('02500010-0000-4000-8000-000000000016', '02100001-0000-4000-8000-000000000001', NULL, NULL, 'prod_catalog.crm.customer_360_dashboard', 'uc_dashboard', 'reference', 'Customer 360 Dashboard', 'prod', 'active', 'Lakeview dashboard for customer insights', 'system@demo', NOW(), NOW()),
-('02500011-0000-4000-8000-000000000017', '02100001-0000-4000-8000-000000000001', NULL, NULL, 'workspace://Workspaces/Analytics/Customer_Analysis', 'powerbi_dataset', 'reference', 'PowerBI Customer Dataset', 'prod', 'active', 'Power BI semantic model for customer analytics', 'system@demo', NOW(), NOW())
-
-ON CONFLICT (id) DO NOTHING;
-
-
--- ============================================================================
--- 15f. DATASET SUBSCRIPTIONS (type=026)
--- ============================================================================
--- Consumer subscriptions to datasets for notifications
-
-INSERT INTO dataset_subscriptions (id, dataset_id, subscriber_email, subscription_reason, subscribed_at) VALUES
--- Subscriptions to Customer Master Production
-('02600001-0000-4000-8000-000000000001', '02100001-0000-4000-8000-000000000001', 'alice.analyst@example.com', 'Needed for marketing dashboards', NOW() - INTERVAL '30 days'),
-('02600002-0000-4000-8000-000000000002', '02100001-0000-4000-8000-000000000001', 'bob.scientist@example.com', 'ML model training data', NOW() - INTERVAL '25 days'),
-('02600003-0000-4000-8000-000000000003', '02100001-0000-4000-8000-000000000001', 'carol.engineer@example.com', 'Data pipeline integration', NOW() - INTERVAL '20 days'),
--- Subscriptions to IoT Telemetry
-('02600004-0000-4000-8000-000000000004', '02100005-0000-4000-8000-000000000005', 'david.ops@example.com', 'Real-time monitoring dashboards', NOW() - INTERVAL '15 days'),
-('02600005-0000-4000-8000-000000000005', '02100005-0000-4000-8000-000000000005', 'eve.developer@example.com', 'IoT analytics application', NOW() - INTERVAL '10 days'),
--- Subscriptions to Retail Sales
-('02600006-0000-4000-8000-000000000006', '02100007-0000-4000-8000-000000000007', 'frank.finance@example.com', 'Revenue reporting', NOW() - INTERVAL '5 days'),
-('02600007-0000-4000-8000-000000000007', '02100007-0000-4000-8000-000000000007', 'alice.analyst@example.com', 'Sales trend analysis', NOW() - INTERVAL '3 days')
-
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 
 -- ============================================================================
@@ -1380,26 +1539,26 @@ INSERT INTO entity_tag_associations (id, tag_id, entity_id, entity_type, assigne
 ('02900013-0000-4000-8000-000000000019', '02700015-0000-4000-8000-000000000021', '00400006-0000-4000-8000-000000000006', 'data_contract', NULL, 'system@demo', NOW()),
 ('02900014-0000-4000-8000-000000000020', '02700009-0000-4000-8000-000000000009', '00400006-0000-4000-8000-000000000006', 'data_contract', NULL, 'system@demo', NOW()),
 
--- Dataset tags
+-- Dataset tags (entity_type='Dataset' — asset-backed)
 -- Customer Master - Production (02100001) - PII, GDPR, delta-table
-('02900015-0000-4000-8000-000000000021', '02700005-0000-4000-8000-000000000005', '02100001-0000-4000-8000-000000000001', 'dataset', NULL, 'system@demo', NOW()),
-('02900016-0000-4000-8000-000000000022', '02700013-0000-4000-8000-000000000019', '02100001-0000-4000-8000-000000000001', 'dataset', NULL, 'system@demo', NOW()),
-('02900017-0000-4000-8000-000000000023', '0270000d-0000-4000-8000-000000000013', '02100001-0000-4000-8000-000000000001', 'dataset', NULL, 'system@demo', NOW()),
-('02900018-0000-4000-8000-000000000024', '02700001-0000-4000-8000-000000000001', '02100001-0000-4000-8000-000000000001', 'dataset', NULL, 'system@demo', NOW()),
+('02900015-0000-4000-8000-000000000021', '02700005-0000-4000-8000-000000000005', '02100001-0000-4000-8000-000000000001', 'Dataset', NULL, 'system@demo', NOW()),
+('02900016-0000-4000-8000-000000000022', '02700013-0000-4000-8000-000000000019', '02100001-0000-4000-8000-000000000001', 'Dataset', NULL, 'system@demo', NOW()),
+('02900017-0000-4000-8000-000000000023', '0270000d-0000-4000-8000-000000000013', '02100001-0000-4000-8000-000000000001', 'Dataset', NULL, 'system@demo', NOW()),
+('02900018-0000-4000-8000-000000000024', '02700001-0000-4000-8000-000000000001', '02100001-0000-4000-8000-000000000001', 'Dataset', NULL, 'system@demo', NOW()),
 
 -- IoT Telemetry Stream (02100005) - real-time, streaming
-('02900019-0000-4000-8000-000000000025', '0270000a-0000-4000-8000-000000000010', '02100005-0000-4000-8000-000000000005', 'dataset', NULL, 'system@demo', NOW()),
-('0290001a-0000-4000-8000-000000000026', '0270000c-0000-4000-8000-000000000012', '02100005-0000-4000-8000-000000000005', 'dataset', NULL, 'system@demo', NOW()),
-('0290001b-0000-4000-8000-000000000027', '0270000d-0000-4000-8000-000000000013', '02100005-0000-4000-8000-000000000005', 'dataset', NULL, 'system@demo', NOW()),
+('02900019-0000-4000-8000-000000000025', '0270000a-0000-4000-8000-000000000010', '02100005-0000-4000-8000-000000000005', 'Dataset', NULL, 'system@demo', NOW()),
+('0290001a-0000-4000-8000-000000000026', '0270000c-0000-4000-8000-000000000012', '02100005-0000-4000-8000-000000000005', 'Dataset', NULL, 'system@demo', NOW()),
+('0290001b-0000-4000-8000-000000000027', '0270000d-0000-4000-8000-000000000013', '02100005-0000-4000-8000-000000000005', 'Dataset', NULL, 'system@demo', NOW()),
 
 -- Sales Analytics Summary (02100007) - analytics, reporting, batch
-('0290001c-0000-4000-8000-000000000028', '02700011-0000-4000-8000-000000000017', '02100007-0000-4000-8000-000000000007', 'dataset', NULL, 'system@demo', NOW()),
-('0290001d-0000-4000-8000-000000000029', '02700012-0000-4000-8000-000000000018', '02100007-0000-4000-8000-000000000007', 'dataset', NULL, 'system@demo', NOW()),
-('0290001e-0000-4000-8000-000000000030', '0270000b-0000-4000-8000-000000000011', '02100007-0000-4000-8000-000000000007', 'dataset', NULL, 'system@demo', NOW()),
+('0290001c-0000-4000-8000-000000000028', '02700011-0000-4000-8000-000000000017', '02100007-0000-4000-8000-000000000007', 'Dataset', NULL, 'system@demo', NOW()),
+('0290001d-0000-4000-8000-000000000029', '02700012-0000-4000-8000-000000000018', '02100007-0000-4000-8000-000000000007', 'Dataset', NULL, 'system@demo', NOW()),
+('0290001e-0000-4000-8000-000000000030', '0270000b-0000-4000-8000-000000000011', '02100007-0000-4000-8000-000000000007', 'Dataset', NULL, 'system@demo', NOW()),
 
 -- Inventory Levels (02100008) - deprecated, archived
-('0290001f-0000-4000-8000-000000000031', '02700004-0000-4000-8000-000000000004', '02100008-0000-4000-8000-000000000008', 'dataset', NULL, 'system@demo', NOW()),
-('02900020-0000-4000-8000-000000000032', '0270000e-0000-4000-8000-000000000014', '02100008-0000-4000-8000-000000000008', 'dataset', NULL, 'system@demo', NOW()),
+('0290001f-0000-4000-8000-000000000031', '02700004-0000-4000-8000-000000000004', '02100008-0000-4000-8000-000000000008', 'Dataset', NULL, 'system@demo', NOW()),
+('02900020-0000-4000-8000-000000000032', '0270000e-0000-4000-8000-000000000014', '02100008-0000-4000-8000-000000000008', 'Dataset', NULL, 'system@demo', NOW()),
 
 -- Dataset Instance tags (imported from Unity Catalog)
 -- Customer Master Production - Main Table (02500001) - delta, partitioned
@@ -1757,36 +1916,36 @@ INSERT INTO comments (id, entity_type, entity_id, comment, comment_type, rating,
 ('02c00010-0000-4000-8000-000000000016', 'data_product', '00700007-0000-4000-8000-000000000007', 'Perfect for executive dashboards.', 'rating', 5, 'active', 'analyst@example.com', NOW() - INTERVAL '13 days', NOW() - INTERVAL '13 days'),
 ('02c00011-0000-4000-8000-000000000017', 'data_product', '00700007-0000-4000-8000-000000000007', 'Love the data freshness and aggregations.', 'rating', 5, 'active', 'bi-dev@example.com', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
 
--- Dataset ratings
+-- Dataset ratings (entity_type='Dataset' — asset-backed)
 -- Customer Master Data (02100001) - 4 ratings, avg ~4.5
-('02c00012-0000-4000-8000-000000000018', 'dataset', '02100001-0000-4000-8000-000000000001', 'Comprehensive customer data, well maintained.', 'rating', 5, 'active', 'alice.johnson@company.com', NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
-('02c00013-0000-4000-8000-000000000019', 'dataset', '02100001-0000-4000-8000-000000000001', 'Great data quality and documentation.', 'rating', 5, 'active', 'bob.wilson@company.com', NOW() - INTERVAL '22 days', NOW() - INTERVAL '22 days'),
-('02c00014-0000-4000-8000-000000000020', 'dataset', '02100001-0000-4000-8000-000000000001', 'Useful for ML training.', 'rating', 4, 'active', 'carol.brown@company.com', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days'),
-('02c00015-0000-4000-8000-000000000021', 'dataset', '02100001-0000-4000-8000-000000000001', 'Solid customer master data.', 'rating', 4, 'active', 'data.scientist@example.com', NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days'),
+('02c00012-0000-4000-8000-000000000018', 'Dataset', '02100001-0000-4000-8000-000000000001', 'Comprehensive customer data, well maintained.', 'rating', 5, 'active', 'alice.johnson@company.com', NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
+('02c00013-0000-4000-8000-000000000019', 'Dataset', '02100001-0000-4000-8000-000000000001', 'Great data quality and documentation.', 'rating', 5, 'active', 'bob.wilson@company.com', NOW() - INTERVAL '22 days', NOW() - INTERVAL '22 days'),
+('02c00014-0000-4000-8000-000000000020', 'Dataset', '02100001-0000-4000-8000-000000000001', 'Useful for ML training.', 'rating', 4, 'active', 'carol.brown@company.com', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days'),
+('02c00015-0000-4000-8000-000000000021', 'Dataset', '02100001-0000-4000-8000-000000000001', 'Solid customer master data.', 'rating', 4, 'active', 'data.scientist@example.com', NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days'),
 
 -- Customer Engagement Analytics (02100002) - 1 rating
-('02c00016-0000-4000-8000-000000000022', 'dataset', '02100002-0000-4000-8000-000000000002', 'Good engagement metrics.', 'rating', 4, 'active', 'marketing-lead@example.com', NOW() - INTERVAL '17 days', NOW() - INTERVAL '17 days'),
+('02c00016-0000-4000-8000-000000000022', 'Dataset', '02100002-0000-4000-8000-000000000002', 'Good engagement metrics.', 'rating', 4, 'active', 'marketing-lead@example.com', NOW() - INTERVAL '17 days', NOW() - INTERVAL '17 days'),
 
 -- Customer Preferences (02100003) - 2 ratings, avg 4.0
-('02c00017-0000-4000-8000-000000000023', 'dataset', '02100003-0000-4000-8000-000000000003', 'Useful preference aggregations.', 'rating', 4, 'active', 'alice.johnson@company.com', NOW() - INTERVAL '12 days', NOW() - INTERVAL '12 days'),
-('02c00018-0000-4000-8000-000000000024', 'dataset', '02100003-0000-4000-8000-000000000003', 'Good for personalization.', 'rating', 4, 'active', 'marketing-lead@example.com', NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+('02c00017-0000-4000-8000-000000000023', 'Dataset', '02100003-0000-4000-8000-000000000003', 'Useful preference aggregations.', 'rating', 4, 'active', 'alice.johnson@company.com', NOW() - INTERVAL '12 days', NOW() - INTERVAL '12 days'),
+('02c00018-0000-4000-8000-000000000024', 'Dataset', '02100003-0000-4000-8000-000000000003', 'Good for personalization.', 'rating', 4, 'active', 'marketing-lead@example.com', NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
 
 -- IoT Device Management (02100004) - 2 ratings, avg 4.5
-('02c00019-0000-4000-8000-000000000025', 'dataset', '02100004-0000-4000-8000-000000000004', 'Complete device registry, well structured.', 'rating', 5, 'active', 'bob.wilson@company.com', NOW() - INTERVAL '18 days', NOW() - INTERVAL '18 days'),
-('02c0001a-0000-4000-8000-000000000026', 'dataset', '02100004-0000-4000-8000-000000000004', 'Good for device tracking.', 'rating', 4, 'active', 'carol.brown@company.com', NOW() - INTERVAL '9 days', NOW() - INTERVAL '9 days'),
+('02c00019-0000-4000-8000-000000000025', 'Dataset', '02100004-0000-4000-8000-000000000004', 'Complete device registry, well structured.', 'rating', 5, 'active', 'bob.wilson@company.com', NOW() - INTERVAL '18 days', NOW() - INTERVAL '18 days'),
+('02c0001a-0000-4000-8000-000000000026', 'Dataset', '02100004-0000-4000-8000-000000000004', 'Good for device tracking.', 'rating', 4, 'active', 'carol.brown@company.com', NOW() - INTERVAL '9 days', NOW() - INTERVAL '9 days'),
 
 -- IoT Telemetry (02100005) - 3 ratings, avg ~4.3
-('02c0001b-0000-4000-8000-000000000027', 'dataset', '02100005-0000-4000-8000-000000000005', 'Real-time data is accurate and reliable.', 'rating', 5, 'active', 'bob.wilson@company.com', NOW() - INTERVAL '24 days', NOW() - INTERVAL '24 days'),
-('02c0001c-0000-4000-8000-000000000028', 'dataset', '02100005-0000-4000-8000-000000000005', 'Works well for anomaly detection.', 'rating', 4, 'active', 'david.garcia@company.com', NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days'),
-('02c0001d-0000-4000-8000-000000000029', 'dataset', '02100005-0000-4000-8000-000000000005', 'Good streaming data quality.', 'rating', 4, 'active', 'data.engineer@example.com', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
+('02c0001b-0000-4000-8000-000000000027', 'Dataset', '02100005-0000-4000-8000-000000000005', 'Real-time data is accurate and reliable.', 'rating', 5, 'active', 'bob.wilson@company.com', NOW() - INTERVAL '24 days', NOW() - INTERVAL '24 days'),
+('02c0001c-0000-4000-8000-000000000028', 'Dataset', '02100005-0000-4000-8000-000000000005', 'Works well for anomaly detection.', 'rating', 4, 'active', 'david.garcia@company.com', NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days'),
+('02c0001d-0000-4000-8000-000000000029', 'Dataset', '02100005-0000-4000-8000-000000000005', 'Good streaming data quality.', 'rating', 4, 'active', 'data.engineer@example.com', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
 
 -- Sales Analytics (02100007) - 3 ratings, avg ~4.7
-('02c0001e-0000-4000-8000-000000000030', 'dataset', '02100007-0000-4000-8000-000000000007', 'Excellent for sales trend analysis.', 'rating', 5, 'active', 'analyst@example.com', NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days'),
-('02c0001f-0000-4000-8000-000000000031', 'dataset', '02100007-0000-4000-8000-000000000007', 'Good aggregations, easy to consume.', 'rating', 5, 'active', 'frank.finance@example.com', NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
-('02c00020-0000-4000-8000-000000000032', 'dataset', '02100007-0000-4000-8000-000000000007', 'Reliable for weekly reporting.', 'rating', 4, 'active', 'alice.johnson@company.com', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
+('02c0001e-0000-4000-8000-000000000030', 'Dataset', '02100007-0000-4000-8000-000000000007', 'Excellent for sales trend analysis.', 'rating', 5, 'active', 'analyst@example.com', NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days'),
+('02c0001f-0000-4000-8000-000000000031', 'Dataset', '02100007-0000-4000-8000-000000000007', 'Good aggregations, easy to consume.', 'rating', 5, 'active', 'frank.finance@example.com', NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+('02c00020-0000-4000-8000-000000000032', 'Dataset', '02100007-0000-4000-8000-000000000007', 'Reliable for weekly reporting.', 'rating', 4, 'active', 'alice.johnson@company.com', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
 
 -- Inventory Levels (02100008) - deprecated, 1 old rating
-('02c00021-0000-4000-8000-000000000033', 'dataset', '02100008-0000-4000-8000-000000000008', 'Was useful, now deprecated.', 'rating', 3, 'active', 'ops-lead@example.com', NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days')
+('02c00021-0000-4000-8000-000000000033', 'Dataset', '02100008-0000-4000-8000-000000000008', 'Was useful, now deprecated.', 'rating', 3, 'active', 'ops-lead@example.com', NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days')
 
 ON CONFLICT (id) DO NOTHING;
 
@@ -1967,92 +2126,8 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================================
--- 24. ASSET TYPES (type=0f2)
+-- 24. ASSET TYPES — removed (now synced from ontos-ontology.ttl at startup)
 -- ============================================================================
--- Reusable templates defining how different kinds of assets are structured.
-
-INSERT INTO asset_types (id, name, description, category, icon, required_fields, optional_fields, allowed_relationships, is_system, status, created_by, created_at, updated_at) VALUES
-('0f200001-0000-4000-8000-000000000001', 'Table',
- 'Database or lakehouse table — the most common physical data asset.',
- 'data', 'Table2',
- '{"catalog": "string", "schema": "string", "table_name": "string"}',
- '{"row_count": "integer", "size_bytes": "integer", "partitioning": "string", "format": "string"}',
- '["hasColumn", "belongsToSystem", "belongsToBusinessDataset", "implementsLogicalEntity", "isTargetOfContract"]',
- true, 'active', 'system@demo', NOW(), NOW()),
-
-('0f200002-0000-4000-8000-000000000002', 'View',
- 'SQL view or materialized view providing a logical layer over physical tables.',
- 'data', 'Eye',
- '{"catalog": "string", "schema": "string", "view_name": "string"}',
- '{"is_materialized": "boolean", "refresh_schedule": "string"}',
- '["hasColumn", "dependsOnTable", "implementsLogicalEntity"]',
- true, 'active', 'system@demo', NOW(), NOW()),
-
-('0f200003-0000-4000-8000-000000000003', 'Column',
- 'A column within a Table or View asset. Child asset.',
- 'data', 'Columns2',
- '{"name": "string", "data_type": "string"}',
- '{"nullable": "boolean", "statistics": "object", "tags": "array"}',
- '["mapsToLogicalAttribute", "governedByPolicy"]',
- true, 'active', 'system@demo', NOW(), NOW()),
-
-('0f200004-0000-4000-8000-000000000004', 'Dashboard',
- 'BI content — Power BI report, Databricks SQL dashboard, Tableau workbook, etc.',
- 'analytics', 'LayoutDashboard',
- '{"tool": "string", "name": "string"}',
- '{"workspace": "string", "report_id": "string", "url": "string"}',
- '["consumesDataProduct", "usesPhysicalAssets", "linkedToBusinessTerms"]',
- true, 'active', 'system@demo', NOW(), NOW()),
-
-('0f200005-0000-4000-8000-000000000005', 'API Endpoint',
- 'A data-serving REST or GraphQL endpoint.',
- 'integration', 'Globe',
- '{"method": "string", "path": "string"}',
- '{"auth_scheme": "string", "version": "string", "producer_team": "string"}',
- '["exposesDataProduct", "implementsDataContract", "subjectToPolicies"]',
- true, 'active', 'system@demo', NOW(), NOW()),
-
-('0f200006-0000-4000-8000-000000000006', 'File Dataset',
- 'A collection of files (Parquet, CSV, JSON) stored in object storage.',
- 'data', 'FolderOpen',
- '{"storage_path": "string", "format": "string"}',
- '{"size_bytes": "integer", "partition_keys": "array"}',
- '["belongsToSystem", "isSourceOfContract"]',
- true, 'active', 'system@demo', NOW(), NOW()),
-
-('0f200007-0000-4000-8000-000000000007', 'ML Model',
- 'A registered machine learning model (MLflow, Unity Catalog model, etc.).',
- 'analytics', 'Brain',
- '{"model_name": "string", "framework": "string"}',
- '{"version": "string", "stage": "string", "metrics": "object"}',
- '["consumesDataset", "producesDataset", "belongsToSystem"]',
- false, 'active', 'system@demo', NOW(), NOW()),
-
-('0f200008-0000-4000-8000-000000000008', 'Stream',
- 'A streaming data source or sink (Kafka topic, Kinesis stream, Event Hub, etc.).',
- 'integration', 'Activity',
- '{"stream_name": "string", "platform": "string"}',
- '{"partitions": "integer", "retention_hours": "integer", "schema_registry": "string"}',
- '["producesTo", "consumesFrom", "belongsToSystem"]',
- false, 'active', 'system@demo', NOW(), NOW()),
-
-('0f200009-0000-4000-8000-000000000009', 'System',
- 'An application or platform (Salesforce, SAP, Databricks, Power BI) that hosts assets.',
- 'system', 'Server',
- '{"name": "string", "type": "string"}',
- '{"environment": "string", "owner_team": "string", "url": "string"}',
- '["containsAssets", "isSourceInBusinessLineage", "isTargetInBusinessLineage"]',
- true, 'active', 'system@demo', NOW(), NOW()),
-
-('0f20000a-0000-4000-8000-000000000010', 'Notebook',
- 'A computational notebook (Databricks, Jupyter) used for data analysis or pipeline logic.',
- 'analytics', 'FileCode',
- '{"path": "string", "language": "string"}',
- '{"cluster_id": "string", "schedule": "string"}',
- '["readsFrom", "writesTo", "belongsToSystem"]',
- false, 'active', 'system@demo', NOW(), NOW())
-
-ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================================
@@ -2066,7 +2141,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f300001-0000-4000-8000-000000000001',
  'Databricks Lakehouse',
  'Primary Databricks workspace for all lakehouse tables and pipelines.',
- '0f200009-0000-4000-8000-000000000009', 'Databricks', 'https://adb-1234567890.azuredatabricks.net',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'System' LIMIT 1), '0f200009-0000-4000-8000-000000000009'), 'Databricks', 'https://adb-1234567890.azuredatabricks.net',
  '00000001-0000-4000-8000-000000000001',
  '{"type": "lakehouse", "environment": "production", "cloud": "Azure"}',
  '["production", "primary"]',
@@ -2075,7 +2150,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f300002-0000-4000-8000-000000000002',
  'Power BI Service',
  'Enterprise Power BI tenant for dashboards and reports.',
- '0f200009-0000-4000-8000-000000000009', 'Power BI', 'https://app.powerbi.com/groups/retail-analytics',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'System' LIMIT 1), '0f200009-0000-4000-8000-000000000009'), 'Power BI', 'https://app.powerbi.com/groups/retail-analytics',
  '00000001-0000-4000-8000-000000000001',
  '{"type": "bi_platform", "environment": "production"}',
  '["analytics", "reporting"]',
@@ -2085,7 +2160,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f300003-0000-4000-8000-000000000003',
  'lakehouse.retail.curated.pos_transactions',
  'Curated POS transaction table with validated, deduplicated retail transactions.',
- '0f200001-0000-4000-8000-000000000001', 'Databricks', 'lakehouse.retail.curated.pos_transactions',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), '0f200001-0000-4000-8000-000000000001'), 'Databricks', 'lakehouse.retail.curated.pos_transactions',
  '0000000c-0000-4000-8000-000000000012',
  '{"catalog": "lakehouse", "schema": "retail_curated", "table_name": "pos_transactions", "row_count": 12500000, "format": "delta"}',
  '["curated", "retail", "pii-free"]',
@@ -2094,7 +2169,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f300004-0000-4000-8000-000000000004',
  'lakehouse.retail.curated.inventory_levels',
  'Current and historical inventory levels by store, SKU, and date.',
- '0f200001-0000-4000-8000-000000000001', 'Databricks', 'lakehouse.retail.curated.inventory_levels',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), '0f200001-0000-4000-8000-000000000001'), 'Databricks', 'lakehouse.retail.curated.inventory_levels',
  '0000000c-0000-4000-8000-000000000012',
  '{"catalog": "lakehouse", "schema": "retail_curated", "table_name": "inventory_levels", "row_count": 3200000, "format": "delta"}',
  '["curated", "supply-chain"]',
@@ -2104,7 +2179,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f300005-0000-4000-8000-000000000005',
  'lakehouse.customer.curated.customer360',
  'Unified customer profile combining CRM, web, and transaction data.',
- '0f200001-0000-4000-8000-000000000001', 'Databricks', 'lakehouse.customer.curated.customer360',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), '0f200001-0000-4000-8000-000000000001'), 'Databricks', 'lakehouse.customer.curated.customer360',
  '00000007-0000-4000-8000-000000000007',
  '{"catalog": "lakehouse", "schema": "customer_curated", "table_name": "customer360", "row_count": 850000, "format": "delta"}',
  '["curated", "pii", "customer"]',
@@ -2114,7 +2189,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f300006-0000-4000-8000-000000000006',
  'lakehouse.finance.curated.invoices',
  'Validated invoice records for financial reporting and compliance.',
- '0f200001-0000-4000-8000-000000000001', 'Databricks', 'lakehouse.finance.curated.invoices',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), '0f200001-0000-4000-8000-000000000001'), 'Databricks', 'lakehouse.finance.curated.invoices',
  '00000002-0000-4000-8000-000000000002',
  '{"catalog": "lakehouse", "schema": "finance_curated", "table_name": "invoices", "row_count": 2100000, "format": "delta"}',
  '["curated", "finance", "sox-compliant"]',
@@ -2124,7 +2199,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f300007-0000-4000-8000-000000000007',
  'Retail Performance Overview',
  'Executive dashboard showing daily KPIs: revenue, transactions, basket size, conversion.',
- '0f200004-0000-4000-8000-000000000004', 'Power BI', 'https://app.powerbi.com/groups/retail-analytics/reports/rpt-001',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Dashboard' LIMIT 1), '0f200004-0000-4000-8000-000000000004'), 'Power BI', 'https://app.powerbi.com/groups/retail-analytics/reports/rpt-001',
  '0000000d-0000-4000-8000-000000000013',
  '{"tool": "Power BI", "workspace": "retail-analytics", "report_id": "rpt-001"}',
  '["executive", "kpi", "retail"]',
@@ -2133,7 +2208,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f300008-0000-4000-8000-000000000008',
  'Customer Lifetime Value Overview',
  'Dashboard showing CLV metrics, segmentation, and churn prediction outputs.',
- '0f200004-0000-4000-8000-000000000004', 'Power BI', 'https://app.powerbi.com/groups/customer-analytics/reports/rpt-002',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Dashboard' LIMIT 1), '0f200004-0000-4000-8000-000000000004'), 'Power BI', 'https://app.powerbi.com/groups/customer-analytics/reports/rpt-002',
  '00000007-0000-4000-8000-000000000007',
  '{"tool": "Power BI", "workspace": "customer-analytics", "report_id": "rpt-002"}',
  '["analytics", "customer", "ml-driven"]',
@@ -2143,17 +2218,17 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f300009-0000-4000-8000-000000000009',
  'POST /v1/customers/search',
  'Customer search API endpoint for internal applications.',
- '0f200005-0000-4000-8000-000000000005', 'Internal API', 'https://api.internal.example.com/v1/customers/search',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'API Endpoint' LIMIT 1), '0f200005-0000-4000-8000-000000000005'), 'Internal API', 'https://api.internal.example.com/v1/customers/search',
  '00000007-0000-4000-8000-000000000007',
  '{"method": "POST", "path": "/v1/customers/search", "auth_scheme": "OAuth2", "version": "v1"}',
  '["api", "customer", "internal"]',
  'active', 'system@demo', NOW(), NOW()),
 
--- File Dataset
+-- File Dataset (mapped to Dataset type since FileDataset not in ontology)
 ('0f30000a-0000-4000-8000-000000000010',
  'Marketing Raw Clickstream Events',
  'Raw clickstream parquet files from web analytics, partitioned by date.',
- '0f200006-0000-4000-8000-000000000006', 'Azure ADLS', 'abfss://raw@datalake.dfs.core.windows.net/marketing/clickstream/',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Dataset' LIMIT 1), '0f200006-0000-4000-8000-000000000006'), 'Azure ADLS', 'abfss://raw@datalake.dfs.core.windows.net/marketing/clickstream/',
  '00000004-0000-4000-8000-000000000004',
  '{"storage_path": "abfss://raw@datalake.dfs.core.windows.net/marketing/clickstream/", "format": "parquet", "partition_keys": ["date"]}',
  '["raw", "marketing", "clickstream"]',
@@ -2163,7 +2238,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f30000b-0000-4000-8000-000000000011',
  'iot-device-telemetry',
  'Kafka topic receiving real-time IoT device sensor readings.',
- '0f200008-0000-4000-8000-000000000008', 'Confluent Kafka', 'kafka://broker.internal:9092/iot-device-telemetry',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Stream' LIMIT 1), '0f200008-0000-4000-8000-000000000008'), 'Confluent Kafka', 'kafka://broker.internal:9092/iot-device-telemetry',
  '0000000a-0000-4000-8000-000000000010',
  '{"stream_name": "iot-device-telemetry", "platform": "Confluent Kafka", "partitions": 12, "retention_hours": 168}',
  '["streaming", "iot", "real-time"]',
@@ -2173,7 +2248,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f30000c-0000-4000-8000-000000000012',
  'demand-forecast-v3',
  'XGBoost demand forecasting model registered in Unity Catalog.',
- '0f200007-0000-4000-8000-000000000007', 'Databricks', 'models:/demand-forecast-v3/Production',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'ML Model' LIMIT 1), '0f200007-0000-4000-8000-000000000007'), 'Databricks', 'models:/demand-forecast-v3/Production',
  '0000000d-0000-4000-8000-000000000013',
  '{"model_name": "demand-forecast-v3", "framework": "xgboost", "version": "3", "stage": "Production", "metrics": {"rmse": 12.4, "mape": 0.08}}',
  '["ml", "forecasting", "production"]',
@@ -2183,7 +2258,7 @@ INSERT INTO assets (id, name, description, asset_type_id, platform, location, do
 ('0f30000d-0000-4000-8000-000000000013',
  'legacy.sales.raw.transactions_v1',
  'Deprecated raw sales table from legacy ETL pipeline. Replaced by POS Transaction Stream.',
- '0f200001-0000-4000-8000-000000000001', 'Databricks', 'legacy.sales.raw.transactions_v1',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Table' LIMIT 1), '0f200001-0000-4000-8000-000000000001'), 'Databricks', 'legacy.sales.raw.transactions_v1',
  '00000003-0000-4000-8000-000000000003',
  '{"catalog": "legacy", "schema": "sales_raw", "table_name": "transactions_v1", "row_count": 0, "format": "delta"}',
  '["deprecated", "legacy"]',
@@ -2193,34 +2268,34 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================================
--- 26. ASSET RELATIONSHIPS (type=0f4)
+-- 26. ENTITY RELATIONSHIPS (migrated from deprecated asset_relationships)
 -- ============================================================================
--- Directed relationships between assets (lineage, containment, consumption).
+-- Directed relationships between entities using the ontology-driven model.
 
-INSERT INTO asset_relationships (id, source_asset_id, target_asset_id, relationship_type, properties, created_by, created_at) VALUES
+INSERT INTO entity_relationships (id, source_type, source_id, target_type, target_id, relationship_type, properties, created_by, created_at) VALUES
 -- Tables belong to Databricks Lakehouse system
-('0f400001-0000-4000-8000-000000000001', '0f300003-0000-4000-8000-000000000003', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
-('0f400002-0000-4000-8000-000000000002', '0f300004-0000-4000-8000-000000000004', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
-('0f400003-0000-4000-8000-000000000003', '0f300005-0000-4000-8000-000000000005', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
-('0f400004-0000-4000-8000-000000000004', '0f300006-0000-4000-8000-000000000006', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400001-0000-4000-8000-000000000001', 'asset', '0f300003-0000-4000-8000-000000000003', 'asset', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400002-0000-4000-8000-000000000002', 'asset', '0f300004-0000-4000-8000-000000000004', 'asset', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400003-0000-4000-8000-000000000003', 'asset', '0f300005-0000-4000-8000-000000000005', 'asset', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400004-0000-4000-8000-000000000004', 'asset', '0f300006-0000-4000-8000-000000000006', 'asset', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
 
 -- Dashboards belong to Power BI system
-('0f400005-0000-4000-8000-000000000005', '0f300007-0000-4000-8000-000000000007', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
-('0f400006-0000-4000-8000-000000000006', '0f300008-0000-4000-8000-000000000008', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400005-0000-4000-8000-000000000005', 'asset', '0f300007-0000-4000-8000-000000000007', 'asset', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0f400006-0000-4000-8000-000000000006', 'asset', '0f300008-0000-4000-8000-000000000008', 'asset', '0f300002-0000-4000-8000-000000000002', 'belongsToSystem', NULL, 'system@demo', NOW()),
 
 -- Dashboard consumes table data (business lineage)
-('0f400007-0000-4000-8000-000000000007', '0f300007-0000-4000-8000-000000000007', '0f300003-0000-4000-8000-000000000003', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
-('0f400008-0000-4000-8000-000000000008', '0f300008-0000-4000-8000-000000000008', '0f300005-0000-4000-8000-000000000005', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
+('0f400007-0000-4000-8000-000000000007', 'asset', '0f300007-0000-4000-8000-000000000007', 'asset', '0f300003-0000-4000-8000-000000000003', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
+('0f400008-0000-4000-8000-000000000008', 'asset', '0f300008-0000-4000-8000-000000000008', 'asset', '0f300005-0000-4000-8000-000000000005', 'consumesFrom', '{"lineage_type": "business"}', 'system@demo', NOW()),
 
--- ML model consumes table, produces to another
-('0f400009-0000-4000-8000-000000000009', '0f30000c-0000-4000-8000-000000000012', '0f300003-0000-4000-8000-000000000003', 'consumesDataset', '{"purpose": "training"}', 'system@demo', NOW()),
-('0f40000a-0000-4000-8000-000000000010', '0f30000c-0000-4000-8000-000000000012', '0f300004-0000-4000-8000-000000000004', 'consumesDataset', '{"purpose": "feature_store"}', 'system@demo', NOW()),
+-- ML model consumes table
+('0f400009-0000-4000-8000-000000000009', 'asset', '0f30000c-0000-4000-8000-000000000012', 'asset', '0f300003-0000-4000-8000-000000000003', 'consumesFrom', '{"purpose": "training"}', 'system@demo', NOW()),
+('0f40000a-0000-4000-8000-000000000010', 'asset', '0f30000c-0000-4000-8000-000000000012', 'asset', '0f300004-0000-4000-8000-000000000004', 'consumesFrom', '{"purpose": "feature_store"}', 'system@demo', NOW()),
 
 -- Stream feeds into table
-('0f40000b-0000-4000-8000-000000000011', '0f30000b-0000-4000-8000-000000000011', '0f300003-0000-4000-8000-000000000003', 'producesTo', '{"processing": "streaming_ingest"}', 'system@demo', NOW()),
+('0f40000b-0000-4000-8000-000000000011', 'asset', '0f30000b-0000-4000-8000-000000000011', 'asset', '0f300003-0000-4000-8000-000000000003', 'producesTo', '{"processing": "streaming_ingest"}', 'system@demo', NOW()),
 
 -- Deprecated table replaced by new one
-('0f40000c-0000-4000-8000-000000000012', '0f30000d-0000-4000-8000-000000000013', '0f300003-0000-4000-8000-000000000003', 'replacedBy', '{"reason": "legacy migration"}', 'system@demo', NOW())
+('0f40000c-0000-4000-8000-000000000012', 'asset', '0f30000d-0000-4000-8000-000000000013', 'asset', '0f300003-0000-4000-8000-000000000003', 'replacedBy', '{"reason": "legacy migration"}', 'system@demo', NOW())
 
 ON CONFLICT (id) DO NOTHING;
 

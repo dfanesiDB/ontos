@@ -85,7 +85,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
   data_producer: [
     { id: 'home', labelKey: 'personaNav.home', path: '/producer', icon: Home },
     { id: 'data-products', labelKey: 'personaNav.dataProducts', path: '/producer/products', icon: Package, featureId: 'data-products' },
-    { id: 'datasets', labelKey: 'personaNav.datasets', path: '/producer/datasets', icon: Table2, featureId: 'datasets' },
+    { id: 'datasets', labelKey: 'personaNav.datasets', path: '/producer/datasets', icon: Table2, featureId: 'assets' },
     { id: 'contracts', labelKey: 'personaNav.contracts', path: '/producer/contracts', icon: FileText, featureId: 'data-contracts' },
     { id: 'requests', labelKey: 'personaNav.requests', path: '/producer/requests', icon: ClipboardCheck, featureId: 'data-asset-reviews' },
   ],
@@ -99,7 +99,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
   data_steward: [
     { id: 'home', labelKey: 'personaNav.home', path: '/steward', icon: Home },
     { id: 'catalog-commander', labelKey: 'personaNav.catalogCommander', path: '/steward/commander', icon: FolderKanban, featureId: 'catalog-commander' },
-    { id: 'assets', labelKey: 'personaNav.assets', path: '/steward/assets', icon: Box, featureId: 'assets' },
+    { id: 'asset-explorer', labelKey: 'personaNav.assetExplorer', path: '/steward/assets', icon: Box, featureId: 'assets' },
     { id: 'compliance-checks', labelKey: 'personaNav.complianceChecks', path: '/steward/compliance', icon: CheckCircle, featureId: 'compliance' },
     { id: 'asset-review', labelKey: 'personaNav.assetReview', path: '/steward/reviews', icon: ClipboardCheck, featureId: 'data-asset-reviews' },
     { id: 'master-data', labelKey: 'personaNav.masterData', path: '/steward/master-data', icon: Database, featureId: 'master-data' },
@@ -111,7 +111,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'projects', labelKey: 'personaNav.projects', path: '/governance/projects', icon: FolderOpen, featureId: 'projects' },
     { id: 'policies', labelKey: 'personaNav.policies', path: '/governance/policies', icon: Shield, featureId: 'policies' },
     { id: 'asset-types', labelKey: 'personaNav.assetTypes', path: '/governance/asset-types', icon: Shapes, featureId: 'assets' },
-    { id: 'assets', labelKey: 'personaNav.assets', path: '/governance/assets', icon: Box, featureId: 'assets' },
+    { id: 'asset-explorer', labelKey: 'personaNav.assetExplorer', path: '/governance/assets', icon: Box, featureId: 'assets' },
     { id: 'tags', labelKey: 'personaNav.tags', path: '/governance/tags', icon: Tag, featureId: 'settings' },
     { id: 'workflows', labelKey: 'personaNav.workflows', path: '/governance/workflows', icon: GitBranch, featureId: 'process-workflows' },
     { id: 'master-data', labelKey: 'personaNav.masterData', path: '/governance/master-data', icon: Database, featureId: 'master-data' },

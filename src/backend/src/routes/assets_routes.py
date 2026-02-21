@@ -17,7 +17,7 @@ from src.common.dependencies import (
     AuditManagerDep,
     AuditCurrentUserDep,
 )
-from src.common.errors import NotFoundError, ConflictError
+from src.common.errors import NotFoundError, ConflictError, ValidationError
 from src.common.logging import get_logger
 
 logger = get_logger(__name__)
@@ -229,6 +229,9 @@ def create_asset(
     except NotFoundError as e:
         details["exception"] = {"type": "NotFoundError", "message": str(e)}
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValidationError as e:
+        details["exception"] = {"type": "ValidationError", "message": str(e)}
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     except ConflictError as e:
         details["exception"] = {"type": "ConflictError", "message": str(e)}
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
@@ -310,6 +313,9 @@ def update_asset(
     except NotFoundError as e:
         details["exception"] = {"type": "NotFoundError", "message": str(e)}
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValidationError as e:
+        details["exception"] = {"type": "ValidationError", "message": str(e)}
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     except ConflictError as e:
         details["exception"] = {"type": "ConflictError", "message": str(e)}
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))

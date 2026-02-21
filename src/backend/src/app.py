@@ -63,6 +63,9 @@ from src.routes import (
     assets_routes,
     business_roles_routes,
     business_owners_routes,
+    ontology_schema_routes,
+    entity_relationship_routes,
+    entity_subscription_routes,
 )
 
 from src.common.database import init_db, get_session_factory, SQLAlchemySession
@@ -307,6 +310,9 @@ business_owners_routes.register_routes(app)
 semantic_models_routes.register_routes(app)
 semantic_links_routes.register_routes(app)
 industry_ontology_routes.register_routes(app)  # Industry Ontology Library
+ontology_schema_routes.register_routes(app)
+entity_relationship_routes.register_routes(app)
+entity_subscription_routes.register_routes(app)
 data_asset_reviews_routes.register_routes(app)
 data_catalog_routes.register_routes(app)
 

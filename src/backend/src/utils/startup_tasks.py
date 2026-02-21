@@ -305,6 +305,48 @@ def initialize_managers(app: FastAPI):
         #     SEARCHABLE_ASSET_MANAGERS.append(metadata_manager) # If it's searchable
         #     logger.info("MetadataManager initialized.")
 
+        # --- OntologySchemaManager ---
+        try:
+            from src.controller.ontology_schema_manager import OntologySchemaManager
+            app.state.ontology_schema_manager = OntologySchemaManager(
+                semantic_models_manager=app.state.semantic_models_manager
+            )
+            # Wire ontology into AssetsManager for property validation
+            if hasattr(app.state, 'assets_manager'):
+                app.state.assets_manager._ontology = app.state.ontology_schema_manager
+            logger.info("OntologySchemaManager initialized.")
+
+            # Sync ontology-defined asset types to AssetTypeDb
+            with session_factory() as sync_db:
+                try:
+                    sync_result = app.state.ontology_schema_manager.sync_asset_types(sync_db)
+                    logger.info(
+                        f"Ontology asset type sync: {len(sync_result.created)} created, "
+                        f"{len(sync_result.updated)} updated, {len(sync_result.errors)} errors"
+                    )
+                except Exception as e_sync:
+                    logger.error(f"Failed to sync ontology asset types: {e_sync}", exc_info=True)
+        except Exception as e:
+            logger.error(f"Failed to initialize OntologySchemaManager: {e}", exc_info=True)
+
+        # --- EntityRelationshipsManager ---
+        try:
+            from src.controller.entity_relationships_manager import EntityRelationshipsManager
+            app.state.entity_relationships_manager = EntityRelationshipsManager(
+                ontology_schema_manager=app.state.ontology_schema_manager
+            )
+            logger.info("EntityRelationshipsManager initialized.")
+        except Exception as e:
+            logger.error(f"Failed to initialize EntityRelationshipsManager: {e}", exc_info=True)
+
+        # --- EntitySubscriptionsManager ---
+        try:
+            from src.controller.entity_subscriptions_manager import EntitySubscriptionsManager
+            app.state.entity_subscriptions_manager = EntitySubscriptionsManager()
+            logger.info("EntitySubscriptionsManager initialized.")
+        except Exception as e:
+            logger.error(f"Failed to initialize EntitySubscriptionsManager: {e}", exc_info=True)
+
         logger.info("All managers instantiated and stored in app.state.")
 
         # Defer SearchManager initialization until after initial data loading completes

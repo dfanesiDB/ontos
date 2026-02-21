@@ -36,6 +36,8 @@ from . import policies
 from . import assets
 from . import business_roles
 from . import business_owners
+from . import entity_relationships
+from . import entity_subscriptions
 from . import workflow_configurations
 from . import workflow_installations
 from . import workflow_job_runs

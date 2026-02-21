@@ -563,15 +563,28 @@ async def clear_demo_data(
             "DELETE FROM rdf_triples WHERE id::text LIKE '020%'",
             "DELETE FROM rdf_triples WHERE id::text LIKE '030%'",
             
-            # Dataset subscriptions (022%, 0260%) and custom properties (024%)
+            # Entity subscriptions (022%, 0260%) — migrated from dataset_subscriptions
+            "DELETE FROM entity_subscriptions WHERE id::text LIKE '022%'",
+            "DELETE FROM entity_subscriptions WHERE id::text LIKE '0260%'",
+            
+            # Entity relationships (0215%) — Dataset→Table/View/Contract
+            "DELETE FROM entity_relationships WHERE id::text LIKE '0215%'",
+            # Entity relationships (0f4%) — asset lineage/containment
+            "DELETE FROM entity_relationships WHERE id::text LIKE '0f4%'",
+            
+            # Legacy: dataset subscriptions/custom properties (if old tables still exist)
             "DELETE FROM dataset_subscriptions WHERE id::text LIKE '022%'",
             "DELETE FROM dataset_subscriptions WHERE id::text LIKE '0260%'",
             "DELETE FROM dataset_custom_properties WHERE id::text LIKE '024%'",
             
-            # Dataset instances (025)
-            "DELETE FROM dataset_instances WHERE id::text LIKE '025%'",
+            # Physical assets (025%) — migrated from dataset_instances
+            "DELETE FROM assets WHERE id::text LIKE '025%'",
             
-            # Datasets (021)
+            # Dataset assets (021%) — migrated from datasets table
+            "DELETE FROM assets WHERE id::text LIKE '021%'",
+            
+            # Legacy: dataset instances (025) and datasets (021) (if old tables still exist)
+            "DELETE FROM dataset_instances WHERE id::text LIKE '025%'",
             "DELETE FROM datasets WHERE id::text LIKE '021%'",
             
             # Data contract servers (srv pattern for server IDs)

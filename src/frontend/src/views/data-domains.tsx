@@ -22,7 +22,7 @@ import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
 import { Toaster } from "@/components/ui/toaster";
 import useBreadcrumbStore from '@/stores/breadcrumb-store';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import DataDomainGraphView from '@/components/data-domains/data-domain-graph-view';
 import { ViewModeToggle } from '@/components/common/view-mode-toggle';
 import { useProjectContext } from '@/stores/project-store';
@@ -60,6 +60,7 @@ export default function DataDomainsView() {
   const { get: apiGet, delete: apiDelete, loading: apiIsLoading } = useApi();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
@@ -164,7 +165,7 @@ export default function DataDomainsView() {
   };
 
   const handleNavigateToDomain = (domainId: string) => {
-    navigate(`/data-domains/${domainId}`);
+    navigate(`${pathname}/${domainId}`);
   };
 
   const columns = useMemo<ColumnDef<DataDomain>[]>(() => [
@@ -286,7 +287,7 @@ export default function DataDomainsView() {
         );
       },
     },
-  ], [canWrite, canAdmin, navigate, t]);
+  ], [canWrite, canAdmin, navigate, pathname, t]);
 
   return (
     <div className="py-6">

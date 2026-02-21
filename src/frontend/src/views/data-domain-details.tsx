@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
@@ -227,6 +227,8 @@ export default function DataDomainDetailsView() {
   const { t } = useTranslation(['data-domains', 'common']);
   const { domainId } = useParams<{ domainId: string }>();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const listPath = pathname.replace(/\/[^/]+$/, '');
   const { get, post, delete: del } = useApi();
   const { toast } = useToast();
   
@@ -515,7 +517,7 @@ export default function DataDomainDetailsView() {
   };
 
   useEffect(() => {
-    setStaticSegments([{ label: 'Data Domains', path: '/data-domains' }]);
+    setStaticSegments([{ label: 'Data Domains', path: listPath }]);
     if (domainId) {
       fetchDomainDetails(domainId);
       fetchMetadata(domainId);
@@ -549,7 +551,7 @@ export default function DataDomainDetailsView() {
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
         </Alert>
-        <Button variant="outline" onClick={() => navigate('/data-domains')}>
+        <Button variant="outline" onClick={() => navigate(listPath)}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Data Domains
         </Button>
       </div>
@@ -562,7 +564,7 @@ export default function DataDomainDetailsView() {
             <Alert className="mb-4">
                 <AlertDescription>Data domain not found or could not be loaded.</AlertDescription>
             </Alert>
-            <Button variant="outline" onClick={() => navigate('/data-domains')}>
+            <Button variant="outline" onClick={() => navigate(listPath)}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Data Domains
             </Button>
         </div>
@@ -572,7 +574,7 @@ export default function DataDomainDetailsView() {
   return (
     <div className="py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => navigate('/data-domains')} size="sm">
+        <Button variant="outline" onClick={() => navigate(listPath)} size="sm">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to List
         </Button>

@@ -45,7 +45,7 @@ export interface AssetTypeUpdate {
 }
 
 // --- Assets ---
-export type AssetStatus = 'active' | 'deprecated' | 'archived';
+export type AssetStatus = 'draft' | 'active' | 'deprecated' | 'archived';
 
 export interface AssetRelationship {
   id: string;

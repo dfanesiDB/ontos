@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -82,6 +82,9 @@ export default function DatasetDetails() {
   const { t } = useTranslation(['datasets', 'common']);
   const { datasetId } = useParams<{ datasetId: string }>();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const listPath = pathname.replace(/\/[^/]+$/, '');
+  const personaPrefix = pathname.match(/^\/[a-z]+/)?.[0] || '';
   const { toast } = useToast();
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
@@ -225,7 +228,7 @@ export default function DatasetDetails() {
 
   useEffect(() => {
     // Set breadcrumbs
-    setStaticSegments([{ label: t('title'), path: '/datasets' }]);
+    setStaticSegments([{ label: t('title'), path: listPath }]);
     setDynamicTitle(dataset?.name || t('details.loading'));
 
     return () => {
@@ -332,7 +335,7 @@ export default function DatasetDetails() {
         title: t('messages.success'),
         description: t('details.deleteSuccess'),
       });
-      navigate('/datasets');
+      navigate(listPath);
     } catch (err) {
       toast({
         title: t('messages.error'),
@@ -586,7 +589,7 @@ export default function DatasetDetails() {
   if (error || !dataset) {
     return (
       <div className="py-6 space-y-6">
-        <Button variant="outline" size="sm" onClick={() => navigate('/datasets')}>
+        <Button variant="outline" size="sm" onClick={() => navigate(listPath)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('details.backToList')}
         </Button>
@@ -604,7 +607,7 @@ export default function DatasetDetails() {
     <div className="py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button variant="outline" size="sm" onClick={() => navigate('/datasets')}>
+        <Button variant="outline" size="sm" onClick={() => navigate(listPath)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('details.backToList')}
         </Button>
@@ -1148,7 +1151,7 @@ export default function DatasetDetails() {
             fetchDataset();
             setIsCreateContractDialogOpen(false);
             // Navigate to the new contract
-            navigate(`/data-contracts/${contractId}`);
+            navigate(`${personaPrefix}/contracts/${contractId}`);
           }}
         />
       )}

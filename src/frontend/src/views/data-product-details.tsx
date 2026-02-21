@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { DataProduct, InputPort, OutputPort, ManagementPort, TeamMember, Support, SubscriptionResponse, SubscribersListResponse } from '@/types/data-product';
 import DataProductCreateDialog from '@/components/data-products/data-product-create-dialog';
@@ -41,6 +41,7 @@ import EntityCostsPanel from '@/components/costs/entity-costs-panel';
 import LinkContractToPortDialog from '@/components/data-products/link-contract-to-port-dialog';
 import VersioningRecommendationDialog from '@/components/common/versioning-recommendation-dialog';
 import { Link2, Unlink } from 'lucide-react';
+import { ProductHierarchyPanel } from '@/components/data-products/product-hierarchy-panel';
 
 /**
  * ODPS v1.0.0 Data Product Details View
@@ -71,6 +72,8 @@ export default function DataProductDetails() {
   const { t } = useTranslation(['data-products', 'common']);
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const listPath = pathname.replace(/\/[^/]+$/, '');
   const api = useApi();
   const { get, post, delete: deleteApi } = api;
   const { toast } = useToast();
@@ -174,7 +177,7 @@ export default function DataProductDetails() {
     }
     setLoading(true);
     setError(null);
-    setStaticSegments([{ label: t('title'), path: '/data-products' }]);
+    setStaticSegments([{ label: t('title'), path: listPath }]);
     setDynamicTitle(t('details.loading'));
 
     try {
@@ -245,7 +248,7 @@ export default function DataProductDetails() {
     try {
       await deleteApi(`/api/data-products/${productId}`);
       toast({ title: 'Success', description: 'Data product deleted successfully.' });
-      navigate('/data-products');
+      navigate(listPath);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete product';
       toast({ title: 'Error', description: `Failed to delete: ${errorMessage}`, variant: 'destructive' });
@@ -264,7 +267,7 @@ export default function DataProductDetails() {
       if (response.data) {
         toast({ title: 'Draft Created', description: 'Personal draft created. You can now edit it.' });
         // Navigate to the new draft
-        navigate(`/data-products/${response.data.id}`);
+        navigate(`${listPath}/${response.data.id}`);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create draft';
@@ -284,9 +287,9 @@ export default function DataProductDetails() {
       toast({ title: 'Draft Discarded', description: 'Personal draft has been discarded.' });
       // Navigate back to products list or parent product
       if (product.parentProductId) {
-        navigate(`/data-products/${product.parentProductId}`);
+        navigate(`${listPath}/${product.parentProductId}`);
       } else {
-        navigate('/data-products');
+        navigate(listPath);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to discard draft';
@@ -917,7 +920,7 @@ export default function DataProductDetails() {
       if (!newProduct || !newProduct.id) throw new Error('Invalid response when creating version.');
 
       toast({ title: 'Success', description: `Version ${newVersionString} created!` });
-      navigate(`/data-products/${newProduct.id}`);
+      navigate(`${listPath}/${newProduct.id}`);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Failed to create version.', variant: 'destructive' });
     }
@@ -949,7 +952,7 @@ export default function DataProductDetails() {
   return (
     <div className="py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => navigate('/data-products')} size="sm">
+        <Button variant="outline" onClick={() => navigate(listPath)} size="sm">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to List
         </Button>
@@ -1263,6 +1266,9 @@ export default function DataProductDetails() {
           )}
         </CardContent>
       </Card>
+
+      {/* Data Hierarchy: Product > Dataset > Table > Column */}
+      {productId && <ProductHierarchyPanel productId={productId} />}
 
       {/* Output Ports Section */}
       <Card>
