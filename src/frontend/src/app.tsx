@@ -69,6 +69,7 @@ import PoliciesView from './views/policies';
 import AssetTypesView from './views/asset-types';
 import AssetExplorerView from './views/asset-explorer';
 import AssetDetailView from './views/asset-detail';
+import HierarchyBrowserView from './views/hierarchy-browser';
 import BusinessRolesView from './views/business-roles';
 import BusinessOwnersView from './views/business-owners';
 import OwnerConsumersView from './views/owner-consumers';
@@ -140,6 +141,7 @@ export default function App() {
               <Route path="/producer" element={<Home />} />
               <Route path="/producer/products" element={<DataProducts />} />
               <Route path="/producer/products/:productId" element={<DataProductDetails />} />
+              <Route path="/producer/hierarchy" element={<HierarchyBrowserView />} />
               <Route path="/producer/datasets" element={<AssetExplorerView />} />
               <Route path="/producer/datasets/:assetId" element={<AssetDetailView />} />
               <Route path="/producer/contracts" element={<DataContracts />} />
@@ -161,6 +163,7 @@ export default function App() {
               {/* === Persona: Data Steward /steward === */}
               <Route path="/steward" element={<Home />} />
               <Route path="/steward/commander" element={<CatalogCommander />} />
+              <Route path="/steward/hierarchy" element={<HierarchyBrowserView />} />
               <Route path="/steward/assets" element={<AssetExplorerView />} />
               <Route path="/steward/assets/:assetId" element={<AssetDetailView />} />
               <Route path="/steward/compliance" element={<Compliance />} />
@@ -178,6 +181,7 @@ export default function App() {
               <Route path="/governance/projects" element={<ProjectsView />} />
               <Route path="/governance/policies" element={<PoliciesView />} />
               <Route path="/governance/asset-types" element={<AssetTypesView />} />
+              <Route path="/governance/hierarchy" element={<HierarchyBrowserView />} />
               <Route path="/governance/assets" element={<AssetExplorerView />} />
               <Route path="/governance/assets/:assetId" element={<AssetDetailView />} />
               <Route path="/governance/tags" element={<SettingsTagsView />} />

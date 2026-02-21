@@ -6,7 +6,7 @@ and resolves entity names for display.
 
 from __future__ import annotations
 
-from typing import List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -18,6 +18,8 @@ from src.models.entity_relationships import (
     EntityRelationshipCreate,
     EntityRelationshipRead,
     EntityRelationshipSummary,
+    InstanceHierarchyNode,
+    HierarchyRootGroup,
 )
 from src.common.errors import ConflictError, NotFoundError
 from src.common.logging import get_logger
@@ -28,6 +30,14 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 ONTOS_NS = "http://ontos.app/ontology#"
+
+DEDICATED_TYPE_RESOLVERS: Dict[str, str] = {
+    "DataProduct": "data_products",
+    "DataDomain": "data_domains",
+    "DataContract": "data_contracts",
+    "Team": "teams",
+    "Project": "projects",
+}
 
 
 class EntityRelationshipsManager:
@@ -165,7 +175,7 @@ class EntityRelationshipsManager:
             rows = entity_relationship_repo.get_by_source(
                 db, source_type=source_type, source_id=source_id,
             )
-        return [self._to_read(r) for r in rows]
+        return [self._to_read(r, db=db) for r in rows]
 
     def get_incoming(
         self, db: Session,
@@ -181,7 +191,7 @@ class EntityRelationshipsManager:
             rows = entity_relationship_repo.get_by_target(
                 db, target_type=target_type, target_id=target_id,
             )
-        return [self._to_read(r) for r in rows]
+        return [self._to_read(r, db=db) for r in rows]
 
     def get_all_for_entity(
         self, db: Session, entity_type: str, entity_id: str
@@ -194,7 +204,7 @@ class EntityRelationshipsManager:
         outgoing = []
         incoming = []
         for r in rows:
-            read = self._to_read(r)
+            read = self._to_read(r, db=db)
             if r.source_type == entity_type and r.source_id == entity_id:
                 outgoing.append(read)
             else:
@@ -222,14 +232,296 @@ class EntityRelationshipsManager:
             relationship_type=relationship_type,
             skip=skip, limit=limit,
         )
-        return [self._to_read(r) for r in rows]
+        return [self._to_read(r, db=db) for r in rows]
+
+    # ------------------------------------------------------------------
+    # Instance Hierarchy
+    # ------------------------------------------------------------------
+
+    def _resolve_entity(
+        self, db: Session, entity_type: str, entity_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Resolve an entity's display info (name, status, description) by type and ID."""
+        table_name = DEDICATED_TYPE_RESOLVERS.get(entity_type)
+        if table_name:
+            return self._resolve_dedicated_entity(db, table_name, entity_id)
+        return self._resolve_asset_entity(db, entity_id)
+
+    @staticmethod
+    def _resolve_dedicated_entity(
+        db: Session, table_name: str, entity_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Resolve a dedicated-tier entity by querying its specific table."""
+        try:
+            if table_name == "data_products":
+                from src.db_models.data_products import DataProductDb
+                obj = db.query(DataProductDb).filter(DataProductDb.id == entity_id).first()
+                if obj:
+                    desc = None
+                    if obj.description and hasattr(obj.description, "purpose"):
+                        desc = obj.description.purpose
+                    return {"name": getattr(obj, "name", None) or entity_id, "status": getattr(obj, "status", None), "description": desc}
+            elif table_name == "data_domains":
+                from src.db_models.data_domains import DataDomain
+                obj = db.query(DataDomain).filter(DataDomain.id == entity_id).first()
+                if obj:
+                    return {"name": obj.name, "status": None, "description": obj.description}
+            elif table_name == "data_contracts":
+                from src.db_models.data_contracts import DataContractDb
+                obj = db.query(DataContractDb).filter(DataContractDb.id == entity_id).first()
+                if obj:
+                    return {"name": getattr(obj, "name", None) or entity_id, "status": getattr(obj, "status", None), "description": getattr(obj, "description_purpose", None)}
+            elif table_name == "teams":
+                from src.db_models.teams import TeamDb
+                obj = db.query(TeamDb).filter(TeamDb.id == entity_id).first()
+                if obj:
+                    return {"name": obj.name, "status": None, "description": getattr(obj, "description", None)}
+            elif table_name == "projects":
+                from src.db_models.projects import ProjectDb
+                obj = db.query(ProjectDb).filter(ProjectDb.id == entity_id).first()
+                if obj:
+                    return {"name": obj.name, "status": getattr(obj, "status", None), "description": getattr(obj, "description", None)}
+        except Exception as e:
+            logger.warning(f"Failed to resolve dedicated entity {table_name}:{entity_id}: {e}")
+        return None
+
+    @staticmethod
+    def _resolve_asset_entity(
+        db: Session, entity_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Resolve an asset-tier entity from the assets table."""
+        try:
+            from src.repositories.assets_repository import asset_repo
+            obj = asset_repo.get(db, entity_id)
+            if obj:
+                return {"name": obj.name, "status": obj.status, "description": obj.description}
+        except Exception as e:
+            logger.warning(f"Failed to resolve asset entity {entity_id}: {e}")
+        return None
+
+    def _get_icon_for_type(self, entity_type: str) -> Optional[str]:
+        """Get the UI icon for an entity type from the ontology."""
+        type_iri = self._normalize_entity_type(entity_type)
+        et = self._osm.get_entity_type(type_iri)
+        return et.ui_icon if et else None
+
+    def get_entity_hierarchy(
+        self,
+        db: Session,
+        entity_type: str,
+        entity_id: str,
+        max_depth: int = 5,
+    ) -> Optional[InstanceHierarchyNode]:
+        """Build a recursive hierarchy tree for a specific entity instance.
+
+        Uses ontology-defined hierarchical relationships to find children.
+        """
+        info = self._resolve_entity(db, entity_type, entity_id)
+        if not info:
+            return None
+
+        icon = self._get_icon_for_type(entity_type)
+
+        root = InstanceHierarchyNode(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            name=info["name"],
+            status=info.get("status"),
+            icon=icon,
+            description=info.get("description"),
+        )
+
+        self._expand_children(db, root, current_depth=0, max_depth=max_depth)
+        return root
+
+    def _expand_children(
+        self,
+        db: Session,
+        node: InstanceHierarchyNode,
+        current_depth: int,
+        max_depth: int,
+    ) -> None:
+        """Recursively expand children for a hierarchy node using ontology relationships."""
+        if current_depth >= max_depth:
+            return
+
+        type_iri = self._normalize_entity_type(node.entity_type)
+        hier_rels = self._osm.get_hierarchy_relationships(type_iri)
+
+        # For System, also check inverse relationships (assets belonging TO this system)
+        inverse_rels = self._osm.get_hierarchy_relationships_inverse(type_iri)
+
+        children: List[InstanceHierarchyNode] = []
+
+        # Outgoing hierarchical relationships (e.g. DataProduct -> hasDataset -> Dataset)
+        for rel_def in hier_rels:
+            rel_name = rel_def.property_name
+            child_rows = entity_relationship_repo.query_filtered(
+                db,
+                source_type=node.entity_type,
+                source_id=node.entity_id,
+                relationship_type=rel_name,
+                limit=500,
+            )
+            for row in child_rows:
+                child_info = self._resolve_entity(db, row.target_type, row.target_id)
+                if not child_info:
+                    continue
+                child_icon = self._get_icon_for_type(row.target_type)
+                child_node = InstanceHierarchyNode(
+                    entity_type=row.target_type,
+                    entity_id=row.target_id,
+                    name=child_info["name"],
+                    status=child_info.get("status"),
+                    icon=child_icon,
+                    description=child_info.get("description"),
+                    relationship_type=rel_name,
+                    relationship_label=rel_def.label,
+                )
+                self._expand_children(db, child_node, current_depth + 1, max_depth)
+                children.append(child_node)
+
+        # Incoming hierarchical relationships (e.g. System <- belongsToSystem <- Asset)
+        for rel_def in inverse_rels:
+            rel_name = rel_def.property_name
+            child_rows = entity_relationship_repo.query_filtered(
+                db,
+                target_type=node.entity_type,
+                target_id=node.entity_id,
+                relationship_type=rel_name,
+                limit=500,
+            )
+            for row in child_rows:
+                child_info = self._resolve_entity(db, row.source_type, row.source_id)
+                if not child_info:
+                    continue
+                child_icon = self._get_icon_for_type(row.source_type)
+                child_node = InstanceHierarchyNode(
+                    entity_type=row.source_type,
+                    entity_id=row.source_id,
+                    name=child_info["name"],
+                    status=child_info.get("status"),
+                    icon=child_icon,
+                    description=child_info.get("description"),
+                    relationship_type=rel_name,
+                    relationship_label=rel_def.inverse_label or rel_def.label,
+                )
+                self._expand_children(db, child_node, current_depth + 1, max_depth)
+                children.append(child_node)
+
+        node.children = children
+        node.child_count = len(children)
+
+    def get_hierarchy_roots(
+        self, db: Session, root_types: Optional[List[str]] = None
+    ) -> List[HierarchyRootGroup]:
+        """Return top-level entities grouped by type for the hierarchy browser.
+
+        Default root types: System, DataDomain
+        """
+        if not root_types:
+            root_types = ["System", "DataDomain"]
+
+        groups: List[HierarchyRootGroup] = []
+
+        for entity_type in root_types:
+            icon = self._get_icon_for_type(entity_type)
+            type_iri = self._normalize_entity_type(entity_type)
+            et = self._osm.get_entity_type(type_iri)
+            label = et.label if et else entity_type
+
+            roots: List[InstanceHierarchyNode] = []
+
+            if entity_type in DEDICATED_TYPE_RESOLVERS:
+                roots = self._get_dedicated_roots(db, entity_type, icon)
+            else:
+                roots = self._get_asset_roots(db, entity_type, icon)
+
+            groups.append(HierarchyRootGroup(
+                entity_type=entity_type,
+                label=label,
+                icon=icon,
+                roots=roots,
+            ))
+
+        return groups
+
+    def _get_dedicated_roots(
+        self, db: Session, entity_type: str, icon: Optional[str]
+    ) -> List[InstanceHierarchyNode]:
+        """Fetch all entities of a dedicated type as root nodes (without expanding children)."""
+        roots: List[InstanceHierarchyNode] = []
+        try:
+            if entity_type == "DataDomain":
+                from src.db_models.data_domains import DataDomain as DD
+                objs = db.query(DD).order_by(DD.name).all()
+                for obj in objs:
+                    roots.append(InstanceHierarchyNode(
+                        entity_type=entity_type,
+                        entity_id=str(obj.id),
+                        name=obj.name,
+                        description=obj.description,
+                        icon=icon,
+                    ))
+            elif entity_type == "DataProduct":
+                from src.db_models.data_products import DataProductDb
+                objs = db.query(DataProductDb).order_by(DataProductDb.name).all()
+                for obj in objs:
+                    desc = None
+                    if obj.description and hasattr(obj.description, "purpose"):
+                        desc = obj.description.purpose
+                    roots.append(InstanceHierarchyNode(
+                        entity_type=entity_type,
+                        entity_id=str(obj.id),
+                        name=obj.name or str(obj.id),
+                        status=obj.status,
+                        description=desc,
+                        icon=icon,
+                    ))
+        except Exception as e:
+            logger.warning(f"Failed to fetch dedicated roots for {entity_type}: {e}")
+        return roots
+
+    def _get_asset_roots(
+        self, db: Session, entity_type: str, icon: Optional[str]
+    ) -> List[InstanceHierarchyNode]:
+        """Fetch all asset-tier entities of a given type as root nodes."""
+        roots: List[InstanceHierarchyNode] = []
+        try:
+            from src.repositories.assets_repository import asset_type_repo, asset_repo
+            from src.db_models.assets import AssetDb
+
+            at = asset_type_repo.get_by_name(db, name=entity_type)
+            if not at:
+                return roots
+            objs = (
+                db.query(AssetDb)
+                .filter(AssetDb.asset_type_id == at.id)
+                .order_by(AssetDb.name)
+                .all()
+            )
+            for obj in objs:
+                roots.append(InstanceHierarchyNode(
+                    entity_type=entity_type,
+                    entity_id=str(obj.id),
+                    name=obj.name,
+                    status=obj.status,
+                    description=obj.description,
+                    icon=icon,
+                ))
+        except Exception as e:
+            logger.warning(f"Failed to fetch asset roots for {entity_type}: {e}")
+        return roots
 
     # ------------------------------------------------------------------
     # Mapping
     # ------------------------------------------------------------------
 
     def _to_read(
-        self, db_obj: EntityRelationshipDb, relationship_label: Optional[str] = None
+        self,
+        db_obj: EntityRelationshipDb,
+        relationship_label: Optional[str] = None,
+        db: Optional[Session] = None,
     ) -> EntityRelationshipRead:
         if not relationship_label:
             rel_iri = self._normalize_relationship_type(db_obj.relationship_type)
@@ -239,6 +531,16 @@ class EntityRelationshipsManager:
                 relationship_label = str(label_val) if label_val else db_obj.relationship_type
             except Exception:
                 relationship_label = db_obj.relationship_type
+
+        source_name: Optional[str] = None
+        target_name: Optional[str] = None
+        if db is not None:
+            src_info = self._resolve_entity(db, db_obj.source_type, db_obj.source_id)
+            if src_info:
+                source_name = src_info["name"]
+            tgt_info = self._resolve_entity(db, db_obj.target_type, db_obj.target_id)
+            if tgt_info:
+                target_name = tgt_info["name"]
 
         return EntityRelationshipRead(
             id=db_obj.id,
@@ -251,4 +553,6 @@ class EntityRelationshipsManager:
             created_by=db_obj.created_by,
             created_at=db_obj.created_at,
             relationship_label=relationship_label,
+            source_name=source_name,
+            target_name=target_name,
         )

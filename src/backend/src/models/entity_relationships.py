@@ -52,3 +52,26 @@ class EntityRelationshipSummary(BaseModel):
     outgoing: List[EntityRelationshipRead] = Field(default_factory=list)
     incoming: List[EntityRelationshipRead] = Field(default_factory=list)
     total: int = 0
+
+
+class InstanceHierarchyNode(BaseModel):
+    """A node in a recursive entity instance hierarchy tree (e.g. System > Dataset > Table > Column)."""
+    entity_type: str
+    entity_id: str
+    name: str
+    status: Optional[str] = None
+    icon: Optional[str] = None
+    description: Optional[str] = None
+    properties: Optional[Dict[str, Any]] = None
+    child_count: int = 0
+    children: List["InstanceHierarchyNode"] = Field(default_factory=list)
+    relationship_type: Optional[str] = None
+    relationship_label: Optional[str] = None
+
+
+class HierarchyRootGroup(BaseModel):
+    """A group of root entities for the hierarchy browser."""
+    entity_type: str
+    label: str
+    icon: Optional[str] = None
+    roots: List[InstanceHierarchyNode] = Field(default_factory=list)

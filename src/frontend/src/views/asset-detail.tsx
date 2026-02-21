@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Box, Loader2, AlertCircle, Pencil, Trash2,
-  MapPin, Globe, Calendar, User, Tag, FileJson,
+  MapPin, Globe, Calendar, User, Tag, FileJson, Network,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -224,6 +224,13 @@ export default function AssetDetailView() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/governance/hierarchy?type=${entityType}&id=${assetId}`)}
+          >
+            <Network className="mr-2 h-4 w-4" /> View in Hierarchy
+          </Button>
           <Button variant="outline" size="sm" disabled={!canWrite} onClick={() => setIsEditOpen(true)}>
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </Button>

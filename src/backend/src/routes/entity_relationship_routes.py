@@ -13,6 +13,8 @@ from src.models.entity_relationships import (
     EntityRelationshipCreate,
     EntityRelationshipRead,
     EntityRelationshipSummary,
+    InstanceHierarchyNode,
+    HierarchyRootGroup,
 )
 from src.controller.entity_relationships_manager import EntityRelationshipsManager
 from src.common.authorization import PermissionChecker
@@ -29,6 +31,7 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/entity-relationships", tags=["Entity Relationships"])
 entity_router = APIRouter(prefix="/api/entities", tags=["Entity Relationships"])
+hierarchy_router = APIRouter(prefix="/api/entity-hierarchy", tags=["Entity Hierarchy"])
 FEATURE_ID = "entity_relationships"
 
 
@@ -260,10 +263,90 @@ def get_entity_relationships(
         )
 
 
+# ===================== Instance Hierarchy =====================
+
+
+@hierarchy_router.get(
+    "/roots",
+    response_model=List[HierarchyRootGroup],
+    summary="Get root entities for the hierarchy browser",
+)
+def get_hierarchy_roots(
+    request: Request,
+    types: Optional[str] = Query(None, description="Comma-separated root types (default: System,DataDomain)"),
+    db: DBSessionDep = None,
+    manager: EntityRelationshipsManager = Depends(get_entity_relationships_manager),
+):
+    """Return top-level entities grouped by type for the hierarchy browser sidebar."""
+    try:
+        root_types = [t.strip() for t in types.split(",")] if types else None
+        return manager.get_hierarchy_roots(db=db, root_types=root_types)
+    except Exception as e:
+        logger.exception("Failed to get hierarchy roots")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get hierarchy roots",
+        )
+
+
+@hierarchy_router.get(
+    "/{entity_type}/{entity_id}",
+    response_model=InstanceHierarchyNode,
+    summary="Get the hierarchy tree for a specific entity",
+)
+def get_entity_hierarchy(
+    request: Request,
+    entity_type: str,
+    entity_id: str,
+    max_depth: int = Query(5, ge=1, le=10, description="Maximum tree depth to expand"),
+    db: DBSessionDep = None,
+    manager: EntityRelationshipsManager = Depends(get_entity_relationships_manager),
+):
+    """Build and return the recursive hierarchy tree for a specific entity instance."""
+    try:
+        result = manager.get_entity_hierarchy(
+            db=db, entity_type=entity_type, entity_id=entity_id, max_depth=max_depth,
+        )
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Entity {entity_type}:{entity_id} not found",
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to get entity hierarchy for %s:%s", entity_type, entity_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get entity hierarchy",
+        )
+
+
+@hierarchy_router.get(
+    "/paths",
+    summary="Get all hierarchy relationship paths from the ontology",
+)
+def get_hierarchy_paths(
+    request: Request,
+    manager: EntityRelationshipsManager = Depends(get_entity_relationships_manager),
+):
+    """Return all ontology-defined hierarchy paths (which types connect to which via which relationship)."""
+    try:
+        return manager._osm.get_all_hierarchy_paths()
+    except Exception as e:
+        logger.exception("Failed to get hierarchy paths")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get hierarchy paths",
+        )
+
+
 # ===================== Registration =====================
 
 
 def register_routes(app):
     app.include_router(router)
     app.include_router(entity_router)
-    logger.info("Entity relationship routes registered with prefix /api/entity-relationships, /api/entities")
+    app.include_router(hierarchy_router)
+    logger.info("Entity relationship routes registered with prefix /api/entity-relationships, /api/entities, /api/entity-hierarchy")

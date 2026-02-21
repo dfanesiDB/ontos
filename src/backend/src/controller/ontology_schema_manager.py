@@ -330,7 +330,74 @@ class OntologySchemaManager:
         )
 
     # ------------------------------------------------------------------
-    # Hierarchy
+    # Hierarchy Relationships (instance-level)
+    # ------------------------------------------------------------------
+
+    def get_hierarchy_relationships(self, type_iri: str) -> List[RelationshipDefinition]:
+        """Return only outgoing relationships marked ontos:isHierarchical for a given type.
+
+        These define which children an entity of this type can have in the hierarchy browser.
+        """
+        all_rels = self.get_relationships(type_iri)
+        hierarchical: List[RelationshipDefinition] = []
+
+        for rel in all_rels.outgoing:
+            prop = URIRef(rel.property_iri)
+            is_hier = self._graph.value(prop, ONTOS.isHierarchical)
+            if is_hier is not None and str(is_hier).lower() in ("true", "1"):
+                hierarchical.append(rel)
+
+        return hierarchical
+
+    def get_hierarchy_relationships_inverse(self, type_iri: str) -> List[RelationshipDefinition]:
+        """Return incoming hierarchical relationships (where this type is a child).
+
+        E.g. for System, returns belongsToSystem incoming relationships (Assets that belong to System).
+        """
+        all_rels = self.get_relationships(type_iri)
+        hierarchical: List[RelationshipDefinition] = []
+
+        for rel in all_rels.incoming:
+            prop = URIRef(rel.property_iri)
+            is_hier = self._graph.value(prop, ONTOS.isHierarchical)
+            if is_hier is not None and str(is_hier).lower() in ("true", "1"):
+                hierarchical.append(rel)
+
+        return hierarchical
+
+    def get_all_hierarchy_paths(self) -> Dict[str, List[Dict[str, str]]]:
+        """Return all hierarchy paths keyed by source type local name.
+
+        Result: {"DataProduct": [{"relationship": "hasDataset", "target_type": "Dataset", "label": "Datasets"}, ...]}
+        """
+        paths: Dict[str, List[Dict[str, str]]] = {}
+
+        for prop in self._graph.subjects(RDF.type, OWL.ObjectProperty):
+            is_hier = self._graph.value(prop, ONTOS.isHierarchical)
+            if is_hier is None or str(is_hier).lower() not in ("true", "1"):
+                continue
+
+            domains = set(self._graph.objects(prop, RDFS.domain))
+            ranges = set(self._graph.objects(prop, RDFS.range))
+            label = _str_or_none(self._graph.value(prop, ONTOS.uiLabel)) or _local_name(str(prop))
+            inverse_label = _str_or_none(self._graph.value(prop, ONTOS.inverseLabel))
+
+            for dom in domains:
+                dom_name = _local_name(str(dom))
+                for rng in ranges:
+                    rng_name = _local_name(str(rng))
+                    entry = {
+                        "relationship": _local_name(str(prop)),
+                        "target_type": rng_name,
+                        "label": label,
+                        "inverse_label": inverse_label,
+                    }
+                    paths.setdefault(dom_name, []).append(entry)
+
+        return paths
+
+    # ------------------------------------------------------------------
+    # Class Hierarchy (type-level)
     # ------------------------------------------------------------------
 
     def get_hierarchy(self, root_iri: Optional[str] = None) -> List[EntityHierarchyNode]:

@@ -80,6 +80,27 @@ export interface EntitySubscription {
   created_at: string;
 }
 
+export interface InstanceHierarchyNode {
+  entity_type: string;
+  entity_id: string;
+  name: string;
+  status?: string | null;
+  icon?: string | null;
+  description?: string | null;
+  properties?: Record<string, any> | null;
+  child_count: number;
+  children: InstanceHierarchyNode[];
+  relationship_type?: string | null;
+  relationship_label?: string | null;
+}
+
+export interface HierarchyRootGroup {
+  entity_type: string;
+  label: string;
+  icon?: string | null;
+  roots: InstanceHierarchyNode[];
+}
+
 export interface ProductDatasetSummary {
   relationship_id: string;
   dataset_id: string;
