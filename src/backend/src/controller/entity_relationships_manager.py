@@ -20,6 +20,9 @@ from src.models.entity_relationships import (
     EntityRelationshipSummary,
     InstanceHierarchyNode,
     HierarchyRootGroup,
+    LineageGraph,
+    LineageGraphNode,
+    LineageGraphEdge,
 )
 from src.common.errors import ConflictError, NotFoundError
 from src.common.logging import get_logger
@@ -512,6 +515,133 @@ class EntityRelationshipsManager:
         except Exception as e:
             logger.warning(f"Failed to fetch asset roots for {entity_type}: {e}")
         return roots
+
+    # ------------------------------------------------------------------
+    # Business Lineage Graph
+    # ------------------------------------------------------------------
+
+    BUSINESS_TYPES = {
+        "BusinessTerm", "LogicalEntity", "LogicalAttribute",
+        "System", "DataProduct", "Dataset", "DeliveryChannel",
+        "Policy", "DataDomain",
+    }
+    TECHNICAL_TYPES = {
+        "PhysicalTable", "PhysicalView", "PhysicalColumn", "DataContract",
+    }
+
+    def get_business_lineage(
+        self,
+        db: Session,
+        entity_type: str,
+        entity_id: str,
+        max_depth: int = 3,
+        include_technical: bool = False,
+        direction: Optional[str] = None,
+    ) -> LineageGraph:
+        """BFS traversal of entity relationships to build a business lineage graph.
+
+        Args:
+            direction: None for both, "downstream" for impact analysis (outgoing only),
+                       "upstream" for provenance (incoming only).
+        """
+        allowed_types = set(self.BUSINESS_TYPES)
+        if include_technical:
+            allowed_types |= self.TECHNICAL_TYPES
+
+        graph = LineageGraph(
+            center_entity_type=entity_type,
+            center_entity_id=entity_id,
+        )
+
+        node_key = f"{entity_type}:{entity_id}"
+        visited_nodes: Dict[str, LineageGraphNode] = {}
+        visited_edges: set = set()
+        queue: List[tuple] = [(entity_type, entity_id, 0)]
+
+        center_info = self._resolve_entity(db, entity_type, entity_id)
+        if not center_info:
+            return graph
+
+        center_node = LineageGraphNode(
+            id=node_key,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            name=center_info["name"],
+            icon=self._get_icon_for_type(entity_type),
+            status=center_info.get("status"),
+            description=center_info.get("description"),
+            is_center=True,
+        )
+        visited_nodes[node_key] = center_node
+
+        while queue:
+            cur_type, cur_id, depth = queue.pop(0)
+            if depth >= max_depth:
+                continue
+
+            rows = entity_relationship_repo.get_for_entity(
+                db, entity_type=cur_type, entity_id=cur_id,
+            )
+
+            for row in rows:
+                is_outgoing = (row.source_type == cur_type and row.source_id == cur_id)
+
+                if direction == "downstream" and not is_outgoing:
+                    continue
+                if direction == "upstream" and is_outgoing:
+                    continue
+
+                neighbor_type = row.target_type if is_outgoing else row.source_type
+                neighbor_id = row.target_id if is_outgoing else row.source_id
+
+                if neighbor_type not in allowed_types:
+                    continue
+
+                neighbor_key = f"{neighbor_type}:{neighbor_id}"
+
+                edge_key = (
+                    f"{row.source_type}:{row.source_id}",
+                    f"{row.target_type}:{row.target_id}",
+                    row.relationship_type,
+                )
+                if edge_key in visited_edges:
+                    continue
+                visited_edges.add(edge_key)
+
+                rel_label = row.relationship_type
+                try:
+                    rel_iri = self._normalize_relationship_type(row.relationship_type)
+                    from rdflib import URIRef, RDFS
+                    lv = self._osm._graph.value(URIRef(rel_iri), RDFS.label)
+                    if lv:
+                        rel_label = str(lv)
+                except Exception:
+                    pass
+
+                graph.edges.append(LineageGraphEdge(
+                    source=f"{row.source_type}:{row.source_id}",
+                    target=f"{row.target_type}:{row.target_id}",
+                    relationship_type=row.relationship_type,
+                    label=rel_label,
+                ))
+
+                if neighbor_key not in visited_nodes:
+                    n_info = self._resolve_entity(db, neighbor_type, neighbor_id)
+                    if not n_info:
+                        continue
+                    visited_nodes[neighbor_key] = LineageGraphNode(
+                        id=neighbor_key,
+                        entity_type=neighbor_type,
+                        entity_id=neighbor_id,
+                        name=n_info["name"],
+                        icon=self._get_icon_for_type(neighbor_type),
+                        status=n_info.get("status"),
+                        description=n_info.get("description"),
+                    )
+                    queue.append((neighbor_type, neighbor_id, depth + 1))
+
+        graph.nodes = list(visited_nodes.values())
+        return graph
 
     # ------------------------------------------------------------------
     # Mapping

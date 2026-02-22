@@ -13,6 +13,8 @@ from src.models.assets import (
 from src.db_models.assets import AssetTypeDb, AssetDb, AssetRelationshipDb
 from src.common.errors import ConflictError, NotFoundError, ValidationError
 from src.common.logging import get_logger
+from src.common.search_interfaces import SearchableAsset, SearchIndexItem
+from src.common.database import get_session_factory
 from src.controller.change_log_manager import change_log_manager
 
 logger = get_logger(__name__)
@@ -20,7 +22,7 @@ logger = get_logger(__name__)
 ONTOS_NS = "http://ontos.app/ontology#"
 
 
-class AssetsManager:
+class AssetsManager(SearchableAsset):
     def __init__(self, ontology_schema_manager=None):
         self._type_repo = asset_type_repo
         self._asset_repo = asset_repo
@@ -326,6 +328,47 @@ class AssetsManager:
             raise NotFoundError(f"Relationship '{relationship_id}' not found.")
         logger.info(f"Removed relationship {relationship_id}")
         return True
+
+    # ------------------------------------------------------------------
+    # SearchableAsset implementation
+    # ------------------------------------------------------------------
+
+    def get_search_index_items(self) -> List[SearchIndexItem]:
+        """Index all active assets for unified search."""
+        logger.info("AssetsManager: Fetching assets for search indexing...")
+        items: List[SearchIndexItem] = []
+        try:
+            session_factory = get_session_factory()
+            if not session_factory:
+                logger.warning("Session factory not available; cannot index assets.")
+                return []
+
+            with session_factory() as db:
+                all_assets = db.query(AssetDb).filter(AssetDb.status != 'retired').all()
+                for a in all_assets:
+                    type_name = a.asset_type.name if a.asset_type else 'Asset'
+                    tags = a.tags if isinstance(a.tags, list) else []
+
+                    items.append(SearchIndexItem(
+                        id=f"asset::{a.id}",
+                        type=f"asset-{type_name.lower().replace(' ', '-')}",
+                        title=a.name,
+                        description=a.description or '',
+                        link=f"/governance/assets/{a.id}",
+                        tags=tags,
+                        feature_id="assets",
+                        extra_data={
+                            "asset_type": type_name,
+                            "platform": a.platform or '',
+                            "status": a.status or '',
+                            "domain_id": str(a.domain_id) if a.domain_id else '',
+                        },
+                    ))
+
+                logger.info(f"Indexed {len(items)} assets for search.")
+        except Exception as e:
+            logger.error(f"Error indexing assets: {e}", exc_info=True)
+        return items
 
 
 # Singleton instance

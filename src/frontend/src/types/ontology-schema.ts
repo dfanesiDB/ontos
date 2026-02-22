@@ -143,3 +143,43 @@ export interface ProductHierarchy {
   product_name: string;
   datasets: HierarchyDataset[];
 }
+
+
+export interface LineageGraphNode {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  name: string;
+  icon?: string | null;
+  status?: string | null;
+  description?: string | null;
+  domain?: string | null;
+  is_center: boolean;
+}
+
+export interface LineageGraphEdge {
+  source: string;
+  target: string;
+  relationship_type: string;
+  label?: string | null;
+}
+
+export interface LineageGraph {
+  center_entity_type: string;
+  center_entity_id: string;
+  nodes: LineageGraphNode[];
+  edges: LineageGraphEdge[];
+}
+
+export interface ReadinessCheck {
+  name: string;
+  status: 'pass' | 'fail' | 'warn';
+  detail: string;
+}
+
+export interface ReadinessReport {
+  product_id: string;
+  product_name: string;
+  checks: ReadinessCheck[];
+  overall: 'ready' | 'not_ready' | 'partial';
+}

@@ -40,9 +40,12 @@ import ApprovalWizardDialog from '@/components/workflows/approval-wizard-dialog'
 import EntityCostsPanel from '@/components/costs/entity-costs-panel';
 import LinkContractToPortDialog from '@/components/data-products/link-contract-to-port-dialog';
 import VersioningRecommendationDialog from '@/components/common/versioning-recommendation-dialog';
-import { Link2, Unlink } from 'lucide-react';
+import { Link2, Unlink, GitBranch } from 'lucide-react';
 import { ProductHierarchyPanel } from '@/components/data-products/product-hierarchy-panel';
 import { EntityRelationshipPanel } from '@/components/common/entity-relationship-panel';
+import { BusinessLineageGraph } from '@/components/common/business-lineage-graph';
+import { ReadinessChecklist } from '@/components/data-products/readiness-checklist';
+import { LineageEditor } from '@/components/common/lineage-editor';
 
 /**
  * ODPS v1.0.0 Data Product Details View
@@ -116,6 +119,7 @@ export default function DataProductDetails() {
 
   // Contract linking states
   const [isLinkContractDialogOpen, setIsLinkContractDialogOpen] = useState(false);
+  const [isLineageEditorOpen, setIsLineageEditorOpen] = useState(false);
   const [selectedPortForLinking, setSelectedPortForLinking] = useState<number | null>(null);
 
   // Subscription state
@@ -1271,6 +1275,35 @@ export default function DataProductDetails() {
       {/* Data Hierarchy: Product > Dataset > Table > Column */}
       {productId && <ProductHierarchyPanel productId={productId} />}
 
+      {/* Business Lineage Graph */}
+      {productId && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                Business Lineage
+              </span>
+              {canModify && (
+                <Button size="sm" variant="outline" onClick={() => setIsLineageEditorOpen(true)}>
+                  <GitBranch className="mr-2 h-3.5 w-3.5" /> Manage Lineage
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BusinessLineageGraph
+              entityType="DataProduct"
+              entityId={productId}
+              className="h-[500px]"
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Production Readiness Checklist */}
+      {productId && <ReadinessChecklist productId={productId} />}
+
       {/* Output Ports Section */}
       <Card>
         <CardHeader>
@@ -1591,6 +1624,18 @@ export default function DataProductDetails() {
 
       {/* Costs Panel */}
       <EntityCostsPanel entityId={productId!} entityType="data_product" />
+
+      {/* Lineage Editor */}
+      {productId && product && (
+        <LineageEditor
+          isOpen={isLineageEditorOpen}
+          onOpenChange={setIsLineageEditorOpen}
+          entityType="DataProduct"
+          entityId={productId}
+          entityName={product.name || productId}
+          onSuccess={() => fetchProductDetails()}
+        />
+      )}
 
       {/* Dialogs */}
       <DataProductCreateDialog

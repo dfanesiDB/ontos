@@ -571,6 +571,10 @@ async def clear_demo_data(
             "DELETE FROM entity_relationships WHERE id::text LIKE '0215%'",
             # Entity relationships (0f4%) — asset lineage/containment
             "DELETE FROM entity_relationships WHERE id::text LIKE '0f4%'",
+            # Entity relationships (0fa%) — business lineage
+            "DELETE FROM entity_relationships WHERE id::text LIKE '0fa%'",
+            # Entity relationships (0f6%) — hasColumn
+            "DELETE FROM entity_relationships WHERE id::text LIKE '0f6%'",
             
             # Legacy: dataset subscriptions/custom properties (if old tables still exist)
             "DELETE FROM dataset_subscriptions WHERE id::text LIKE '022%'",
@@ -582,6 +586,13 @@ async def clear_demo_data(
             
             # Dataset assets (021%) — migrated from datasets table
             "DELETE FROM assets WHERE id::text LIKE '021%'",
+            
+            # Business Term assets (0f7%)
+            "DELETE FROM assets WHERE id::text LIKE '0f7%'",
+            # Logical Entity/Attribute assets (0f8%)
+            "DELETE FROM assets WHERE id::text LIKE '0f8%'",
+            # Delivery Channel assets (0f9%)
+            "DELETE FROM assets WHERE id::text LIKE '0f9%'",
             
             # Legacy: dataset instances (025) and datasets (021) (if old tables still exist)
             "DELETE FROM dataset_instances WHERE id::text LIKE '025%'",

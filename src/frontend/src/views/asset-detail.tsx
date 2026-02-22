@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, Pencil, Trash2,
-  MapPin, Globe, Calendar, User, Tag, FileJson, Network,
+  MapPin, Globe, Calendar, User, Tag, FileJson, Network, GitBranch,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AssetRead } from '@/types/asset';
 import { EntityTypeDefinition } from '@/types/ontology-schema';
 import { AssetFormDialog } from '@/components/common/asset-form-dialog';
+import { BusinessLineageGraph } from '@/components/common/business-lineage-graph';
+import { ImpactAnalysisPanel } from '@/components/common/impact-analysis-panel';
+import { LineageEditor } from '@/components/common/lineage-editor';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { RelativeDate } from '@/components/common/relative-date';
@@ -98,6 +101,7 @@ export default function AssetDetailView() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false);
   const [ontologyIri, setOntologyIri] = useState<string | null>(null);
+  const [isLineageEditorOpen, setIsLineageEditorOpen] = useState(false);
 
   const { get: apiGet, delete: apiDelete, loading: apiIsLoading } = useApi();
   const { toast } = useToast();
@@ -108,6 +112,32 @@ export default function AssetDetailView() {
   const featureId = 'assets';
   const canWrite = !permissionsLoading && hasPermission(featureId, FeatureAccessLevel.READ_WRITE);
   const canAdmin = !permissionsLoading && hasPermission(featureId, FeatureAccessLevel.ADMIN);
+
+  const entityType = asset?.asset_type_name || 'Asset';
+
+  const ontologyTypeName = useMemo(() => {
+    const typeMap: Record<string, string> = {
+      'Business Term': 'BusinessTerm',
+      'Logical Entity': 'LogicalEntity',
+      'Logical Attribute': 'LogicalAttribute',
+      'Delivery Channel': 'DeliveryChannel',
+      'Table': 'PhysicalTable',
+      'View': 'PhysicalView',
+      'Column': 'PhysicalColumn',
+      'ML Model': 'MLModel',
+      'API Endpoint': 'APIEndpoint',
+    };
+    return typeMap[entityType] || entityType.replace(/\s+/g, '');
+  }, [entityType]);
+
+  const showLineageTab = [
+    'BusinessTerm', 'LogicalEntity', 'System', 'DataProduct',
+    'Dataset', 'DeliveryChannel', 'Policy',
+  ].includes(ontologyTypeName);
+
+  const isBusinessTerm = ontologyTypeName === 'BusinessTerm';
+  const isPolicy = ontologyTypeName === 'Policy';
+  const isLogicalEntity = ontologyTypeName === 'LogicalEntity';
 
   const fetchAsset = useCallback(async () => {
     if (!assetId) return;
@@ -197,8 +227,6 @@ export default function AssetDetailView() {
     );
   }
 
-  const entityType = asset.asset_type_name || 'Asset';
-
   return (
     <div className="py-6 space-y-6">
       {/* Header */}
@@ -240,10 +268,19 @@ export default function AssetDetailView() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(`/governance/hierarchy?type=${entityType}&id=${assetId}`)}
+            onClick={() => navigate(`/governance/hierarchy?type=${ontologyTypeName}&id=${assetId}`)}
           >
             <Network className="mr-2 h-4 w-4" /> View in Hierarchy
           </Button>
+          {showLineageTab && canWrite && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsLineageEditorOpen(true)}
+            >
+              <GitBranch className="mr-2 h-4 w-4" /> Manage Lineage
+            </Button>
+          )}
           <Button variant="outline" size="sm" disabled={!canWrite} onClick={() => setIsEditOpen(true)}>
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </Button>
@@ -259,11 +296,20 @@ export default function AssetDetailView() {
         </div>
       </div>
 
-      {/* Tabs: Overview, Relationships */}
+      {/* Tabs */}
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="relationships">Relationships</TabsTrigger>
+          {showLineageTab && (
+            <TabsTrigger value="lineage">
+              <GitBranch className="mr-1 h-3.5 w-3.5" />
+              Business Lineage
+            </TabsTrigger>
+          )}
+          {(isPolicy || isBusinessTerm) && (
+            <TabsTrigger value="impact">Impact Analysis</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-6">
@@ -341,12 +387,97 @@ export default function AssetDetailView() {
             </CardContent>
           </Card>
 
-          {/* Properties */}
-          <PropertiesCard properties={asset.properties} />
+          {/* Type-specific: BusinessTerm - Definition & Synonyms */}
+          {isBusinessTerm && asset.properties && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Business Definition</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {asset.properties.definition && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Definition</Label>
+                    <p className="text-sm mt-1">{asset.properties.definition}</p>
+                  </div>
+                )}
+                {asset.properties.synonyms && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Synonyms</Label>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {String(asset.properties.synonyms).split(',').map((s) => (
+                        <Badge key={s.trim()} variant="secondary" className="text-xs">{s.trim()}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {asset.properties.examples && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Examples</Label>
+                    <p className="text-sm mt-1 text-muted-foreground">{asset.properties.examples}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Type-specific: LogicalEntity - Domain & Supertype */}
+          {isLogicalEntity && asset.properties && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Logical Model</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {asset.properties.entityDomain && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Domain</Label>
+                    <p className="text-sm mt-1">{asset.properties.entityDomain}</p>
+                  </div>
+                )}
+                {asset.properties.entitySupertype && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Supertype</Label>
+                    <p className="text-sm mt-1">{asset.properties.entitySupertype}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Type-specific: Policy - Type & Enforcement */}
+          {isPolicy && asset.properties && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Policy Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {asset.properties.policyType && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Policy Type</Label>
+                    <Badge variant="outline" className="ml-2">{asset.properties.policyType}</Badge>
+                  </div>
+                )}
+                {asset.properties.enforcementLevel && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Enforcement</Label>
+                    <Badge variant="outline" className="ml-2">{asset.properties.enforcementLevel}</Badge>
+                  </div>
+                )}
+                {asset.properties.policyContent && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Content</Label>
+                    <p className="text-sm mt-1 whitespace-pre-wrap">{asset.properties.policyContent}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Properties (non-type-specific fields) */}
+          {!isBusinessTerm && <PropertiesCard properties={asset.properties} />}
 
           {/* Quick relationship summary on overview */}
           <EntityRelationshipPanel
-            entityType={entityType}
+            entityType={ontologyTypeName}
             entityId={asset.id}
             title="Relationships"
             canEdit={canWrite}
@@ -355,12 +486,32 @@ export default function AssetDetailView() {
 
         <TabsContent value="relationships" className="mt-4">
           <EntityRelationshipPanel
-            entityType={entityType}
+            entityType={ontologyTypeName}
             entityId={asset.id}
             title="All Entity Relationships"
             canEdit={canWrite}
           />
         </TabsContent>
+
+        {showLineageTab && (
+          <TabsContent value="lineage" className="mt-4">
+            <BusinessLineageGraph
+              entityType={ontologyTypeName}
+              entityId={asset.id}
+              className="h-[600px]"
+            />
+          </TabsContent>
+        )}
+
+        {(isPolicy || isBusinessTerm) && (
+          <TabsContent value="impact" className="mt-4">
+            <ImpactAnalysisPanel
+              entityType={ontologyTypeName}
+              entityId={asset.id}
+              maxDepth={4}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Ownership Panel */}
@@ -391,6 +542,18 @@ export default function AssetDetailView() {
           assetTypeName={asset.asset_type_name || 'Asset'}
           assetTypeIri={ontologyIri}
           asset={asset}
+        />
+      )}
+
+      {/* Lineage Editor */}
+      {showLineageTab && asset && (
+        <LineageEditor
+          isOpen={isLineageEditorOpen}
+          onOpenChange={setIsLineageEditorOpen}
+          entityType={ontologyTypeName}
+          entityId={asset.id}
+          entityName={asset.name}
+          onSuccess={() => fetchAsset()}
         />
       )}
 

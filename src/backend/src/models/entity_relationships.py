@@ -75,3 +75,47 @@ class HierarchyRootGroup(BaseModel):
     label: str
     icon: Optional[str] = None
     roots: List[InstanceHierarchyNode] = Field(default_factory=list)
+
+
+class LineageGraphNode(BaseModel):
+    """A node in the business lineage graph."""
+    id: str = Field(..., description="Unique key: '{entity_type}:{entity_id}'")
+    entity_type: str
+    entity_id: str
+    name: str
+    icon: Optional[str] = None
+    status: Optional[str] = None
+    description: Optional[str] = None
+    domain: Optional[str] = None
+    is_center: bool = False
+
+
+class LineageGraphEdge(BaseModel):
+    """An edge in the business lineage graph."""
+    source: str = Field(..., description="Source node id ('{entity_type}:{entity_id}')")
+    target: str = Field(..., description="Target node id ('{entity_type}:{entity_id}')")
+    relationship_type: str
+    label: Optional[str] = None
+
+
+class LineageGraph(BaseModel):
+    """Full business lineage graph for rendering."""
+    center_entity_type: str
+    center_entity_id: str
+    nodes: List[LineageGraphNode] = Field(default_factory=list)
+    edges: List[LineageGraphEdge] = Field(default_factory=list)
+
+
+class ReadinessCheck(BaseModel):
+    """A single readiness check result."""
+    name: str
+    status: str = Field(..., description="pass, fail, or warn")
+    detail: str = ""
+
+
+class ReadinessReport(BaseModel):
+    """Production readiness report for a data product."""
+    product_id: str
+    product_name: str
+    checks: List[ReadinessCheck] = Field(default_factory=list)
+    overall: str = Field("not_ready", description="ready, not_ready, or partial")

@@ -2372,6 +2372,138 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================================
+-- 25b. BUSINESS TERM ASSETS (type=0f7)
+-- ============================================================================
+-- BusinessTerm assets for business lineage CUJ.
+
+INSERT INTO assets (id, name, description, asset_type_id, platform, location, domain_id, properties, tags, status, created_by, created_at, updated_at) VALUES
+('0f700001-0000-4000-8000-000000000001',
+ 'Customer', 'A party who has purchased or is eligible to purchase goods or services from the company.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Business Term' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"definition": "A party who has purchased or is eligible to purchase goods or services from the company. Includes both B2C end-consumers and B2B accounts.", "synonyms": "Client, Account, Buyer", "examples": "Retail customer with loyalty card, Enterprise account with MSA"}',
+ '["customer", "core-entity", "pii"]', 'active', 'system@demo', NOW(), NOW()),
+('0f700002-0000-4000-8000-000000000002',
+ 'Customer Lifetime Value', 'Predicted total net profit attributed to the entire future relationship with a customer.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Business Term' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"definition": "Predicted total net profit attributed to the entire future relationship with a customer. Calculated using RFM model and historical purchase data.", "synonyms": "CLV, CLTV, LTV", "examples": "A customer with CLV of $2,500 is a high-value segment target"}',
+ '["customer", "analytics", "kpi"]', 'active', 'system@demo', NOW(), NOW()),
+('0f700003-0000-4000-8000-000000000003',
+ 'Active Customer', 'A customer who has completed at least one transaction within the last 12 months.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Business Term' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"definition": "A customer who has completed at least one purchase transaction within the trailing 12-month window.", "synonyms": "Current Customer, Engaged Customer", "examples": "Customers in the active segment for marketing campaigns"}',
+ '["customer", "segmentation"]', 'active', 'system@demo', NOW(), NOW()),
+('0f700004-0000-4000-8000-000000000004',
+ 'Transaction', 'A financial exchange event recording the purchase of goods or services.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Business Term' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '0000000c-0000-4000-8000-000000000012',
+ '{"definition": "A financial exchange event recording the purchase of goods or services at a point of sale or online.", "synonyms": "Purchase, Sale, Order", "examples": "POS receipt #12345, Online order #ORD-67890"}',
+ '["retail", "financial", "core-entity"]', 'active', 'system@demo', NOW(), NOW())
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 25c. LOGICAL ENTITY & ATTRIBUTE ASSETS (type=0f8)
+-- ============================================================================
+-- Logical model entities bridging business terms to physical implementations.
+
+INSERT INTO assets (id, name, description, asset_type_id, platform, location, domain_id, properties, tags, status, created_by, created_at, updated_at) VALUES
+-- LogicalEntity: Customer
+('0f800001-0000-4000-8000-000000000001',
+ 'Customer', 'Logical entity representing a customer in the conceptual data model.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Logical Entity' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"entityDomain": "Customer", "entitySupertype": "Party"}',
+ '["customer", "cdm", "logical-model"]', 'active', 'system@demo', NOW(), NOW()),
+-- LogicalEntity: Transaction
+('0f800002-0000-4000-8000-000000000002',
+ 'Transaction', 'Logical entity representing a sales/purchase transaction.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Logical Entity' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '0000000c-0000-4000-8000-000000000012',
+ '{"entityDomain": "Sales", "entitySupertype": "Event"}',
+ '["retail", "cdm", "logical-model"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- LogicalAttributes for Customer
+('0f810001-0000-4000-8000-000000000001',
+ 'Customer.Id', 'Unique business identifier for a customer.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Logical Attribute' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"attributeDataType": "String", "isIdentifier": true, "sensitivityLevel": "internal"}',
+ '["customer", "identifier"]', 'active', 'system@demo', NOW(), NOW()),
+('0f810002-0000-4000-8000-000000000002',
+ 'Customer.Name', 'Full legal name of the customer.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Logical Attribute' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"attributeDataType": "String", "isIdentifier": false, "sensitivityLevel": "pii"}',
+ '["customer", "pii"]', 'active', 'system@demo', NOW(), NOW()),
+('0f810003-0000-4000-8000-000000000003',
+ 'Customer.Email', 'Primary email address of the customer.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Logical Attribute' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"attributeDataType": "String", "isIdentifier": false, "sensitivityLevel": "pii"}',
+ '["customer", "pii", "contact"]', 'active', 'system@demo', NOW(), NOW()),
+('0f810004-0000-4000-8000-000000000004',
+ 'Customer.Phone', 'Primary phone number of the customer.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Logical Attribute' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"attributeDataType": "String", "isIdentifier": false, "sensitivityLevel": "pii"}',
+ '["customer", "pii", "contact"]', 'active', 'system@demo', NOW(), NOW()),
+
+-- LogicalAttributes for Transaction
+('0f810005-0000-4000-8000-000000000005',
+ 'Transaction.Id', 'Unique business identifier for a transaction.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Logical Attribute' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '0000000c-0000-4000-8000-000000000012',
+ '{"attributeDataType": "String", "isIdentifier": true, "sensitivityLevel": "internal"}',
+ '["retail", "identifier"]', 'active', 'system@demo', NOW(), NOW()),
+('0f810006-0000-4000-8000-000000000006',
+ 'Transaction.Amount', 'Monetary value of the transaction.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Logical Attribute' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '0000000c-0000-4000-8000-000000000012',
+ '{"attributeDataType": "Decimal", "isIdentifier": false, "sensitivityLevel": "internal"}',
+ '["retail", "financial"]', 'active', 'system@demo', NOW(), NOW())
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
+-- 25d. DELIVERY CHANNEL ASSETS (type=0f9)
+-- ============================================================================
+-- Delivery channels through which data products expose data.
+
+INSERT INTO assets (id, name, description, asset_type_id, platform, location, domain_id, properties, tags, status, created_by, created_at, updated_at) VALUES
+('0f900001-0000-4000-8000-000000000001',
+ 'Customer 360 API', 'REST API serving unified customer profile data to downstream applications.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Delivery Channel' LIMIT 1), '00000000-0000-0000-0000-000000000000'), 'Databricks', 'https://api.example.com/v1/customers',
+ '00000007-0000-4000-8000-000000000007',
+ '{"channelType": "api", "channelUrl": "https://api.example.com/v1/customers", "channelFormat": "json", "refreshFrequency": "real_time"}',
+ '["customer", "api", "real-time"]', 'active', 'system@demo', NOW(), NOW()),
+('0f900002-0000-4000-8000-000000000002',
+ 'CLV Dashboard', 'Interactive dashboard showing customer lifetime value trends and segmentation.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Delivery Channel' LIMIT 1), '00000000-0000-0000-0000-000000000000'), 'Databricks', 'https://dashboards.example.com/clv',
+ '00000007-0000-4000-8000-000000000007',
+ '{"channelType": "dashboard", "channelUrl": "https://dashboards.example.com/clv", "channelFormat": "html", "refreshFrequency": "daily"}',
+ '["customer", "analytics", "dashboard"]', 'active', 'system@demo', NOW(), NOW()),
+('0f900003-0000-4000-8000-000000000003',
+ 'Daily Revenue Report', 'Automated daily revenue summary report delivered to finance stakeholders.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Delivery Channel' LIMIT 1), '00000000-0000-0000-0000-000000000000'), 'Databricks', NULL,
+ '0000000c-0000-4000-8000-000000000012',
+ '{"channelType": "report", "channelFormat": "pdf", "refreshFrequency": "daily"}',
+ '["retail", "finance", "report"]', 'active', 'system@demo', NOW(), NOW()),
+('0f900004-0000-4000-8000-000000000004',
+ 'Partner Data Feed', 'Nightly Parquet export of anonymized sales data for partner analytics.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Delivery Channel' LIMIT 1), '00000000-0000-0000-0000-000000000000'), 'Databricks', 's3://partner-data/exports/',
+ '0000000c-0000-4000-8000-000000000012',
+ '{"channelType": "file_export", "channelFormat": "parquet", "refreshFrequency": "daily"}',
+ '["retail", "partner", "export"]', 'active', 'system@demo', NOW(), NOW())
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
 -- 26. ENTITY RELATIONSHIPS (migrated from deprecated asset_relationships)
 -- ============================================================================
 -- Directed relationships between entities using the ontology-driven model.
@@ -2446,7 +2578,62 @@ INSERT INTO entity_relationships (id, source_type, source_id, target_type, targe
 ('0f60000d-0000-4000-8000-000000000013', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'PhysicalColumn', '0f50000d-0000-4000-8000-000000000013', 'hasColumn', NULL, 'system@demo', NOW()),
 ('0f60000e-0000-4000-8000-000000000014', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'PhysicalColumn', '0f50000e-0000-4000-8000-000000000014', 'hasColumn', NULL, 'system@demo', NOW()),
 ('0f60000f-0000-4000-8000-000000000015', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'PhysicalColumn', '0f50000f-0000-4000-8000-000000000015', 'hasColumn', NULL, 'system@demo', NOW()),
-('0f600010-0000-4000-8000-000000000016', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'PhysicalColumn', '0f500010-0000-4000-8000-000000000016', 'hasColumn', NULL, 'system@demo', NOW())
+('0f600010-0000-4000-8000-000000000016', 'PhysicalView', '0250000f-0000-4000-8000-000000000015', 'PhysicalColumn', '0f500010-0000-4000-8000-000000000016', 'hasColumn', NULL, 'system@demo', NOW()),
+
+-- ============================================================================
+-- 26b. BUSINESS LINEAGE RELATIONSHIPS
+-- ============================================================================
+
+-- BusinessTerm "Customer" relates to LogicalEntity "Customer"
+('0fa00001-0000-4000-8000-000000000001', 'BusinessTerm', '0f700001-0000-4000-8000-000000000001', 'LogicalEntity', '0f800001-0000-4000-8000-000000000001', 'relatesTo', NULL, 'system@demo', NOW()),
+-- BusinessTerm "Transaction" relates to LogicalEntity "Transaction"
+('0fa00002-0000-4000-8000-000000000002', 'BusinessTerm', '0f700004-0000-4000-8000-000000000004', 'LogicalEntity', '0f800002-0000-4000-8000-000000000002', 'relatesTo', NULL, 'system@demo', NOW()),
+-- BusinessTerm "Customer Lifetime Value" relates to LogicalEntity "Customer"
+('0fa00003-0000-4000-8000-000000000003', 'BusinessTerm', '0f700002-0000-4000-8000-000000000002', 'LogicalEntity', '0f800001-0000-4000-8000-000000000001', 'relatesTo', NULL, 'system@demo', NOW()),
+
+-- LogicalEntity "Customer" has attributes
+('0fa00010-0000-4000-8000-000000000010', 'LogicalEntity', '0f800001-0000-4000-8000-000000000001', 'LogicalAttribute', '0f810001-0000-4000-8000-000000000001', 'hasLogicalAttribute', NULL, 'system@demo', NOW()),
+('0fa00011-0000-4000-8000-000000000011', 'LogicalEntity', '0f800001-0000-4000-8000-000000000001', 'LogicalAttribute', '0f810002-0000-4000-8000-000000000002', 'hasLogicalAttribute', NULL, 'system@demo', NOW()),
+('0fa00012-0000-4000-8000-000000000012', 'LogicalEntity', '0f800001-0000-4000-8000-000000000001', 'LogicalAttribute', '0f810003-0000-4000-8000-000000000003', 'hasLogicalAttribute', NULL, 'system@demo', NOW()),
+('0fa00013-0000-4000-8000-000000000013', 'LogicalEntity', '0f800001-0000-4000-8000-000000000001', 'LogicalAttribute', '0f810004-0000-4000-8000-000000000004', 'hasLogicalAttribute', NULL, 'system@demo', NOW()),
+
+-- LogicalEntity "Transaction" has attributes
+('0fa00014-0000-4000-8000-000000000014', 'LogicalEntity', '0f800002-0000-4000-8000-000000000002', 'LogicalAttribute', '0f810005-0000-4000-8000-000000000005', 'hasLogicalAttribute', NULL, 'system@demo', NOW()),
+('0fa00015-0000-4000-8000-000000000015', 'LogicalEntity', '0f800002-0000-4000-8000-000000000002', 'LogicalAttribute', '0f810006-0000-4000-8000-000000000006', 'hasLogicalAttribute', NULL, 'system@demo', NOW()),
+
+-- LogicalAttribute "Customer.Id" implemented by Customer Master Data Dataset
+('0fa00020-0000-4000-8000-000000000020', 'LogicalAttribute', '0f810001-0000-4000-8000-000000000001', 'Dataset', '02100001-0000-4000-8000-000000000001', 'implementedBy', NULL, 'system@demo', NOW()),
+-- LogicalAttribute "Customer.Email" implemented by Customer Master Data Dataset
+('0fa00021-0000-4000-8000-000000000021', 'LogicalAttribute', '0f810003-0000-4000-8000-000000000003', 'Dataset', '02100001-0000-4000-8000-000000000001', 'implementedBy', NULL, 'system@demo', NOW()),
+-- LogicalAttribute "Transaction.Id" implemented by Sales Analytics Dataset
+('0fa00022-0000-4000-8000-000000000022', 'LogicalAttribute', '0f810005-0000-4000-8000-000000000005', 'Dataset', '02100004-0000-4000-8000-000000000004', 'implementedBy', NULL, 'system@demo', NOW()),
+-- LogicalAttribute "Transaction.Amount" implemented by Sales Analytics Dataset
+('0fa00023-0000-4000-8000-000000000023', 'LogicalAttribute', '0f810006-0000-4000-8000-000000000006', 'Dataset', '02100004-0000-4000-8000-000000000004', 'implementedBy', NULL, 'system@demo', NOW()),
+
+-- DataProduct "Customer Marketing Recommendations" exposes delivery channels
+('0fa00030-0000-4000-8000-000000000030', 'DataProduct', '00700006-0000-4000-8000-000000000006', 'DeliveryChannel', '0f900001-0000-4000-8000-000000000001', 'exposes', NULL, 'system@demo', NOW()),
+('0fa00031-0000-4000-8000-000000000031', 'DataProduct', '00700006-0000-4000-8000-000000000006', 'DeliveryChannel', '0f900002-0000-4000-8000-000000000002', 'exposes', NULL, 'system@demo', NOW()),
+-- DataProduct "Retail Performance Dashboard" exposes delivery channels
+('0fa00032-0000-4000-8000-000000000032', 'DataProduct', '00700002-0000-4000-8000-000000000002', 'DeliveryChannel', '0f900003-0000-4000-8000-000000000003', 'exposes', NULL, 'system@demo', NOW()),
+-- DataProduct "Prepared Sales Transactions" exposes delivery channels
+('0fa00033-0000-4000-8000-000000000033', 'DataProduct', '00700003-0000-4000-8000-000000000003', 'DeliveryChannel', '0f900004-0000-4000-8000-000000000004', 'exposes', NULL, 'system@demo', NOW()),
+
+-- DataProduct dependencies (depends_on)
+-- "Customer Marketing Recommendations" depends on "Prepared Sales Transactions"
+('0fa00040-0000-4000-8000-000000000040', 'DataProduct', '00700006-0000-4000-8000-000000000006', 'DataProduct', '00700003-0000-4000-8000-000000000003', 'dependsOn', NULL, 'system@demo', NOW()),
+-- "Retail Performance Dashboard" depends on "POS Transaction Stream"
+('0fa00041-0000-4000-8000-000000000041', 'DataProduct', '00700002-0000-4000-8000-000000000002', 'DataProduct', '00700001-0000-4000-8000-000000000001', 'dependsOn', NULL, 'system@demo', NOW()),
+-- "Demand Forecast" depends on "Inventory Optimization"
+('0fa00042-0000-4000-8000-000000000042', 'DataProduct', '00700004-0000-4000-8000-000000000004', 'DataProduct', '00700005-0000-4000-8000-000000000005', 'dependsOn', NULL, 'system@demo', NOW()),
+
+-- Policy "Customer PII Policy" applies to BusinessTerm "Customer" and LogicalAttributes
+('0fa00050-0000-4000-8000-000000000050', 'Policy', '0f100001-0000-4000-8000-000000000001', 'BusinessTerm', '0f700001-0000-4000-8000-000000000001', 'appliesTo', NULL, 'system@demo', NOW()),
+('0fa00051-0000-4000-8000-000000000051', 'Policy', '0f100001-0000-4000-8000-000000000001', 'LogicalAttribute', '0f810003-0000-4000-8000-000000000003', 'appliesTo', NULL, 'system@demo', NOW()),
+('0fa00052-0000-4000-8000-000000000052', 'Policy', '0f100001-0000-4000-8000-000000000001', 'LogicalAttribute', '0f810004-0000-4000-8000-000000000004', 'appliesTo', NULL, 'system@demo', NOW()),
+
+-- Delivery channels belong to systems
+('0fa00060-0000-4000-8000-000000000060', 'DeliveryChannel', '0f900001-0000-4000-8000-000000000001', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
+('0fa00061-0000-4000-8000-000000000061', 'DeliveryChannel', '0f900002-0000-4000-8000-000000000002', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW())
 
 ON CONFLICT (id) DO NOTHING;
 

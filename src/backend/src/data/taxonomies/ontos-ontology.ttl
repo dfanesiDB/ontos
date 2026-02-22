@@ -434,6 +434,45 @@ ontos:Stream a rdfs:Class ;
     ontos:uiDisplayOrder 2 ;
     ontos:uiPersonaVisibility "admin,steward,producer" .
 
+# --- Semantic / logical model assets ---
+
+ontos:LogicalEntity a rdfs:Class ;
+    rdfs:subClassOf ontos:Asset ;
+    rdfs:label "Logical Entity" ;
+    rdfs:comment "Business-level entity in the conceptual/logical data model (e.g. Customer, Order, Product)" ;
+    skos:example "Customer, Order, Product, Employee" ;
+    skos:definition "Part of the CDM layer connecting business terms to physical implementations" ;
+    ontos:modelTier "asset" ;
+    ontos:uiIcon "Shapes" ;
+    ontos:uiCategory "governance" ;
+    ontos:uiDisplayOrder 12 ;
+    ontos:uiPersonaVisibility "admin,steward,producer,consumer" .
+
+ontos:LogicalAttribute a rdfs:Class ;
+    rdfs:subClassOf ontos:Asset ;
+    rdfs:label "Logical Attribute" ;
+    rdfs:comment "Named attribute of a logical entity representing a business-meaningful data element" ;
+    skos:example "Customer.Id, Customer.Email, Order.TotalAmount" ;
+    skos:definition "Bridges business terms to physical columns via implemented_by relationships" ;
+    ontos:modelTier "asset" ;
+    ontos:uiIcon "Tag" ;
+    ontos:uiCategory "governance" ;
+    ontos:uiDisplayOrder 13 ;
+    ontos:uiPersonaVisibility "admin,steward,producer,consumer" .
+
+# --- Delivery channel assets ---
+
+ontos:DeliveryChannel a rdfs:Class ;
+    rdfs:subClassOf ontos:Asset ;
+    rdfs:label "Delivery Channel" ;
+    rdfs:comment "Mechanism through which data products expose data to consumers (dashboard, API, report, file, stream)" ;
+    skos:example "Customer 360 API, CLV Dashboard, Daily Revenue Report, Partner Data Feed" ;
+    ontos:modelTier "asset" ;
+    ontos:uiIcon "Send" ;
+    ontos:uiCategory "integration" ;
+    ontos:uiDisplayOrder 3 ;
+    ontos:uiPersonaVisibility "admin,steward,producer,consumer" .
+
 # --- System assets ---
 
 ontos:System a rdfs:Class ;
@@ -667,6 +706,85 @@ ontos:memberOfTeam a owl:ObjectProperty ;
     rdfs:domain ontos:TeamMember ;
     rdfs:range ontos:Team ;
     ontos:cardinality "1..1" .
+
+
+# ############################################################################
+#
+#   SECTION 7b — OBJECT PROPERTIES: BUSINESS LINEAGE & LOGICAL MODEL
+#
+# ############################################################################
+
+ontos:relatesTo a owl:ObjectProperty ;
+    rdfs:label "relates to" ;
+    rdfs:comment "Links a business term to logical entities or attributes that define it" ;
+    rdfs:domain ontos:BusinessTerm ;
+    rdfs:range ontos:LogicalEntity , ontos:LogicalAttribute ;
+    ontos:uiLabel "Related Logical Model" ;
+    ontos:inverseLabel "Business Terms" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" .
+
+ontos:hasLogicalAttribute a owl:ObjectProperty ;
+    rdfs:label "has logical attribute" ;
+    rdfs:comment "Links a logical entity to its constituent attributes" ;
+    rdfs:domain ontos:LogicalEntity ;
+    rdfs:range ontos:LogicalAttribute ;
+    ontos:uiLabel "Attributes" ;
+    ontos:inverseLabel "Logical Entity" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
+
+ontos:implementedBy a owl:ObjectProperty ;
+    rdfs:label "implemented by" ;
+    rdfs:comment "Links a logical attribute to the physical assets (columns, datasets) that implement it" ;
+    rdfs:domain ontos:LogicalAttribute ;
+    rdfs:range ontos:Dataset , ontos:PhysicalColumn ;
+    ontos:uiLabel "Implemented By" ;
+    ontos:inverseLabel "Implements" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" .
+
+ontos:exposes a owl:ObjectProperty ;
+    rdfs:label "exposes" ;
+    rdfs:comment "Links a data product to the delivery channels through which it serves data" ;
+    rdfs:domain ontos:DataProduct ;
+    rdfs:range ontos:DeliveryChannel ;
+    ontos:uiLabel "Delivery Channels" ;
+    ontos:inverseLabel "Exposed By" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
+
+ontos:dependsOn a owl:ObjectProperty ;
+    rdfs:label "depends on" ;
+    rdfs:comment "Links a data product to upstream data products it depends on" ;
+    rdfs:domain ontos:DataProduct ;
+    rdfs:range ontos:DataProduct ;
+    ontos:uiLabel "Depends On" ;
+    ontos:inverseLabel "Depended On By" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" .
+
+ontos:contractFor a owl:ObjectProperty ;
+    rdfs:label "contract for" ;
+    rdfs:comment "Links a data contract to the datasets or API endpoints it governs" ;
+    rdfs:domain ontos:DataContract ;
+    rdfs:range ontos:Dataset , ontos:APIEndpoint ;
+    ontos:uiLabel "Contract For" ;
+    ontos:inverseLabel "Governed By Contract" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" .
+
+ontos:appliesTo a owl:ObjectProperty ;
+    rdfs:label "applies to" ;
+    rdfs:comment "Links a policy to the entities it governs" ;
+    rdfs:domain ontos:Policy ;
+    rdfs:range ontos:DataDomain , ontos:BusinessTerm , ontos:LogicalAttribute , ontos:DataProduct ;
+    ontos:uiLabel "Applies To" ;
+    ontos:inverseLabel "Governed By Policy" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" .
 
 
 # ############################################################################
@@ -1246,6 +1364,107 @@ ontos:topicName a owl:DatatypeProperty ;
     ontos:uiFieldOrder 11 ;
     ontos:isRequired false ;
     ontos:uiFieldGroup "technical" .
+
+# --- LogicalEntity ---
+
+ontos:entityDomain a owl:DatatypeProperty ;
+    rdfs:label "entity domain" ;
+    rdfs:comment "The business domain this logical entity belongs to (e.g. Customer, Sales, Finance)" ;
+    rdfs:domain ontos:LogicalEntity ;
+    rdfs:range xsd:string ;
+    ontos:uiFieldType "text" ;
+    ontos:uiFieldOrder 10 ;
+    ontos:isRequired false ;
+    ontos:uiFieldGroup "basic" .
+
+ontos:entitySupertype a owl:DatatypeProperty ;
+    rdfs:label "entity supertype" ;
+    rdfs:comment "Parent entity in the conceptual model hierarchy (e.g. Party for Customer/Supplier)" ;
+    rdfs:domain ontos:LogicalEntity ;
+    rdfs:range xsd:string ;
+    ontos:uiFieldType "text" ;
+    ontos:uiFieldOrder 11 ;
+    ontos:isRequired false ;
+    ontos:uiFieldGroup "basic" .
+
+# --- LogicalAttribute ---
+
+ontos:attributeDataType a owl:DatatypeProperty ;
+    rdfs:label "logical data type" ;
+    rdfs:comment "Logical data type of the attribute (e.g. String, Integer, Date, Boolean)" ;
+    rdfs:domain ontos:LogicalAttribute ;
+    rdfs:range xsd:string ;
+    ontos:uiFieldType "select" ;
+    ontos:uiFieldOrder 10 ;
+    ontos:isRequired false ;
+    ontos:uiFieldGroup "technical" ;
+    ontos:uiSelectOptions "String,Integer,Decimal,Boolean,Date,DateTime,Binary,Array,Map" .
+
+ontos:isIdentifier a owl:DatatypeProperty ;
+    rdfs:label "is identifier" ;
+    rdfs:comment "Whether this attribute serves as a business identifier for the entity" ;
+    rdfs:domain ontos:LogicalAttribute ;
+    rdfs:range xsd:boolean ;
+    ontos:uiFieldType "boolean" ;
+    ontos:uiFieldOrder 11 ;
+    ontos:isRequired false ;
+    ontos:uiFieldGroup "basic" .
+
+ontos:sensitivityLevel a owl:DatatypeProperty ;
+    rdfs:label "sensitivity level" ;
+    rdfs:comment "Data sensitivity classification for this attribute" ;
+    rdfs:domain ontos:LogicalAttribute ;
+    rdfs:range xsd:string ;
+    ontos:uiFieldType "select" ;
+    ontos:uiFieldOrder 12 ;
+    ontos:isRequired false ;
+    ontos:uiFieldGroup "governance" ;
+    ontos:uiSelectOptions "public,internal,confidential,restricted,pii" .
+
+# --- DeliveryChannel ---
+
+ontos:channelType a owl:DatatypeProperty ;
+    rdfs:label "channel type" ;
+    rdfs:comment "Type of delivery mechanism" ;
+    rdfs:domain ontos:DeliveryChannel ;
+    rdfs:range xsd:string ;
+    ontos:uiFieldType "select" ;
+    ontos:uiFieldOrder 10 ;
+    ontos:isRequired true ;
+    ontos:uiFieldGroup "basic" ;
+    ontos:uiSelectOptions "dashboard,report,api,file_export,stream,data_share,embedded_analytics" .
+
+ontos:channelUrl a owl:DatatypeProperty ;
+    rdfs:label "channel URL" ;
+    rdfs:comment "Access URL for the delivery channel" ;
+    rdfs:domain ontos:DeliveryChannel ;
+    rdfs:range xsd:anyURI ;
+    ontos:uiFieldType "url" ;
+    ontos:uiFieldOrder 11 ;
+    ontos:isRequired false ;
+    ontos:uiFieldGroup "technical" .
+
+ontos:channelFormat a owl:DatatypeProperty ;
+    rdfs:label "output format" ;
+    rdfs:comment "Data format delivered by the channel" ;
+    rdfs:domain ontos:DeliveryChannel ;
+    rdfs:range xsd:string ;
+    ontos:uiFieldType "select" ;
+    ontos:uiFieldOrder 12 ;
+    ontos:isRequired false ;
+    ontos:uiFieldGroup "technical" ;
+    ontos:uiSelectOptions "json,csv,parquet,delta,avro,html,pdf,excel" .
+
+ontos:refreshFrequency a owl:DatatypeProperty ;
+    rdfs:label "refresh frequency" ;
+    rdfs:comment "How often the delivery channel is updated" ;
+    rdfs:domain ontos:DeliveryChannel ;
+    rdfs:range xsd:string ;
+    ontos:uiFieldType "select" ;
+    ontos:uiFieldOrder 13 ;
+    ontos:isRequired false ;
+    ontos:uiFieldGroup "basic" ;
+    ontos:uiSelectOptions "real_time,hourly,daily,weekly,monthly,on_demand" .
 
 # --- System ---
 
