@@ -8,7 +8,7 @@ import { BoxSelect, Shield, Shapes, ArrowRight, TrendingUp, Globe, GitBranch, Ta
 
 export default function GovernanceHome() {
   const [domains, setDomains] = useState<any[]>([]);
-  const [policies, setPolicies] = useState<any[]>([]);
+  const [policyCount, setPolicyCount] = useState<number>(0);
   const [assetTypes, setAssetTypes] = useState<any[]>([]);
   const [compliance, setCompliance] = useState<{ score?: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,14 +18,28 @@ export default function GovernanceHome() {
     if (didFetch.current) return;
     didFetch.current = true;
 
+    const fetchPolicyCount = async () => {
+      try {
+        const typesRes = await fetch('/api/asset-types/summary');
+        if (!typesRes.ok) return 0;
+        const types = await typesRes.json();
+        const policyType = (Array.isArray(types) ? types : []).find((t: any) => t.name === 'Policy');
+        if (!policyType) return 0;
+        const assetsRes = await fetch(`/api/assets?asset_type_id=${policyType.id}&limit=1000`);
+        if (!assetsRes.ok) return 0;
+        const assets = await assetsRes.json();
+        return Array.isArray(assets) ? assets.length : 0;
+      } catch { return 0; }
+    };
+
     Promise.allSettled([
       fetch('/api/data-domains').then(r => r.ok ? r.json() : []),
-      fetch('/api/policies').then(r => r.ok ? r.json() : []),
+      fetchPolicyCount(),
       fetch('/api/ontology/entity-types?tier=asset').then(r => r.ok ? r.json() : []),
       fetch('/api/compliance/trend').then(r => r.ok ? r.json() : []),
     ]).then(([domainsData, policiesData, typesData, trendData]) => {
       if (domainsData.status === 'fulfilled') setDomains(Array.isArray(domainsData.value) ? domainsData.value : []);
-      if (policiesData.status === 'fulfilled') setPolicies(Array.isArray(policiesData.value) ? policiesData.value : policiesData.value?.items ?? []);
+      if (policiesData.status === 'fulfilled') setPolicyCount(typeof policiesData.value === 'number' ? policiesData.value : 0);
       if (typesData.status === 'fulfilled') setAssetTypes(Array.isArray(typesData.value) ? typesData.value : []);
       if (trendData.status === 'fulfilled') {
         const trend = Array.isArray(trendData.value) ? trendData.value : [];
@@ -61,7 +75,7 @@ export default function GovernanceHome() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Policies</p>
-                <p className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : policies.length}</p>
+                <p className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : policyCount}</p>
               </div>
             </div>
           </CardContent>
@@ -136,7 +150,7 @@ export default function GovernanceHome() {
               <Link to="/governance/domains"><BoxSelect className="h-4 w-4 mr-2" />Manage Domains</Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/governance/policies"><Shield className="h-4 w-4 mr-2" />Manage Policies</Link>
+              <Link to="/governance/assets"><Shield className="h-4 w-4 mr-2" />Manage Policies</Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
               <Link to="/governance/assets"><Shapes className="h-4 w-4 mr-2" />Asset Explorer</Link>

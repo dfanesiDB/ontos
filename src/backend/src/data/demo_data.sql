@@ -71,11 +71,11 @@
 --   02d = data_profiling_runs
 --   02e = suggested_quality_checks
 --   0f0 = business_roles
---   0f1 = policies
+--   0f1 = policies (now stored as Policy assets in 0f3)
 --   0f2 = asset_types
 --   0f3 = assets
 --   0f4 = asset_relationships
---   0f5 = policy_attachments
+--   0f5 = policy_attachments (now stored as entity_relationships)
 --   0f6 = business_owners
 -- ============================================================================
 
@@ -2038,92 +2038,6 @@ INSERT INTO business_roles (id, name, description, category, is_system, status, 
 ON CONFLICT (id) DO NOTHING;
 
 
--- ============================================================================
--- 23. POLICIES (type=0f1)
--- ============================================================================
--- Formal, reusable rules for data access, usage, protection, and management.
-
-INSERT INTO policies (id, name, description, policy_type, status, content, enforcement_level, version, metadata, is_system, created_by, created_at, updated_at) VALUES
-
--- Access / Privacy policies
-('0f100001-0000-4000-8000-000000000001',
- 'Customer PII Protection Policy',
- 'Customer personally identifiable information must not be visible in any external-facing output. Only users with the Customer Analytics role may view unmasked email and phone fields.',
- 'access_privacy', 'active',
- E'## Scope\nApplies to all assets and data products in the Customer domain.\n\n## Rules\n1. Columns classified as PII (email, phone, address, SSN) MUST be masked in external dashboards and APIs.\n2. Only users with the **Customer Analytics** group may access unmasked PII columns.\n3. Row-level security must filter customer data to the originating region.\n\n## Enforcement\n- Column masking policies in Unity Catalog.\n- Row-level filters on customer_region.',
- 'mandatory', 'v1.0',
- '{"applies_to": ["email", "phone", "address"], "regulation": "GDPR, CCPA"}',
- true, 'system@demo', NOW() - INTERVAL '90 days', NOW() - INTERVAL '5 days'),
-
-('0f100002-0000-4000-8000-000000000002',
- 'Employee Data Access Policy',
- 'Employee HR data is restricted to HR department members and authorized managers.',
- 'access_privacy', 'active',
- E'## Scope\nHuman Resources domain.\n\n## Rules\n1. Salary, SSN, and performance review data are restricted to HR group members.\n2. Managers may view direct-report summaries only.\n3. No bulk export of employee PII without VP-level approval.',
- 'mandatory', 'v1.1',
- '{"regulation": "SOX, internal HR policy"}',
- true, 'system@demo', NOW() - INTERVAL '120 days', NOW() - INTERVAL '10 days'),
-
--- Data Quality policies
-('0f100003-0000-4000-8000-000000000003',
- 'Finance Zero-Null Key Fields Policy',
- 'For all Finance domain products, key fields (Invoice.Id, Booking.Amount) must have 0% nulls in production outputs, and data must be refreshed at least once per day.',
- 'data_quality', 'active',
- E'## Scope\nFinance domain — all production data products.\n\n## Rules\n1. Primary key fields must have null_rate = 0%.\n2. Amount/currency fields must have null_rate = 0%.\n3. Freshness SLA: data must be updated within 24 hours.\n4. Duplicate rate for key fields must be < 0.01%.\n\n## Enforcement\nEncoded as expectations in ODCS contracts. Validated by nightly compliance runs.',
- 'automated', 'v2.0',
- '{"freshness_hours": 24, "null_tolerance": 0}',
- true, 'system@demo', NOW() - INTERVAL '60 days', NOW() - INTERVAL '2 days'),
-
-('0f100004-0000-4000-8000-000000000004',
- 'Retail Transactions Completeness Policy',
- 'POS transaction data must be complete — no missing store_id, transaction_id, or amount fields in curated layers.',
- 'data_quality', 'active',
- E'## Scope\nRetail Operations and Retail Analytics domains.\n\n## Rules\n1. store_id, transaction_id, timestamp, and amount are mandatory.\n2. Null rate for these fields must be 0% in curated/gold layers.\n3. Raw/bronze layers may have up to 0.1% nulls with alerting.\n\n## Enforcement\nGreat Expectations suites attached to pipeline output.',
- 'automated', 'v1.0',
- '{"layers": ["curated", "gold"], "mandatory_fields": ["store_id", "transaction_id", "timestamp", "amount"]}',
- false, 'system@demo', NOW() - INTERVAL '45 days', NOW() - INTERVAL '7 days'),
-
--- Retention / Lifecycle policies
-('0f100005-0000-4000-8000-000000000005',
- 'Marketing Raw Events 90-Day Retention',
- 'Raw event data in the Marketing domain must be retained for 90 days, then aggregated and anonymized.',
- 'retention_lifecycle', 'active',
- E'## Scope\nMarketing domain — raw/bronze event tables.\n\n## Rules\n1. Raw clickstream and campaign event data retained for 90 days.\n2. After 90 days, data must be aggregated to daily granularity and anonymized (remove user identifiers).\n3. Aggregated data retained for 3 years.\n4. Deletion jobs must run weekly.\n\n## Enforcement\nScheduled Databricks job manages TTL and aggregation.',
- 'automated', 'v1.0',
- '{"retention_days": 90, "aggregate_retention_years": 3}',
- true, 'system@demo', NOW() - INTERVAL '30 days', NOW() - INTERVAL '3 days'),
-
-('0f100006-0000-4000-8000-000000000006',
- 'IoT Telemetry Data Lifecycle',
- 'IoT sensor readings retained at full resolution for 30 days, downsampled to 1-minute averages for 1 year, then purged.',
- 'retention_lifecycle', 'draft',
- E'## Scope\nIoT domain.\n\n## Rules\n1. Full-resolution telemetry: 30-day retention.\n2. 1-minute downsampled averages: 1-year retention.\n3. Device metadata retained indefinitely.\n4. Alert/anomaly events retained for 2 years.\n\n## Enforcement\nPending automation — currently manual.',
- 'advisory', 'v0.9',
- '{"full_resolution_days": 30, "downsampled_years": 1}',
- false, 'system@demo', NOW() - INTERVAL '15 days', NOW() - INTERVAL '1 day'),
-
--- Usage / Purpose limitation
-('0f100007-0000-4000-8000-000000000007',
- 'EU Customer Data ML Training Restriction',
- 'EU customer data may not be used to train models for targeted advertising without explicit consent.',
- 'usage_purpose', 'active',
- E'## Scope\nCustomer and Marketing domains — datasets labeled as "training datasets" or "ML outputs".\n\n## Rules\n1. Datasets containing EU customer records (country in EU member states) MUST NOT be fed into advertising ML pipelines.\n2. Exception: explicit opt-in consent flag (consent_marketing_ml = true) is present and validated.\n3. All ML training jobs must log data lineage for audit.\n\n## Enforcement\nPipeline pre-checks validate consent flags before training.',
- 'mandatory', 'v1.0',
- '{"regulation": "GDPR Art. 22", "regions": ["EU", "EEA"]}',
- true, 'system@demo', NOW() - INTERVAL '75 days', NOW() - INTERVAL '20 days'),
-
--- Custom policy
-('0f100008-0000-4000-8000-000000000008',
- 'Cross-Domain Data Sharing Approval',
- 'Any data product shared across domain boundaries requires written approval from both domain owners.',
- 'custom', 'active',
- E'## Scope\nAll domains.\n\n## Rules\n1. Cross-domain data product subscriptions require approval from the source domain owner AND the consuming domain owner.\n2. Approval must be recorded in the system with justification.\n3. Re-approval required annually or when the data product version changes significantly.\n\n## Enforcement\nWorkflow-based approval in Ontos.',
- 'mandatory', 'v1.0',
- NULL,
- false, 'system@demo', NOW() - INTERVAL '40 days', NOW() - INTERVAL '8 days')
-
-ON CONFLICT (id) DO NOTHING;
-
 
 -- ============================================================================
 -- 24. ASSET TYPES — removed (now synced from ontos-ontology.ttl at startup)
@@ -2504,6 +2418,93 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================================
+-- 25e. POLICY ASSETS (type=0f1)
+-- ============================================================================
+-- Formal, reusable rules for data access, usage, protection, and management.
+-- Previously stored in a dedicated policies table, now modeled as Policy assets.
+
+INSERT INTO assets (id, name, description, asset_type_id, platform, location, domain_id, properties, tags, status, created_by, created_at, updated_at) VALUES
+-- Access / Privacy policies
+('0f100001-0000-4000-8000-000000000001',
+ 'Customer PII Protection Policy',
+ 'Customer personally identifiable information must not be visible in any external-facing output. Only users with the Customer Analytics role may view unmasked email and phone fields.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Policy' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"policyType": "access_privacy", "enforcementLevel": "mandatory", "policyContent": "## Scope\nApplies to all assets and data products in the Customer domain.\n\n## Rules\n1. Columns classified as PII (email, phone, address, SSN) MUST be masked in external dashboards and APIs.\n2. Only users with the **Customer Analytics** group may access unmasked PII columns.\n3. Row-level security must filter customer data to the originating region.\n\n## Enforcement\n- Column masking policies in Unity Catalog.\n- Row-level filters on customer_region.", "version": "v1.0", "regulation": "GDPR, CCPA"}',
+ '["access-privacy", "mandatory", "pii", "gdpr"]',
+ 'active', 'system@demo', NOW() - INTERVAL '90 days', NOW() - INTERVAL '5 days'),
+
+('0f100002-0000-4000-8000-000000000002',
+ 'Employee Data Access Policy',
+ 'Employee HR data is restricted to HR department members and authorized managers.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Policy' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000009-0000-4000-8000-000000000009',
+ '{"policyType": "access_privacy", "enforcementLevel": "mandatory", "policyContent": "## Scope\nHuman Resources domain.\n\n## Rules\n1. Salary, SSN, and performance review data are restricted to HR group members.\n2. Managers may view direct-report summaries only.\n3. No bulk export of employee PII without VP-level approval.", "version": "v1.1", "regulation": "SOX, internal HR policy"}',
+ '["access-privacy", "mandatory", "hr"]',
+ 'active', 'system@demo', NOW() - INTERVAL '120 days', NOW() - INTERVAL '10 days'),
+
+-- Data Quality policies
+('0f100003-0000-4000-8000-000000000003',
+ 'Finance Zero-Null Key Fields Policy',
+ 'For all Finance domain products, key fields (Invoice.Id, Booking.Amount) must have 0% nulls in production outputs, and data must be refreshed at least once per day.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Policy' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000002-0000-4000-8000-000000000002',
+ '{"policyType": "data_quality", "enforcementLevel": "automated", "policyContent": "## Scope\nFinance domain — all production data products.\n\n## Rules\n1. Primary key fields must have null_rate = 0%.\n2. Amount/currency fields must have null_rate = 0%.\n3. Freshness SLA: data must be updated within 24 hours.\n4. Duplicate rate for key fields must be < 0.01%.\n\n## Enforcement\nEncoded as expectations in ODCS contracts. Validated by nightly compliance runs.", "version": "v2.0", "freshness_hours": 24}',
+ '["data-quality", "automated", "finance"]',
+ 'active', 'system@demo', NOW() - INTERVAL '60 days', NOW() - INTERVAL '2 days'),
+
+('0f100004-0000-4000-8000-000000000004',
+ 'Retail Transactions Completeness Policy',
+ 'POS transaction data must be complete — no missing store_id, transaction_id, or amount fields in curated layers.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Policy' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '0000000c-0000-4000-8000-000000000012',
+ '{"policyType": "data_quality", "enforcementLevel": "automated", "policyContent": "## Scope\nRetail Operations and Retail Analytics domains.\n\n## Rules\n1. store_id, transaction_id, timestamp, and amount are mandatory.\n2. Null rate for these fields must be 0% in curated/gold layers.\n3. Raw/bronze layers may have up to 0.1% nulls with alerting.\n\n## Enforcement\nGreat Expectations suites attached to pipeline output.", "version": "v1.0"}',
+ '["data-quality", "automated", "retail"]',
+ 'active', 'system@demo', NOW() - INTERVAL '45 days', NOW() - INTERVAL '7 days'),
+
+-- Retention / Lifecycle policies
+('0f100005-0000-4000-8000-000000000005',
+ 'Marketing Raw Events 90-Day Retention',
+ 'Raw event data in the Marketing domain must be retained for 90 days, then aggregated and anonymized.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Policy' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000004-0000-4000-8000-000000000004',
+ '{"policyType": "retention_lifecycle", "enforcementLevel": "automated", "policyContent": "## Scope\nMarketing domain — raw/bronze event tables.\n\n## Rules\n1. Raw clickstream and campaign event data retained for 90 days.\n2. After 90 days, data must be aggregated to daily granularity and anonymized (remove user identifiers).\n3. Aggregated data retained for 3 years.\n4. Deletion jobs must run weekly.\n\n## Enforcement\nScheduled Databricks job manages TTL and aggregation.", "version": "v1.0", "retention_days": 90}',
+ '["retention", "automated", "marketing"]',
+ 'active', 'system@demo', NOW() - INTERVAL '30 days', NOW() - INTERVAL '3 days'),
+
+('0f100006-0000-4000-8000-000000000006',
+ 'IoT Telemetry Data Lifecycle',
+ 'IoT sensor readings retained at full resolution for 30 days, downsampled to 1-minute averages for 1 year, then purged.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Policy' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '0000000a-0000-4000-8000-000000000010',
+ '{"policyType": "retention_lifecycle", "enforcementLevel": "advisory", "policyContent": "## Scope\nIoT domain.\n\n## Rules\n1. Full-resolution telemetry: 30-day retention.\n2. 1-minute downsampled averages: 1-year retention.\n3. Device metadata retained indefinitely.\n4. Alert/anomaly events retained for 2 years.\n\n## Enforcement\nPending automation — currently manual.", "version": "v0.9"}',
+ '["retention", "advisory", "iot", "draft"]',
+ 'draft', 'system@demo', NOW() - INTERVAL '15 days', NOW() - INTERVAL '1 day'),
+
+-- Usage / Purpose limitation
+('0f100007-0000-4000-8000-000000000007',
+ 'EU Customer Data ML Training Restriction',
+ 'EU customer data may not be used to train models for targeted advertising without explicit consent.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Policy' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ '00000007-0000-4000-8000-000000000007',
+ '{"policyType": "usage_purpose", "enforcementLevel": "mandatory", "policyContent": "## Scope\nCustomer and Marketing domains — datasets labeled as \"training datasets\" or \"ML outputs\".\n\n## Rules\n1. Datasets containing EU customer records (country in EU member states) MUST NOT be fed into advertising ML pipelines.\n2. Exception: explicit opt-in consent flag (consent_marketing_ml = true) is present and validated.\n3. All ML training jobs must log data lineage for audit.\n\n## Enforcement\nPipeline pre-checks validate consent flags before training.", "version": "v1.0", "regulation": "GDPR Art. 22"}',
+ '["usage-purpose", "mandatory", "gdpr", "ml"]',
+ 'active', 'system@demo', NOW() - INTERVAL '75 days', NOW() - INTERVAL '20 days'),
+
+-- Custom policy
+('0f100008-0000-4000-8000-000000000008',
+ 'Cross-Domain Data Sharing Approval',
+ 'Any data product shared across domain boundaries requires written approval from both domain owners.',
+ COALESCE((SELECT id FROM asset_types WHERE name = 'Policy' LIMIT 1), '00000000-0000-0000-0000-000000000000'), NULL, NULL,
+ NULL,
+ '{"policyType": "custom", "enforcementLevel": "mandatory", "policyContent": "## Scope\nAll domains.\n\n## Rules\n1. Cross-domain data product subscriptions require approval from the source domain owner AND the consuming domain owner.\n2. Approval must be recorded in the system with justification.\n3. Re-approval required annually or when the data product version changes significantly.\n\n## Enforcement\nWorkflow-based approval in Ontos.", "version": "v1.0"}',
+ '["custom", "mandatory", "cross-domain"]',
+ 'active', 'system@demo', NOW() - INTERVAL '40 days', NOW() - INTERVAL '8 days')
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
 -- 26. ENTITY RELATIONSHIPS (migrated from deprecated asset_relationships)
 -- ============================================================================
 -- Directed relationships between entities using the ontology-driven model.
@@ -2633,51 +2634,30 @@ INSERT INTO entity_relationships (id, source_type, source_id, target_type, targe
 
 -- Delivery channels belong to systems
 ('0fa00060-0000-4000-8000-000000000060', 'DeliveryChannel', '0f900001-0000-4000-8000-000000000001', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
-('0fa00061-0000-4000-8000-000000000061', 'DeliveryChannel', '0f900002-0000-4000-8000-000000000002', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW())
+('0fa00061-0000-4000-8000-000000000061', 'DeliveryChannel', '0f900002-0000-4000-8000-000000000002', 'System', '0f300001-0000-4000-8000-000000000001', 'belongsToSystem', NULL, 'system@demo', NOW()),
 
-ON CONFLICT (id) DO NOTHING;
-
-
--- ============================================================================
--- 27. POLICY ATTACHMENTS (type=0f5)
--- ============================================================================
--- Link policies to domains, data products, assets, and attributes.
-
-INSERT INTO policy_attachments (id, policy_id, target_type, target_id, target_name, notes, created_by, created_at) VALUES
--- Customer PII Policy → Customer domain
-('0f500001-0000-4000-8000-000000000001', '0f100001-0000-4000-8000-000000000001', 'domain', '00000007-0000-4000-8000-000000000007', 'Customer', 'Applies to all assets in the Customer domain', 'system@demo', NOW()),
--- Customer PII Policy → Customer360 table
-('0f500002-0000-4000-8000-000000000002', '0f100001-0000-4000-8000-000000000001', 'asset', '0f300005-0000-4000-8000-000000000005', 'customer360', 'PII masking required for email, phone columns', 'system@demo', NOW()),
--- Customer PII Policy → Customer search API
-('0f500003-0000-4000-8000-000000000003', '0f100001-0000-4000-8000-000000000001', 'asset', '0f300009-0000-4000-8000-000000000009', 'POST /v1/customers/search', 'API must enforce PII filtering', 'system@demo', NOW()),
-
+-- Policy attachments (migrated from policy_attachments table to entity_relationships)
+-- Customer PII Policy → Customer domain, customer360 table, customer search API
+('0f500001-0000-4000-8000-000000000051', 'Policy', '0f100001-0000-4000-8000-000000000001', 'DataDomain', '00000007-0000-4000-8000-000000000007', 'appliesTo', '{"notes": "Applies to all assets in the Customer domain"}', 'system@demo', NOW()),
+('0f500002-0000-4000-8000-000000000052', 'PhysicalTable', '0f300005-0000-4000-8000-000000000005', 'Policy', '0f100001-0000-4000-8000-000000000001', 'attachedPolicy', '{"notes": "PII masking required for email, phone columns"}', 'system@demo', NOW()),
+('0f500003-0000-4000-8000-000000000053', 'APIEndpoint', '0f300009-0000-4000-8000-000000000009', 'Policy', '0f100001-0000-4000-8000-000000000001', 'attachedPolicy', '{"notes": "API must enforce PII filtering"}', 'system@demo', NOW()),
 -- Employee Data Access Policy → HR domain
-('0f500004-0000-4000-8000-000000000004', '0f100002-0000-4000-8000-000000000002', 'domain', '00000009-0000-4000-8000-000000000009', 'Human Resources', NULL, 'system@demo', NOW()),
-
--- Finance Zero-Null Policy → Finance domain
-('0f500005-0000-4000-8000-000000000005', '0f100003-0000-4000-8000-000000000003', 'domain', '00000002-0000-4000-8000-000000000002', 'Finance', NULL, 'system@demo', NOW()),
--- Finance Zero-Null Policy → Invoices table
-('0f500006-0000-4000-8000-000000000006', '0f100003-0000-4000-8000-000000000003', 'asset', '0f300006-0000-4000-8000-000000000006', 'invoices', 'Invoice.Id and Booking.Amount must be non-null', 'system@demo', NOW()),
-
--- Retail Completeness Policy → Retail Operations domain
-('0f500007-0000-4000-8000-000000000007', '0f100004-0000-4000-8000-000000000004', 'domain', '0000000c-0000-4000-8000-000000000012', 'Retail Operations', NULL, 'system@demo', NOW()),
--- Retail Completeness Policy → POS Transactions table
-('0f500008-0000-4000-8000-000000000008', '0f100004-0000-4000-8000-000000000004', 'asset', '0f300003-0000-4000-8000-000000000003', 'pos_transactions', NULL, 'system@demo', NOW()),
--- Retail Completeness Policy → POS Transaction Stream data product
-('0f500009-0000-4000-8000-000000000009', '0f100004-0000-4000-8000-000000000004', 'data_product', '00700001-0000-4000-8000-000000000001', 'POS Transaction Stream v1', 'Completeness validation on output port', 'system@demo', NOW()),
-
--- Marketing Retention Policy → Marketing domain
-('0f50000a-0000-4000-8000-000000000010', '0f100005-0000-4000-8000-000000000005', 'domain', '00000004-0000-4000-8000-000000000004', 'Marketing', NULL, 'system@demo', NOW()),
--- Marketing Retention Policy → Clickstream file dataset
-('0f50000b-0000-4000-8000-000000000011', '0f100005-0000-4000-8000-000000000005', 'asset', '0f30000a-0000-4000-8000-000000000010', 'Marketing Raw Clickstream Events', 'Subject to 90-day TTL', 'system@demo', NOW()),
-
--- EU ML Training Restriction → Customer domain
-('0f50000c-0000-4000-8000-000000000012', '0f100007-0000-4000-8000-000000000007', 'domain', '00000007-0000-4000-8000-000000000007', 'Customer', 'EU customer data subject to consent checks', 'system@demo', NOW()),
--- EU ML Training Restriction → Marketing domain
-('0f50000d-0000-4000-8000-000000000013', '0f100007-0000-4000-8000-000000000007', 'domain', '00000004-0000-4000-8000-000000000004', 'Marketing', 'Training datasets in Marketing must check consent', 'system@demo', NOW()),
-
--- Cross-Domain Sharing → applies broadly (Core domain as top-level)
-('0f50000e-0000-4000-8000-000000000014', '0f100008-0000-4000-8000-000000000008', 'domain', '00000001-0000-4000-8000-000000000001', 'Core', 'Applies to all cross-domain data product subscriptions', 'system@demo', NOW())
+('0f500004-0000-4000-8000-000000000054', 'Policy', '0f100002-0000-4000-8000-000000000002', 'DataDomain', '00000009-0000-4000-8000-000000000009', 'appliesTo', NULL, 'system@demo', NOW()),
+-- Finance Zero-Null Policy → Finance domain, invoices table
+('0f500005-0000-4000-8000-000000000055', 'Policy', '0f100003-0000-4000-8000-000000000003', 'DataDomain', '00000002-0000-4000-8000-000000000002', 'appliesTo', NULL, 'system@demo', NOW()),
+('0f500006-0000-4000-8000-000000000056', 'PhysicalTable', '0f300006-0000-4000-8000-000000000006', 'Policy', '0f100003-0000-4000-8000-000000000003', 'attachedPolicy', '{"notes": "Invoice.Id and Booking.Amount must be non-null"}', 'system@demo', NOW()),
+-- Retail Completeness Policy → Retail Operations domain, POS transactions table, POS Transaction Stream DP
+('0f500007-0000-4000-8000-000000000057', 'Policy', '0f100004-0000-4000-8000-000000000004', 'DataDomain', '0000000c-0000-4000-8000-000000000012', 'appliesTo', NULL, 'system@demo', NOW()),
+('0f500008-0000-4000-8000-000000000058', 'PhysicalTable', '0f300003-0000-4000-8000-000000000003', 'Policy', '0f100004-0000-4000-8000-000000000004', 'attachedPolicy', NULL, 'system@demo', NOW()),
+('0f500009-0000-4000-8000-000000000059', 'Policy', '0f100004-0000-4000-8000-000000000004', 'DataProduct', '00700001-0000-4000-8000-000000000001', 'appliesTo', '{"notes": "Completeness validation on output port"}', 'system@demo', NOW()),
+-- Marketing Retention Policy → Marketing domain, clickstream dataset
+('0f50000a-0000-4000-8000-000000000060', 'Policy', '0f100005-0000-4000-8000-000000000005', 'DataDomain', '00000004-0000-4000-8000-000000000004', 'appliesTo', NULL, 'system@demo', NOW()),
+('0f50000b-0000-4000-8000-000000000061', 'Dataset', '0f30000a-0000-4000-8000-000000000010', 'Policy', '0f100005-0000-4000-8000-000000000005', 'attachedPolicy', '{"notes": "Subject to 90-day TTL"}', 'system@demo', NOW()),
+-- EU ML Training Restriction → Customer domain, Marketing domain
+('0f50000c-0000-4000-8000-000000000062', 'Policy', '0f100007-0000-4000-8000-000000000007', 'DataDomain', '00000007-0000-4000-8000-000000000007', 'appliesTo', '{"notes": "EU customer data subject to consent checks"}', 'system@demo', NOW()),
+('0f50000d-0000-4000-8000-000000000063', 'Policy', '0f100007-0000-4000-8000-000000000007', 'DataDomain', '00000004-0000-4000-8000-000000000004', 'appliesTo', '{"notes": "Training datasets in Marketing must check consent"}', 'system@demo', NOW()),
+-- Cross-Domain Sharing → Core domain
+('0f50000e-0000-4000-8000-000000000064', 'Policy', '0f100008-0000-4000-8000-000000000008', 'DataDomain', '00000001-0000-4000-8000-000000000001', 'appliesTo', '{"notes": "Applies to all cross-domain data product subscriptions"}', 'system@demo', NOW())
 
 ON CONFLICT (id) DO NOTHING;
 
@@ -2706,10 +2686,10 @@ INSERT INTO business_owners (id, object_type, object_id, user_email, user_name, 
 -- Data Product — Business Sponsor
 ('0f60000a-0000-4000-8000-000000000010', 'data_product', '00700001-0000-4000-8000-000000000001', 'eva.director@example.com', 'Eva Director',  '0f000007-0000-4000-8000-000000000007', true,  NOW() - INTERVAL '120 days', NULL, NULL, 'system@demo', NOW(), NOW()),
 
--- Policy owners
-('0f60000b-0000-4000-8000-000000000011', 'policy', '0f100001-0000-4000-8000-000000000001', 'alice.chen@example.com',   'Alice Chen',   '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '90 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
-('0f60000c-0000-4000-8000-000000000012', 'policy', '0f100003-0000-4000-8000-000000000003', 'bob.martinez@example.com', 'Bob Martinez', '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '60 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
-('0f60000d-0000-4000-8000-000000000013', 'policy', '0f100007-0000-4000-8000-000000000007', 'alice.chen@example.com',   'Alice Chen',   '0f00000a-0000-4000-8000-000000000010', true,  NOW() - INTERVAL '75 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+-- Policy asset owners
+('0f60000b-0000-4000-8000-000000000011', 'asset', '0f100001-0000-4000-8000-000000000001', 'alice.chen@example.com',   'Alice Chen',   '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '90 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f60000c-0000-4000-8000-000000000012', 'asset', '0f100003-0000-4000-8000-000000000003', 'bob.martinez@example.com', 'Bob Martinez', '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '60 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
+('0f60000d-0000-4000-8000-000000000013', 'asset', '0f100007-0000-4000-8000-000000000007', 'alice.chen@example.com',   'Alice Chen',   '0f00000a-0000-4000-8000-000000000010', true,  NOW() - INTERVAL '75 days',  NULL, NULL, 'system@demo', NOW(), NOW()),
 
 -- Asset owners
 ('0f60000e-0000-4000-8000-000000000014', 'asset', '0f300005-0000-4000-8000-000000000005', 'alice.chen@example.com',    'Alice Chen',    '0f000001-0000-4000-8000-000000000001', true,  NOW() - INTERVAL '60 days',  NULL, NULL, 'system@demo', NOW(), NOW()),

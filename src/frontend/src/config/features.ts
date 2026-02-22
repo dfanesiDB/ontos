@@ -124,15 +124,6 @@ import {
       showInLanding: true,
     },
     {
-      id: 'policies',
-      name: 'Policies',
-      path: '/policies',
-      description: 'Define formal, reusable rules for data access, usage, protection, and management.',
-      icon: Shield,
-      maturity: 'beta',
-      showInLanding: true,
-    },
-    {
       id: 'assets',
       name: 'Assets',
       path: '/assets',

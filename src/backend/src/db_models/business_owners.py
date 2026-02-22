@@ -12,7 +12,7 @@ class BusinessOwnerDb(Base):
     __tablename__ = "business_owners"
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    object_type = Column(String, nullable=False, index=True)  # data_product, data_contract, dataset, data_domain, business_term, policy, asset, tag
+    object_type = Column(String, nullable=False, index=True)  # data_product, data_contract, dataset, data_domain, business_term, asset, tag
     object_id = Column(String, nullable=False, index=True)  # The ID of the owned object
     user_email = Column(String, nullable=False, index=True)  # Owner's email / identifier
     user_name = Column(String, nullable=True)  # Cached display name

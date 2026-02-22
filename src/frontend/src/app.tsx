@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './components/theme';
 import Layout from './components/layout/layout';
 import { TooltipProvider } from './components/ui/tooltip';
@@ -65,7 +65,6 @@ import OntologySearchView from './views/ontology-search';
 import OntologyHomeView from './views/ontology-home';
 import CollectionsView from './views/collections';
 import BusinessTermsView from './views/business-terms';
-import PoliciesView from './views/policies';
 import AssetTypesView from './views/asset-types';
 import AssetExplorerView from './views/asset-explorer';
 import AssetDetailView from './views/asset-detail';
@@ -179,7 +178,7 @@ export default function App() {
               <Route path="/governance/domains/:domainId" element={<DataDomainDetailsView />} />
               <Route path="/governance/teams" element={<TeamsView />} />
               <Route path="/governance/projects" element={<ProjectsView />} />
-              <Route path="/governance/policies" element={<PoliciesView />} />
+              <Route path="/governance/policies" element={<Navigate to="/governance/assets" replace />} />
               <Route path="/governance/asset-types" element={<AssetTypesView />} />
               <Route path="/governance/hierarchy" element={<HierarchyBrowserView />} />
               <Route path="/governance/assets" element={<AssetExplorerView />} />

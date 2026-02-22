@@ -4,7 +4,6 @@ export type OwnerObjectType =
   | 'dataset'
   | 'data_domain'
   | 'business_term'
-  | 'policy'
   | 'asset'
   | 'tag';
 

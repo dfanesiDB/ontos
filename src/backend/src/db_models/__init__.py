@@ -32,7 +32,6 @@ from . import semantic_models
 from . import settings
 from . import tags
 from . import teams
-from . import policies
 from . import assets
 from . import business_roles
 from . import business_owners

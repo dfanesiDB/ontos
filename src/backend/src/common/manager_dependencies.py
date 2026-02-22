@@ -25,7 +25,6 @@ from src.controller.workspace_manager import WorkspaceManager
 from src.controller.change_log_manager import ChangeLogManager
 from src.controller.datasets_manager import DatasetsManager
 from src.controller.delivery_service import DeliveryService
-from src.controller.policies_manager import PoliciesManager
 from src.controller.assets_manager import AssetsManager
 from src.controller.business_roles_manager import BusinessRolesManager
 from src.controller.business_owners_manager import BusinessOwnersManager
@@ -184,13 +183,6 @@ def get_datasets_manager(request: Request) -> DatasetsManager:
     return manager
 
 # Add getters for Compliance, Estate, MDM, Security, Entitlements, Catalog Commander managers when they are added
-
-def get_policies_manager(request: Request) -> PoliciesManager:
-    manager = getattr(request.app.state, 'policies_manager', None)
-    if not manager:
-        logger.critical("PoliciesManager not found in application state!")
-        raise HTTPException(status_code=503, detail="Policies service not configured.")
-    return manager
 
 def get_assets_manager(request: Request) -> AssetsManager:
     manager = getattr(request.app.state, 'assets_manager', None)

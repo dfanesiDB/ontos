@@ -109,7 +109,6 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'domains', labelKey: 'personaNav.domains', path: '/governance/domains', icon: BoxSelect, featureId: 'data-domains' },
     { id: 'teams', labelKey: 'personaNav.teams', path: '/governance/teams', icon: UserCheck, featureId: 'teams' },
     { id: 'projects', labelKey: 'personaNav.projects', path: '/governance/projects', icon: FolderOpen, featureId: 'projects' },
-    { id: 'policies', labelKey: 'personaNav.policies', path: '/governance/policies', icon: Shield, featureId: 'policies' },
     { id: 'asset-types', labelKey: 'personaNav.assetTypes', path: '/governance/asset-types', icon: Shapes, featureId: 'assets' },
     { id: 'hierarchy', labelKey: 'personaNav.hierarchy', path: '/governance/hierarchy', icon: Network, featureId: 'assets' },
     { id: 'asset-explorer', labelKey: 'personaNav.assetExplorer', path: '/governance/assets', icon: Box, featureId: 'assets' },

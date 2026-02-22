@@ -165,10 +165,6 @@ APP_FEATURES: Dict[str, Dict[str, str | List[FeatureAccessLevel]]] = {
         'allowed_levels': READ_WRITE_ADMIN_LEVELS  # READ_WRITE to add, ADMIN to manage all
     },
     # Reference Data
-    'policies': {
-        'name': 'Policies',
-        'allowed_levels': READ_WRITE_ADMIN_LEVELS
-    },
     'assets': {
         'name': 'Assets',
         'allowed_levels': READ_WRITE_ADMIN_LEVELS

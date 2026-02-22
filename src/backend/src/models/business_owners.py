@@ -13,7 +13,6 @@ class OwnerObjectType(str, Enum):
     DATASET = "dataset"
     DATA_DOMAIN = "data_domain"
     BUSINESS_TERM = "business_term"
-    POLICY = "policy"
     ASSET = "asset"
     TAG = "tag"
 
