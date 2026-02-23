@@ -4,8 +4,8 @@
   "tabs": {
     "askOntos": "Preguntar a Ontos",
     "indexSearch": "Búsqueda de Índice",
-    "conceptGraph": "Grafo de Conceptos",
-    "knowledgeGraph": "Grafo de Conocimiento",
+    "viewGraph": "Ver Grafo",
+    "searchGraph": "Buscar Grafo",
     "concepts": "Conceptos"
   },
   "noResults": "No se encontraron resultados",

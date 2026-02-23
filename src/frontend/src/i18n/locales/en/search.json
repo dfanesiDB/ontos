@@ -4,10 +4,15 @@
   "tabs": {
     "askOntos": "Ask Ontos",
     "indexSearch": "Index Search",
-    "conceptGraph": "Concept Graph",
-    "knowledgeGraph": "Knowledge Graph",
+    "searchConcepts": "Search Concepts",
+    "viewGraph": "View Graph",
+    "searchGraph": "Search Graph",
     "concepts": "Concepts",
     "properties": "Properties"
+  },
+  "subtitles": {
+    "searchConcepts": "Search and browse ontology concepts and properties",
+    "searchGraph": "Query and explore the knowledge graph using SPARQL"
   },
   "noResults": "No results found",
   "noResultsHint": "Try adjusting your search terms or filters",

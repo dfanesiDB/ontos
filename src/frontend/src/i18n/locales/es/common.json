@@ -110,7 +110,7 @@
     "columns": "columnas",
     "tables": "tablas",
     "relationships": "relaciones",
-    "conceptGraph": "Grafo de Conceptos",
+    "viewGraph": "Ver Grafo",
     "concepts": "conceptos",
     "securableId": "ID de seguridad",
     "securableType": "Tipo de seguridad",

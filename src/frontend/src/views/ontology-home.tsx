@@ -79,12 +79,13 @@ export default function OntologyHomeView() {
 
   // Breadcrumbs
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
+  const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
 
   useEffect(() => {
-    setStaticSegments([
-      { label: t('semantic-models:title'), path: '/ontology' },
-    ]);
-  }, [setStaticSegments, t]);
+    setStaticSegments([]);
+    setDynamicTitle(t('common:terms.viewGraph', { defaultValue: 'View Graph' }));
+    return () => { setStaticSegments([]); setDynamicTitle(null); };
+  }, [setStaticSegments, setDynamicTitle, t]);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -138,7 +139,7 @@ export default function OntologyHomeView() {
 
   // Navigate to concept in Business Terms view on node click
   const handleNodeClick = useCallback((concept: OntologyConcept) => {
-    navigate(`/ontology/glossaries?concept=${encodeURIComponent(concept.iri)}`);
+    navigate(`/governance/glossary?concept=${encodeURIComponent(concept.iri)}`);
   }, [navigate]);
 
   // Toggle root visibility in the graph
@@ -161,7 +162,7 @@ export default function OntologyHomeView() {
         <div className="flex items-center gap-3">
           <Network className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold">{t('semantic-models:title')}</h1>
+            <h1 className="text-2xl font-bold">{t('common:terms.viewGraph', { defaultValue: 'View Graph' })}</h1>
             <p className="text-sm text-muted-foreground">
               {filteredConcepts.length} {t('common:terms.concepts')}
             </p>
@@ -197,7 +198,7 @@ export default function OntologyHomeView() {
             onSetFilterExpanded={setFilterExpanded}
           />
 
-          {/* Knowledge Graph */}
+          {/* View Graph */}
           <GraphTab
             concepts={filteredConcepts}
             hiddenRoots={hiddenRoots}

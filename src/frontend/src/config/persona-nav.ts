@@ -119,9 +119,9 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'audit', labelKey: 'personaNav.audit', path: '/governance/audit', icon: ScrollText, featureId: 'audit', group: 'oversight' },
     { id: 'estates', labelKey: 'personaNav.estateManager', path: '/governance/estates', icon: Globe, featureId: 'estate-manager', group: 'oversight' },
     // -- ADVANCED --
-    { id: 'ontology', labelKey: 'personaNav.ontologyModels', path: '/governance/ontology', icon: Brain, featureId: 'semantic-models', group: 'advanced' },
-    { id: 'concept-graph', labelKey: 'personaNav.conceptGraph', path: '/governance/graph', icon: Network, featureId: 'semantic-models', group: 'advanced' },
-    { id: 'knowledge-graph', labelKey: 'personaNav.knowledgeGraph', path: '/governance/kg', icon: Globe2, featureId: 'semantic-models', group: 'advanced' },
+    { id: 'ontology', labelKey: 'personaNav.searchConcepts', path: '/governance/ontology', icon: Brain, featureId: 'semantic-models', group: 'advanced' },
+    { id: 'concept-graph', labelKey: 'personaNav.viewGraph', path: '/governance/graph', icon: Network, featureId: 'semantic-models', group: 'advanced' },
+    { id: 'knowledge-graph', labelKey: 'personaNav.searchGraph', path: '/governance/kg', icon: Globe2, featureId: 'semantic-models', group: 'advanced' },
     { id: 'rdf-sources', labelKey: 'personaNav.rdfSources', path: '/governance/rdf-sources', icon: Settings, featureId: 'semantic-models', group: 'advanced' },
     { id: 'asset-types', labelKey: 'personaNav.assetTypes', path: '/governance/asset-types', icon: Shapes, featureId: 'assets', group: 'advanced' },
     { id: 'tags', labelKey: 'personaNav.tags', path: '/governance/tags', icon: Tag, featureId: 'settings', group: 'advanced' },
@@ -147,7 +147,6 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     // -- ACCESS --
     { id: 'roles', labelKey: 'personaNav.appRoles', path: '/admin/roles', icon: Shield, featureId: 'settings', group: 'access' },
     { id: 'business-roles', labelKey: 'personaNav.businessRoles', path: '/admin/business-roles', icon: Briefcase, featureId: 'business-roles', group: 'access' },
-    { id: 'business-owners', labelKey: 'personaNav.businessOwners', path: '/admin/business-owners', icon: Users2, featureId: 'business-owners', group: 'access' },
     // -- SYSTEM --
     { id: 'search-settings', labelKey: 'personaNav.searchSettings', path: '/admin/search', icon: Search, featureId: 'settings', group: 'system' },
     { id: 'mcp', labelKey: 'personaNav.mcpSettings', path: '/admin/mcp', icon: Cpu, featureId: 'settings', group: 'system' },

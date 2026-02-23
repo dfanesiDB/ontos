@@ -4,8 +4,8 @@
   "tabs": {
     "askOntos": "Ontos fragen",
     "indexSearch": "Index-Suche",
-    "conceptGraph": "Konzeptgraph",
-    "knowledgeGraph": "Wissensgraph",
+    "viewGraph": "Graph anzeigen",
+    "searchGraph": "Graph durchsuchen",
     "concepts": "Konzepte",
     "properties": "Eigenschaften"
   },

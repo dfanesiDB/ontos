@@ -4,8 +4,8 @@
   "tabs": {
     "askOntos": "Vraag Ontos",
     "indexSearch": "Index Zoeken",
-    "conceptGraph": "Concept Grafiek",
-    "knowledgeGraph": "Knowledge Graph",
+    "viewGraph": "Grafiek Bekijken",
+    "searchGraph": "Grafiek Zoeken",
     "concepts": "Concepten"
   },
   "noResults": "Geen resultaten gevonden",

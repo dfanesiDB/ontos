@@ -110,7 +110,7 @@
     "columns": "kolommen",
     "tables": "tabellen",
     "relationships": "relaties",
-    "conceptGraph": "Concept Grafiek",
+    "viewGraph": "Grafiek Bekijken",
     "concepts": "concepten",
     "securableId": "Beveiligbaar ID",
     "securableType": "Beveiligbaar Type",

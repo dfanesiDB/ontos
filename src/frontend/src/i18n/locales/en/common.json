@@ -113,7 +113,7 @@
     "columns": "columns",
     "tables": "tables",
     "relationships": "relationships",
-    "conceptGraph": "Concept Graph",
+    "viewGraph": "View Graph",
     "concepts": "concepts",
     "properties": "properties",
     "securableId": "Securable ID",

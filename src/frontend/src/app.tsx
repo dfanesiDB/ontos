@@ -241,7 +241,7 @@ export default function App() {
               <Route path="/admin/git" element={<SettingsGitView />} />
               <Route path="/admin/roles" element={<SettingsRolesView />} />
               <Route path="/admin/business-roles" element={<BusinessRolesView />} />
-              <Route path="/admin/business-owners" element={<BusinessOwnersView />} />
+              <Route path="/admin/business-owners" element={<Navigate to="/governance/ownership" replace />} />
               <Route path="/admin/search" element={<SettingsSearchView />} />
               <Route path="/admin/mcp" element={<SettingsMcpView />} />
               <Route path="/admin/tags" element={<SettingsTagsView />} />

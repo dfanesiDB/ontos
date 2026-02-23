@@ -110,7 +110,7 @@
     "columns": "列",
     "tables": "テーブル",
     "relationships": "リレーション",
-    "conceptGraph": "コンセプトグラフ",
+    "viewGraph": "グラフを表示",
     "concepts": "概念",
     "securableId": "セキュリティ対象ID",
     "securableType": "セキュリティ対象タイプ",
