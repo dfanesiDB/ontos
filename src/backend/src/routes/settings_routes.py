@@ -31,6 +31,7 @@ from ..common.search_config_loader import get_search_config_loader
 from src.common.logging import get_logger
 logger = get_logger(__name__)
 
+
 router = APIRouter(prefix="/api", tags=["Settings"])
 
 SETTINGS_FEATURE_ID = "settings" # Define a feature ID for settings
@@ -1323,3 +1324,21 @@ async def complete_delivery_task(
             success=success,
             details=details
         )
+
+
+# ============================================================================
+# Legacy connector config endpoints (DEPRECATED — use /api/connections instead)
+# Kept for backward compatibility; will be removed in a future version.
+# ============================================================================
+
+@router.get('/settings/connectors')
+async def list_connectors_legacy():
+    """DEPRECATED: Use GET /api/connections instead."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/api/connections", status_code=307)
+
+
+@router.post('/settings/connectors/{connector_type}/test')
+async def test_connector_legacy(connector_type: str):
+    """DEPRECATED: Use POST /api/connections/{id}/test instead."""
+    return {"error": "Deprecated. Use /api/connections/{id}/test with a connection ID."}

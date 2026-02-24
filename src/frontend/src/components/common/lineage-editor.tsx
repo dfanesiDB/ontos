@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,9 +11,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
   Loader2, Plus, Check, Search, ChevronRight, ChevronLeft,
-  Shapes, Tag, Database, Package, Server, Shield, Send, BookOpen,
+  Link2, Database, Package, Shield, Send, BookOpen, Tag,
+  Shapes, AlertCircle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { RelationshipDefinition, EntityRelationships } from '@/types/ontology-schema';
 
 interface LinkCandidate {
   id: string;
@@ -33,23 +35,20 @@ interface PendingRelationship {
   target_name: string;
 }
 
-const STEP_ICONS: Record<string, React.ElementType> = {
-  logical_model: Shapes,
-  physical_mapping: Database,
-  systems_products: Package,
-  policies: Shield,
-  delivery: Send,
-  review: Check,
+const TARGET_TYPE_ICONS: Record<string, React.ElementType> = {
+  Dataset: Database,
+  DataProduct: Package,
+  Policy: Shield,
+  DeliveryChannel: Send,
+  LogicalEntity: Shapes,
+  LogicalAttribute: Shapes,
+  BusinessTerm: Tag,
 };
 
-const STEPS = [
-  { id: 'logical_model', label: 'Logical Model', description: 'Link to logical entities and attributes' },
-  { id: 'physical_mapping', label: 'Physical Mapping', description: 'Map logical attributes to datasets and columns' },
-  { id: 'systems_products', label: 'Systems & Products', description: 'Identify source systems and data products' },
-  { id: 'delivery', label: 'Delivery Channels', description: 'Define how data is delivered to consumers' },
-  { id: 'policies', label: 'Policies', description: 'Attach governance policies' },
-  { id: 'review', label: 'Review & Save', description: 'Review all relationships and save' },
-];
+function getIconForRelationship(rel: RelationshipDefinition): React.ElementType {
+  const typeName = rel.target_type_label || rel.target_type_iri.split('#').pop() || '';
+  return TARGET_TYPE_ICONS[typeName] || Link2;
+}
 
 interface LineageEditorProps {
   isOpen: boolean;
@@ -72,13 +71,44 @@ export function LineageEditor({
   const [currentStep, setCurrentStep] = useState(0);
   const [pendingRelationships, setPendingRelationships] = useState<PendingRelationship[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [relationships, setRelationships] = useState<RelationshipDefinition[]>([]);
+  const [isLoadingSchema, setIsLoadingSchema] = useState(false);
+  const [schemaError, setSchemaError] = useState<string | null>(null);
+
+  const steps = useMemo(() => [
+    ...relationships.map(rel => ({
+      id: rel.property_name,
+      label: rel.label,
+      relationship: rel,
+    })),
+    { id: 'review', label: 'Review & Save', relationship: null },
+  ], [relationships]);
+
+  const isReviewStep = currentStep === steps.length - 1;
 
   useEffect(() => {
-    if (isOpen) {
-      setCurrentStep(0);
-      setPendingRelationships([]);
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
+    setCurrentStep(0);
+    setPendingRelationships([]);
+    setSchemaError(null);
+
+    const fetchSchema = async () => {
+      setIsLoadingSchema(true);
+      try {
+        const iri = `http://ontos.app/ontology#${entityType}`;
+        const res = await fetch(`/api/ontology/entity-types/${encodeURIComponent(iri)}/relationships`);
+        if (!res.ok) throw new Error(`Failed to load relationships (${res.status})`);
+        const data: EntityRelationships = await res.json();
+        setRelationships([...data.outgoing, ...data.incoming]);
+      } catch (err: any) {
+        setSchemaError(err.message || 'Failed to load ontology relationships');
+        setRelationships([]);
+      } finally {
+        setIsLoadingSchema(false);
+      }
+    };
+    fetchSchema();
+  }, [isOpen, entityType]);
 
   const addRelationship = useCallback((rel: PendingRelationship) => {
     setPendingRelationships(prev => {
@@ -136,8 +166,6 @@ export function LineageEditor({
     onSuccess?.();
   };
 
-  const step = STEPS[currentStep];
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
@@ -151,137 +179,115 @@ export function LineageEditor({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Step indicator */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-2">
-          {STEPS.map((s, i) => {
-            const Icon = STEP_ICONS[s.id] || Shapes;
-            const isActive = i === currentStep;
-            const isDone = i < currentStep;
-            return (
-              <button
-                key={s.id}
-                onClick={() => setCurrentStep(i)}
-                className={`flex items-center gap-1 px-2 py-1 rounded text-xs whitespace-nowrap transition-colors ${
-                  isActive ? 'bg-primary text-primary-foreground' :
-                  isDone ? 'bg-primary/10 text-primary' :
-                  'bg-muted text-muted-foreground hover:bg-accent'
-                }`}
-              >
-                <Icon className="h-3 w-3" />
-                {s.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <Separator />
-
-        {/* Step content */}
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="py-3">
-            {currentStep < 5 ? (
-              <CandidateSearchStep
-                entityType={entityType}
-                entityId={entityId}
-                stepConfig={getStepConfig(step.id, entityType)}
-                onAddRelationship={addRelationship}
-                pendingRelationships={pendingRelationships}
-              />
-            ) : (
-              <ReviewStep
-                pendingRelationships={pendingRelationships}
-                onRemove={removeRelationship}
-              />
-            )}
+        {isLoadingSchema ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mr-2" />
+            <span className="text-sm text-muted-foreground">Loading relationship types...</span>
           </div>
-        </ScrollArea>
-
-        <Separator />
-
-        <DialogFooter className="flex items-center justify-between sm:justify-between">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentStep === 0}
-              onClick={() => setCurrentStep(s => s - 1)}
-            >
-              <ChevronLeft className="mr-1 h-3.5 w-3.5" /> Back
-            </Button>
-            {currentStep < STEPS.length - 1 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentStep(s => s + 1)}
-              >
-                Next <ChevronRight className="ml-1 h-3.5 w-3.5" />
-              </Button>
-            )}
+        ) : schemaError ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <AlertCircle className="h-6 w-6 text-destructive" />
+            <p className="text-sm text-destructive">{schemaError}</p>
           </div>
-          <div className="flex gap-2 items-center">
-            <span className="text-xs text-muted-foreground">
-              {pendingRelationships.length} relationship(s) queued
-            </span>
-            {currentStep === STEPS.length - 1 && (
-              <Button size="sm" onClick={handleSave} disabled={isSaving}>
-                {isSaving && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-                Save All
-              </Button>
-            )}
+        ) : relationships.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <Link2 className="h-6 w-6 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              No relationships defined for <span className="font-medium">{entityType}</span> in the ontology.
+            </p>
           </div>
-        </DialogFooter>
+        ) : (
+          <>
+            {/* Step indicator */}
+            <div className="flex items-center gap-1 overflow-x-auto pb-2">
+              {steps.map((s, i) => {
+                const Icon = s.relationship ? getIconForRelationship(s.relationship) : Check;
+                const isActive = i === currentStep;
+                const isDone = i < currentStep;
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setCurrentStep(i)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs whitespace-nowrap transition-colors ${
+                      isActive ? 'bg-primary text-primary-foreground' :
+                      isDone ? 'bg-primary/10 text-primary' :
+                      'bg-muted text-muted-foreground hover:bg-accent'
+                    }`}
+                  >
+                    <Icon className="h-3 w-3" />
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <Separator />
+
+            {/* Step content */}
+            <ScrollArea className="flex-1 min-h-0">
+              <div className="py-3">
+                {!isReviewStep && steps[currentStep]?.relationship ? (
+                  <CandidateSearchStep
+                    entityType={entityType}
+                    entityId={entityId}
+                    relationship={steps[currentStep].relationship!}
+                    onAddRelationship={addRelationship}
+                    pendingRelationships={pendingRelationships}
+                  />
+                ) : (
+                  <ReviewStep
+                    pendingRelationships={pendingRelationships}
+                    onRemove={removeRelationship}
+                  />
+                )}
+              </div>
+            </ScrollArea>
+
+            <Separator />
+
+            <DialogFooter className="flex items-center justify-between sm:justify-between">
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentStep === 0}
+                  onClick={() => setCurrentStep(s => s - 1)}
+                >
+                  <ChevronLeft className="mr-1 h-3.5 w-3.5" /> Back
+                </Button>
+                {currentStep < steps.length - 1 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentStep(s => s + 1)}
+                  >
+                    Next <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2 items-center">
+                <span className="text-xs text-muted-foreground">
+                  {pendingRelationships.length} relationship(s) queued
+                </span>
+                {isReviewStep && (
+                  <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                    Save All
+                  </Button>
+                )}
+              </div>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
-interface StepConfig {
-  targetType: string;
-  relationshipType: string;
-  direction: 'outgoing' | 'incoming';
-  label: string;
-}
-
-function getStepConfig(stepId: string, entityType: string): StepConfig {
-  const configs: Record<string, StepConfig> = {
-    logical_model: {
-      targetType: 'LogicalEntity',
-      relationshipType: 'relatesTo',
-      direction: 'outgoing',
-      label: 'Logical Entities',
-    },
-    physical_mapping: {
-      targetType: 'Dataset',
-      relationshipType: 'implementedBy',
-      direction: 'outgoing',
-      label: 'Datasets & Columns',
-    },
-    systems_products: {
-      targetType: 'DataProduct',
-      relationshipType: 'dependsOn',
-      direction: 'outgoing',
-      label: 'Data Products',
-    },
-    delivery: {
-      targetType: 'DeliveryChannel',
-      relationshipType: 'exposes',
-      direction: 'outgoing',
-      label: 'Delivery Channels',
-    },
-    policies: {
-      targetType: 'Policy',
-      relationshipType: 'appliesTo',
-      direction: 'incoming',
-      label: 'Policies',
-    },
-  };
-  return configs[stepId] || configs.logical_model;
-}
-
 interface CandidateSearchStepProps {
   entityType: string;
   entityId: string;
-  stepConfig: StepConfig;
+  relationship: RelationshipDefinition;
   onAddRelationship: (rel: PendingRelationship) => void;
   pendingRelationships: PendingRelationship[];
 }
@@ -289,7 +295,7 @@ interface CandidateSearchStepProps {
 function CandidateSearchStep({
   entityType,
   entityId,
-  stepConfig,
+  relationship,
   onAddRelationship,
   pendingRelationships,
 }: CandidateSearchStepProps) {
@@ -297,12 +303,14 @@ function CandidateSearchStep({
   const [candidates, setCandidates] = useState<LinkCandidate[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  const targetType = relationship.target_type_label || relationship.target_type_iri.split('#').pop() || '';
+
   useEffect(() => {
     const search = async () => {
       setIsSearching(true);
       try {
         const params = new URLSearchParams({
-          target_type: stepConfig.targetType,
+          target_type: targetType,
           limit: '20',
         });
         if (searchQuery) params.set('query', searchQuery);
@@ -321,48 +329,50 @@ function CandidateSearchStep({
 
     const timer = setTimeout(search, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, stepConfig.targetType]);
+  }, [searchQuery, targetType]);
 
   const isAlreadyAdded = (candidateId: string) => {
     return pendingRelationships.some(r => {
-      if (stepConfig.direction === 'outgoing') {
-        return r.target_id === candidateId && r.relationship_type === stepConfig.relationshipType;
+      if (relationship.direction === 'outgoing') {
+        return r.target_id === candidateId && r.relationship_type === relationship.property_name;
       }
-      return r.source_id === candidateId && r.relationship_type === stepConfig.relationshipType;
+      return r.source_id === candidateId && r.relationship_type === relationship.property_name;
     });
   };
 
   const handleAdd = (candidate: LinkCandidate) => {
-    const rel: PendingRelationship = stepConfig.direction === 'outgoing'
+    const rel: PendingRelationship = relationship.direction === 'outgoing'
       ? {
           source_type: entityType,
           source_id: entityId,
-          target_type: stepConfig.targetType,
+          target_type: targetType,
           target_id: candidate.id,
-          relationship_type: stepConfig.relationshipType,
+          relationship_type: relationship.property_name,
           target_name: candidate.name,
         }
       : {
-          source_type: stepConfig.targetType,
+          source_type: targetType,
           source_id: candidate.id,
           target_type: entityType,
           target_id: entityId,
-          relationship_type: stepConfig.relationshipType,
+          relationship_type: relationship.property_name,
           target_name: candidate.name,
         };
     onAddRelationship(rel);
   };
 
+  const searchLabel = relationship.label || targetType;
+
   return (
     <div className="space-y-3">
       <div>
-        <Label className="text-sm">Search {stepConfig.label}</Label>
+        <Label className="text-sm">Search {searchLabel}</Label>
         <div className="relative mt-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={`Search for ${stepConfig.label.toLowerCase()}...`}
+            placeholder={`Search for ${searchLabel.toLowerCase()}...`}
             className="pl-9 h-9"
           />
         </div>

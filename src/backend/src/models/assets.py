@@ -84,6 +84,20 @@ class UnifiedAssetType(str, Enum):
     SNOWFLAKE_TASK = "snowflake_task"
     
     # -------------------------------------------------------------------------
+    # BigQuery - Data Assets
+    # -------------------------------------------------------------------------
+    BQ_TABLE = "bq_table"
+    BQ_VIEW = "bq_view"
+    BQ_MATERIALIZED_VIEW = "bq_materialized_view"
+    BQ_EXTERNAL_TABLE = "bq_external_table"
+    
+    # -------------------------------------------------------------------------
+    # BigQuery - Compute Assets
+    # -------------------------------------------------------------------------
+    BQ_ROUTINE = "bq_routine"
+    BQ_MODEL = "bq_model"
+    
+    # -------------------------------------------------------------------------
     # Kafka - Data Assets
     # -------------------------------------------------------------------------
     KAFKA_TOPIC = "kafka_topic"
@@ -152,6 +166,14 @@ ASSET_TYPE_CATEGORIES: Dict[UnifiedAssetType, AssetCategory] = {
     UnifiedAssetType.SNOWFLAKE_FUNCTION: AssetCategory.COMPUTE,
     UnifiedAssetType.SNOWFLAKE_PROCEDURE: AssetCategory.COMPUTE,
     UnifiedAssetType.SNOWFLAKE_TASK: AssetCategory.COMPUTE,
+    # BigQuery Data
+    UnifiedAssetType.BQ_TABLE: AssetCategory.DATA,
+    UnifiedAssetType.BQ_VIEW: AssetCategory.DATA,
+    UnifiedAssetType.BQ_MATERIALIZED_VIEW: AssetCategory.DATA,
+    UnifiedAssetType.BQ_EXTERNAL_TABLE: AssetCategory.DATA,
+    # BigQuery Compute
+    UnifiedAssetType.BQ_ROUTINE: AssetCategory.COMPUTE,
+    UnifiedAssetType.BQ_MODEL: AssetCategory.COMPUTE,
     # Kafka
     UnifiedAssetType.KAFKA_TOPIC: AssetCategory.DATA,
     UnifiedAssetType.KAFKA_SCHEMA: AssetCategory.DATA,
@@ -185,6 +207,10 @@ SCHEMA_SUPPORTING_TYPES: set = {
     UnifiedAssetType.SNOWFLAKE_TABLE,
     UnifiedAssetType.SNOWFLAKE_VIEW,
     UnifiedAssetType.SNOWFLAKE_MATERIALIZED_VIEW,
+    UnifiedAssetType.BQ_TABLE,
+    UnifiedAssetType.BQ_VIEW,
+    UnifiedAssetType.BQ_MATERIALIZED_VIEW,
+    UnifiedAssetType.BQ_EXTERNAL_TABLE,
     UnifiedAssetType.KAFKA_TOPIC,  # If using Schema Registry
     UnifiedAssetType.POWERBI_DATASET,
     UnifiedAssetType.POWERBI_SEMANTIC_MODEL,
@@ -215,6 +241,14 @@ CONNECTOR_ASSET_TYPES: Dict[str, List[UnifiedAssetType]] = {
         UnifiedAssetType.SNOWFLAKE_FUNCTION,
         UnifiedAssetType.SNOWFLAKE_PROCEDURE,
         UnifiedAssetType.SNOWFLAKE_TASK,
+    ],
+    "bigquery": [
+        UnifiedAssetType.BQ_TABLE,
+        UnifiedAssetType.BQ_VIEW,
+        UnifiedAssetType.BQ_MATERIALIZED_VIEW,
+        UnifiedAssetType.BQ_EXTERNAL_TABLE,
+        UnifiedAssetType.BQ_ROUTINE,
+        UnifiedAssetType.BQ_MODEL,
     ],
     "kafka": [
         UnifiedAssetType.KAFKA_TOPIC,

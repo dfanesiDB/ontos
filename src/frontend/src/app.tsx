@@ -47,6 +47,7 @@ import SettingsTagsView from './views/settings-tags';
 import SettingsSearchView from './views/settings-search';
 import SettingsMcpView from './views/settings-mcp';
 import SettingsUiView from './views/settings-ui';
+import SettingsConnectorsView from './views/settings-connectors';
 import UserGuide from './views/user-guide';
 import DocumentationViewer from './views/documentation-viewer';
 import DatabaseSchema from './views/database-schema';
@@ -70,6 +71,7 @@ import BusinessOwnersView from './views/business-owners';
 import OwnerConsumersView from './views/owner-consumers';
 import CollectionsView from './views/collections';
 import SettingsSemanticModelsView from './views/settings-semantic-models';
+import HierarchyBrowserView from './views/hierarchy-browser';
 
 /** Syncs the URL prefix to the persona store so direct navigation works. */
 function PersonaUrlSync() {
@@ -154,7 +156,7 @@ export default function App() {
               {/* Legacy producer paths */}
               <Route path="/producer/datasets" element={<Navigate to="/producer/assets" replace />} />
               <Route path="/producer/requests" element={<Navigate to="/producer/reviews" replace />} />
-              <Route path="/producer/hierarchy" element={<Navigate to="/producer/assets" replace />} />
+              <Route path="/producer/hierarchy" element={<HierarchyBrowserView />} />
 
               {/* === Legacy: Data Product Owner /owner -> redirect to /producer === */}
               <Route path="/owner" element={<Navigate to="/producer" replace />} />
@@ -175,7 +177,7 @@ export default function App() {
               <Route path="/steward/master-data" element={<MasterDataManagement />} />
               <Route path="/steward/commander" element={<CatalogCommander />} />
               {/* Legacy steward paths */}
-              <Route path="/steward/hierarchy" element={<Navigate to="/steward/assets" replace />} />
+              <Route path="/steward/hierarchy" element={<HierarchyBrowserView />} />
 
               {/* === Persona: Data Governor /governance (absorbs Ontology Engineer) === */}
               <Route path="/governance" element={<Home />} />
@@ -205,7 +207,7 @@ export default function App() {
               <Route path="/governance/tags" element={<SettingsTagsView />} />
               {/* Legacy governance paths */}
               <Route path="/governance/projects" element={<Navigate to="/governance/teams" replace />} />
-              <Route path="/governance/hierarchy" element={<Navigate to="/governance/assets" replace />} />
+              <Route path="/governance/hierarchy" element={<HierarchyBrowserView />} />
               <Route path="/governance/master-data" element={<Navigate to="/governance/assets" replace />} />
 
               {/* === Legacy: Ontology Engineer /ontology -> redirect to /governance === */}
@@ -244,6 +246,7 @@ export default function App() {
               <Route path="/admin/business-owners" element={<Navigate to="/governance/ownership" replace />} />
               <Route path="/admin/search" element={<SettingsSearchView />} />
               <Route path="/admin/mcp" element={<SettingsMcpView />} />
+              <Route path="/admin/connectors" element={<SettingsConnectorsView />} />
               <Route path="/admin/tags" element={<SettingsTagsView />} />
               <Route path="/admin/audit" element={<AuditTrail />} />
               <Route path="/admin/about" element={<About />} />

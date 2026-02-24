@@ -130,10 +130,7 @@ export default function AssetDetailView() {
     return typeMap[entityType] || entityType.replace(/\s+/g, '');
   }, [entityType]);
 
-  const showLineageTab = [
-    'BusinessTerm', 'LogicalEntity', 'System', 'DataProduct',
-    'Dataset', 'DeliveryChannel', 'Policy',
-  ].includes(ontologyTypeName);
+  const showLineageTab = true;
 
   const isBusinessTerm = ontologyTypeName === 'BusinessTerm';
   const isPolicy = ontologyTypeName === 'Policy';

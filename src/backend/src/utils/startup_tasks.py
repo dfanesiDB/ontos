@@ -68,6 +68,7 @@ from src.connectors.databricks import DatabricksConnector
 from src.connectors.snowflake import SnowflakeConnector
 from src.connectors.kafka import KafkaConnector
 from src.connectors.powerbi import PowerBIConnector
+from src.connectors.bigquery import BigQueryConnector
 
 logger = get_logger(__name__)
 
@@ -156,11 +157,12 @@ def initialize_managers(app: FastAPI):
             registry.register_instance("databricks", databricks_connector, set_as_default=True)
             logger.info("Registered Databricks connector (default)")
             
-            # Register stub connectors for future platform support
+            # Register additional connectors (lazily instantiated when first accessed)
+            registry.register_class("bigquery", BigQueryConnector)
             registry.register_class("snowflake", SnowflakeConnector)
             registry.register_class("kafka", KafkaConnector)
             registry.register_class("powerbi", PowerBIConnector)
-            logger.info("Registered stub connectors: snowflake, kafka, powerbi")
+            logger.info("Registered connectors: bigquery, snowflake, kafka, powerbi")
             
             logger.info(f"Connector registry initialized with {len(registry.list_registered())} connectors")
         except Exception as e:
@@ -196,6 +198,17 @@ def initialize_managers(app: FastAPI):
 
         # Instantiate SettingsManager first, passing settings
         app.state.settings_manager = SettingsManager(db=db_session, settings=settings, workspace_client=ws_client)
+
+        # Initialise ConnectionsManager — manages external connections (BQ, etc.)
+        from src.controller.connections_manager import ConnectionsManager
+        connections_mgr = ConnectionsManager(db=db_session, workspace_client=ws_client)
+        connections_mgr.ensure_system_databricks_connection()
+        migrated = connections_mgr.migrate_from_app_settings()
+        if migrated:
+            logger.info(f"Migrated {migrated} legacy connector config(s) to connections table")
+        db_session.commit()
+        app.state.connections_manager = connections_mgr
+        logger.info("ConnectionsManager initialized")
 
         # Instantiate other managers, passing the settings_manager instance if needed
         audit_manager = AuditManager(settings=settings, db_session=db_session)

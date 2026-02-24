@@ -37,6 +37,7 @@ import {
   Box,
   Settings,
   Truck,
+  Plug,
   Info,
   Factory,
   Scale,
@@ -84,6 +85,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'data-products', labelKey: 'personaNav.dataProducts', path: '/producer/products', icon: Package, featureId: 'data-products', group: 'build' },
     { id: 'contracts', labelKey: 'personaNav.dataContracts', path: '/producer/contracts', icon: FileText, featureId: 'data-contracts', group: 'build' },
     { id: 'data-assets', labelKey: 'personaNav.dataAssets', path: '/producer/assets', icon: Database, featureId: 'assets', group: 'build' },
+    { id: 'hierarchy', labelKey: 'personaNav.hierarchyBrowser', path: '/producer/hierarchy', icon: Network, featureId: 'assets', group: 'build' },
     // -- MONITOR --
     { id: 'quality', labelKey: 'personaNav.qualityCompliance', path: '/producer/quality', icon: CheckCircle, featureId: 'compliance', group: 'monitor' },
     { id: 'consumers', labelKey: 'personaNav.myConsumers', path: '/producer/consumers', icon: Users, featureId: 'data-products', group: 'monitor' },
@@ -95,6 +97,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'home', labelKey: 'personaNav.home', path: '/steward', icon: Home, group: 'catalog' },
     { id: 'asset-explorer', labelKey: 'personaNav.assetExplorer', path: '/steward/assets', icon: Box, featureId: 'assets', group: 'catalog' },
     { id: 'catalog', labelKey: 'personaNav.dataCatalog', path: '/steward/catalog', icon: BookOpen, featureId: 'data-catalog', group: 'catalog' },
+    { id: 'hierarchy', labelKey: 'personaNav.hierarchyBrowser', path: '/steward/hierarchy', icon: Network, featureId: 'assets', group: 'catalog' },
     { id: 'glossary', labelKey: 'personaNav.businessGlossary', path: '/steward/glossary', icon: BookMarked, featureId: 'semantic-models', group: 'catalog' },
     // -- GOVERN --
     { id: 'compliance', labelKey: 'personaNav.compliance', path: '/steward/compliance', icon: CheckCircle, featureId: 'compliance', group: 'govern' },
@@ -115,6 +118,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'workflows', labelKey: 'personaNav.workflows', path: '/governance/workflows', icon: GitBranch, featureId: 'process-workflows', group: 'standards' },
     // -- OVERSIGHT --
     { id: 'asset-explorer', labelKey: 'personaNav.assetExplorer', path: '/governance/assets', icon: Box, featureId: 'assets', group: 'oversight' },
+    { id: 'hierarchy', labelKey: 'personaNav.hierarchyBrowser', path: '/governance/hierarchy', icon: Network, featureId: 'assets', group: 'oversight' },
     { id: 'compliance', labelKey: 'personaNav.compliance', path: '/governance/compliance', icon: CheckCircle, featureId: 'compliance', group: 'oversight' },
     { id: 'audit', labelKey: 'personaNav.audit', path: '/governance/audit', icon: ScrollText, featureId: 'audit', group: 'oversight' },
     { id: 'estates', labelKey: 'personaNav.estateManager', path: '/governance/estates', icon: Globe, featureId: 'estate-manager', group: 'oversight' },
@@ -140,6 +144,7 @@ export const PERSONA_NAV: Record<PersonaId, PersonaNavItem[]> = {
     { id: 'home', labelKey: 'personaNav.home', path: '/admin', icon: Home, group: 'configuration' },
     { id: 'general', labelKey: 'personaNav.general', path: '/admin/general', icon: Settings, featureId: 'settings', group: 'configuration' },
     { id: 'ui', labelKey: 'personaNav.uiCustomization', path: '/admin/ui', icon: Palette, featureId: 'settings', group: 'configuration' },
+    { id: 'connectors', labelKey: 'personaNav.connectors', path: '/admin/connectors', icon: Plug, featureId: 'settings', group: 'configuration' },
     // -- AUTOMATION --
     { id: 'jobs', labelKey: 'personaNav.jobs', path: '/admin/jobs', icon: Briefcase, featureId: 'settings', group: 'automation' },
     { id: 'delivery', labelKey: 'personaNav.deliveryModes', path: '/admin/delivery', icon: Truck, featureId: 'settings', group: 'automation' },

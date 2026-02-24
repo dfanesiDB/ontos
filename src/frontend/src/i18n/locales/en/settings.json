@@ -33,6 +33,7 @@
     "entitlementsSync": "Entitlements Sync",
     "general": "General",
     "uiCustomization": "UI Customization",
+    "connectors": "Connectors",
     "jobs": "Jobs",
     "deliveryModes": "Delivery Modes",
     "git": "Git Integration",
@@ -43,7 +44,8 @@
     "mcpSettings": "MCP Settings",
     "collections": "Collections",
     "rdfSources": "RDF Sources",
-    "about": "About"
+    "about": "About",
+    "hierarchyBrowser": "Hierarchy Browser"
   },
   "navGroups": {
     "discover": "Discover",
@@ -98,7 +100,8 @@
     "search": "Search",
     "mcpTokens": "MCP Tokens",
     "workflows": "Workflows",
-    "uiCustomization": "UI Customization"
+    "uiCustomization": "UI Customization",
+    "connectors": "Connectors"
   },
   "accessDenied": {
     "title": "Access Denied",
@@ -464,6 +467,58 @@
       "saveSuccess": "UI customization settings saved",
       "saveError": "Failed to save UI customization settings",
       "reloadRequired": "Reload the page to see some changes."
+    }
+  },
+  "connectors": {
+    "title": "Connections",
+    "description": "Manage connections to external data platforms for asset discovery and metadata retrieval.",
+    "addConnection": "Add Connection",
+    "testConnection": "Test Connection",
+    "editTitle": "Edit Connection",
+    "editDescription": "Update connection settings.",
+    "createTitle": "New Connection",
+    "createDescription": "Configure a new connection to an external data platform.",
+    "deleteTitle": "Delete Connection",
+    "deleteDescription": "Are you sure you want to delete this connection? This action cannot be undone.",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "description": "Description",
+      "status": "Status",
+      "updated": "Updated"
+    },
+    "form": {
+      "connectorType": "Connector Type",
+      "name": "Name",
+      "description": "Description",
+      "enabled": "Enabled",
+      "isDefault": "Default"
+    },
+    "bigquery": {
+      "configTitle": "BigQuery Configuration",
+      "ucConnectionName": "UC Connection Name",
+      "ucConnectionNameHelp": "Optional. Provides GCP Project ID from UC Connection metadata.",
+      "projectId": "GCP Project ID",
+      "projectIdHelp": "Optional. Derived from credentials if not set.",
+      "location": "Location",
+      "locationHelp": "e.g. US, EU, us-central1",
+      "authSectionTitle": "Authentication",
+      "authSectionHelp": "Store the GCP service account key JSON as a Databricks Secret, then reference the scope and key name below.",
+      "secretScope": "Secret Scope",
+      "secretKey": "Secret Key",
+      "credentialsPath": "Credentials File Path",
+      "credentialsPathHelp": "Dev fallback: local path to a service account key JSON file."
+    },
+    "databricks": {
+      "systemNote": "This connection is auto-configured from environment variables and cannot be modified."
+    },
+    "messages": {
+      "saveSuccess": "Connection saved",
+      "saveError": "Failed to save connection",
+      "testSuccess": "Connection successful",
+      "testFailed": "Connection failed",
+      "testError": "Connection test error",
+      "deleteSuccess": "Connection deleted"
     }
   }
 }
