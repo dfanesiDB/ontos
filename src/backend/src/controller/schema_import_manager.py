@@ -30,6 +30,7 @@ from src.models.schema_import import (
     ImportResult,
     ImportResultItem,
 )
+from src.db_models.entity_relationships import EntityRelationshipDb
 from src.repositories.assets_repository import asset_repo, asset_type_repo
 
 logger = get_logger(__name__)
@@ -272,23 +273,54 @@ class SchemaImportManager:
                     parent_path=item.parent_path,
                 ))
 
-        # 3. Wire relationships
+        # 3. Wire relationships (both asset_relationships and entity_relationships)
+        # Build a lookup from path -> (asset_type_name, asset_id) for entity relationships
+        path_to_type: Dict[str, str] = {}
+        for item in preview_items:
+            if item.path in created_assets:
+                path_to_type[item.path] = item.asset_type
+
         for item in preview_items:
             if item.parent_path and item.parent_path in created_assets and item.path in created_assets:
                 rel_type = self._relationship_type_for(item.asset_type)
+                source_id = created_assets[item.parent_path]
+                target_id = created_assets[item.path]
                 try:
                     self._assets.add_relationship(
                         db,
                         rel_in=AssetRelationshipCreate(
-                            source_asset_id=created_assets[item.parent_path],
-                            target_asset_id=created_assets[item.path],
+                            source_asset_id=source_id,
+                            target_asset_id=target_id,
                             relationship_type=rel_type,
                         ),
                         current_user_id=current_user_id,
                     )
                 except Exception as exc:
-                    # Relationship may already exist — not fatal
                     logger.debug(f"Relationship {item.parent_path} -> {item.path}: {exc}")
+
+                # Also write to entity_relationships so the detail page shows them
+                source_type = path_to_type.get(item.parent_path, "Asset")
+                target_type = path_to_type.get(item.path, "Asset")
+                try:
+                    existing = db.query(EntityRelationshipDb).filter(
+                        EntityRelationshipDb.source_type == source_type,
+                        EntityRelationshipDb.source_id == str(source_id),
+                        EntityRelationshipDb.target_type == target_type,
+                        EntityRelationshipDb.target_id == str(target_id),
+                        EntityRelationshipDb.relationship_type == rel_type,
+                    ).first()
+                    if not existing:
+                        db.add(EntityRelationshipDb(
+                            source_type=source_type,
+                            source_id=str(source_id),
+                            target_type=target_type,
+                            target_id=str(target_id),
+                            relationship_type=rel_type,
+                            created_by=current_user_id,
+                        ))
+                        db.flush()
+                except Exception as exc:
+                    logger.debug(f"Entity relationship {item.parent_path} -> {item.path}: {exc}")
 
         return result
 

@@ -646,9 +646,15 @@ class AssetSummary(BaseModel):
     """Lightweight representation for lists."""
     id: UUID
     name: str
+    description: Optional[str] = None
     asset_type_id: UUID
     asset_type_name: Optional[str] = None
     platform: Optional[str] = None
+    location: Optional[str] = None
+    tags: Optional[List[str]] = None
     status: AssetStatus
+    parent_id: Optional[UUID] = Field(None, description="ID of the parent asset (from hierarchical relationship)")
+    parent_name: Optional[str] = Field(None, description="Name of the parent asset")
+    updated_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}

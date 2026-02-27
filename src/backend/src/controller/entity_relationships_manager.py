@@ -199,7 +199,11 @@ class EntityRelationshipsManager:
     def get_all_for_entity(
         self, db: Session, entity_type: str, entity_id: str
     ) -> EntityRelationshipSummary:
-        """All relationships for an entity, split into outgoing/incoming."""
+        """All relationships for an entity, split into outgoing/incoming.
+
+        Also merges relationships from the legacy asset_relationships table
+        so that schema-imported links are visible.
+        """
         rows = entity_relationship_repo.get_for_entity(
             db, entity_type=entity_type, entity_id=entity_id,
         )
@@ -213,6 +217,13 @@ class EntityRelationshipsManager:
             else:
                 incoming.append(read)
 
+        # Merge legacy asset_relationships if this is an asset-tier entity
+        seen_keys = {
+            (r.source_type, r.source_id, r.target_type, r.target_id, r.relationship_type)
+            for r in rows
+        }
+        self._merge_asset_relationships(db, entity_id, outgoing, incoming, seen_keys)
+
         return EntityRelationshipSummary(
             entity_type=entity_type,
             entity_id=entity_id,
@@ -220,6 +231,80 @@ class EntityRelationshipsManager:
             incoming=incoming,
             total=len(outgoing) + len(incoming),
         )
+
+    def _merge_asset_relationships(
+        self,
+        db: Session,
+        entity_id: str,
+        outgoing: list,
+        incoming: list,
+        seen_keys: set,
+    ) -> None:
+        """Merge legacy asset_relationships into the outgoing/incoming lists."""
+        try:
+            from src.db_models.assets import AssetRelationshipDb, AssetDb
+            from sqlalchemy.orm import selectinload
+            from sqlalchemy import or_
+            from uuid import UUID as PyUUID
+
+            try:
+                asset_uuid = PyUUID(entity_id)
+            except ValueError:
+                return
+
+            asset_rels = (
+                db.query(AssetRelationshipDb)
+                .options(
+                    selectinload(AssetRelationshipDb.source_asset).selectinload(AssetDb.asset_type),
+                    selectinload(AssetRelationshipDb.target_asset).selectinload(AssetDb.asset_type),
+                )
+                .filter(or_(
+                    AssetRelationshipDb.source_asset_id == asset_uuid,
+                    AssetRelationshipDb.target_asset_id == asset_uuid,
+                ))
+                .all()
+            )
+
+            for ar in asset_rels:
+                src_type = ar.source_asset.asset_type.name if ar.source_asset and ar.source_asset.asset_type else "Asset"
+                tgt_type = ar.target_asset.asset_type.name if ar.target_asset and ar.target_asset.asset_type else "Asset"
+                key = (src_type, str(ar.source_asset_id), tgt_type, str(ar.target_asset_id), ar.relationship_type)
+                if key in seen_keys:
+                    continue
+                seen_keys.add(key)
+
+                rel_label = ar.relationship_type
+                try:
+                    rel_iri = self._normalize_relationship_type(ar.relationship_type)
+                    from rdflib import URIRef, RDFS
+                    lv = self._osm._graph.value(URIRef(rel_iri), RDFS.label)
+                    if lv:
+                        rel_label = str(lv)
+                except Exception:
+                    pass
+
+                read = EntityRelationshipRead(
+                    id=ar.id,
+                    source_type=src_type,
+                    source_id=str(ar.source_asset_id),
+                    target_type=tgt_type,
+                    target_id=str(ar.target_asset_id),
+                    relationship_type=ar.relationship_type,
+                    properties=ar.properties,
+                    created_by=ar.created_by,
+                    created_at=ar.created_at,
+                    relationship_label=rel_label,
+                    source_name=ar.source_asset.name if ar.source_asset else None,
+                    target_name=ar.target_asset.name if ar.target_asset else None,
+                )
+
+                is_outgoing = str(ar.source_asset_id) == entity_id
+                if is_outgoing:
+                    outgoing.append(read)
+                else:
+                    incoming.append(read)
+        except Exception as e:
+            logger.debug(f"Failed to merge asset_relationships for {entity_id}: {e}")
 
     def query_relationships(
         self, db: Session, *,
@@ -520,34 +605,20 @@ class EntityRelationshipsManager:
     # Business Lineage Graph
     # ------------------------------------------------------------------
 
-    BUSINESS_TYPES = {
-        "BusinessTerm", "LogicalEntity", "LogicalAttribute",
-        "System", "DataProduct", "Dataset", "DeliveryChannel",
-        "Policy", "DataDomain",
-    }
-    TECHNICAL_TYPES = {
-        "Table", "View", "Column", "DataContract",
-    }
-
     def get_business_lineage(
         self,
         db: Session,
         entity_type: str,
         entity_id: str,
         max_depth: int = 3,
-        include_technical: bool = False,
         direction: Optional[str] = None,
     ) -> LineageGraph:
-        """BFS traversal of entity relationships to build a business lineage graph.
+        """BFS traversal of entity relationships to build a lineage graph.
 
         Args:
             direction: None for both, "downstream" for impact analysis (outgoing only),
                        "upstream" for provenance (incoming only).
         """
-        allowed_types = set(self.BUSINESS_TYPES)
-        if include_technical:
-            allowed_types |= self.TECHNICAL_TYPES
-
         graph = LineageGraph(
             center_entity_type=entity_type,
             center_entity_id=entity_id,
@@ -593,9 +664,6 @@ class EntityRelationshipsManager:
 
                 neighbor_type = row.target_type if is_outgoing else row.source_type
                 neighbor_id = row.target_id if is_outgoing else row.source_id
-
-                if neighbor_type not in allowed_types:
-                    continue
 
                 neighbor_key = f"{neighbor_type}:{neighbor_id}"
 

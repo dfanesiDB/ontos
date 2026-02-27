@@ -1,65 +1,50 @@
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
-import ReactFlow, {
-  Node,
-  Edge,
-  Position,
-  MarkerType,
-  useNodesState,
-  useEdgesState,
-  Controls,
-  Background,
-  MiniMap,
-  NodeProps,
-  Handle,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+import React, { useRef, useEffect, useMemo, useCallback, useState } from 'react';
+// @ts-expect-error - react-cytoscapejs doesn't have type declarations
+import CytoscapeComponent from 'react-cytoscapejs';
+import type { Core, ElementDefinition, LayoutOptions } from 'cytoscape';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import {
-  Box, Table2, Eye, Columns2, LayoutDashboard, Globe, FileCode, Brain,
-  Activity, Server, Shield, BookOpen, Database, Shapes, Package, Tag, Send,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import {
+  Loader2, AlertCircle, ZoomIn, ZoomOut, Maximize, RotateCcw,
+  Group, Ungroup,
 } from 'lucide-react';
-import * as dagre from 'dagre';
-import type { LineageGraph, LineageGraphNode, LineageGraphEdge } from '@/types/ontology-schema';
+import type { LineageGraph, LineageGraphNode } from '@/types/ontology-schema';
 
-const ICON_MAP: Record<string, React.ElementType> = {
-  Table2, Eye, Columns2, LayoutDashboard, Globe, FileCode, Brain, Activity,
-  Server, Shield, BookOpen, Database, Shapes, Box, Package, Tag, Send,
+// ─── Shared color map (also used by lineage-flow-graph) ─────────────────
+
+export const TYPE_COLOR: Record<string, { bg: string; border: string; text: string; minimap: string; hex: string }> = {
+  BusinessTerm:     { bg: 'bg-indigo-500/10',   border: 'border-indigo-500/50',  text: 'text-indigo-600 dark:text-indigo-400',   minimap: '#6366f1', hex: '#6366f1' },
+  LogicalEntity:    { bg: 'bg-violet-500/10',   border: 'border-violet-500/40',  text: 'text-violet-600 dark:text-violet-400',   minimap: '#8b5cf6', hex: '#8b5cf6' },
+  LogicalAttribute: { bg: 'bg-fuchsia-500/10',  border: 'border-fuchsia-500/40', text: 'text-fuchsia-600 dark:text-fuchsia-400', minimap: '#d946ef', hex: '#d946ef' },
+  System:           { bg: 'bg-blue-500/10',     border: 'border-blue-500/40',    text: 'text-blue-600 dark:text-blue-400',       minimap: '#3b82f6', hex: '#3b82f6' },
+  DataDomain:       { bg: 'bg-purple-500/10',   border: 'border-purple-500/40',  text: 'text-purple-600 dark:text-purple-400',   minimap: '#a855f7', hex: '#a855f7' },
+  DataProduct:      { bg: 'bg-emerald-500/10',  border: 'border-emerald-500/40', text: 'text-emerald-600 dark:text-emerald-400', minimap: '#10b981', hex: '#10b981' },
+  Dataset:          { bg: 'bg-amber-500/10',    border: 'border-amber-500/40',   text: 'text-amber-600 dark:text-amber-400',     minimap: '#f59e0b', hex: '#f59e0b' },
+  DeliveryChannel:  { bg: 'bg-cyan-500/10',     border: 'border-cyan-500/40',    text: 'text-cyan-600 dark:text-cyan-400',       minimap: '#06b6d4', hex: '#06b6d4' },
+  Policy:           { bg: 'bg-red-500/10',      border: 'border-red-500/40',     text: 'text-red-600 dark:text-red-400',         minimap: '#ef4444', hex: '#ef4444' },
+  Table:            { bg: 'bg-orange-500/10',    border: 'border-orange-500/40',  text: 'text-orange-600 dark:text-orange-400',   minimap: '#f97316', hex: '#f97316' },
+  View:             { bg: 'bg-teal-500/10',     border: 'border-teal-500/40',    text: 'text-teal-600 dark:text-teal-400',       minimap: '#14b8a6', hex: '#14b8a6' },
+  Column:           { bg: 'bg-slate-500/10',    border: 'border-slate-500/40',   text: 'text-slate-600 dark:text-slate-400',     minimap: '#64748b', hex: '#64748b' },
+  Schema:           { bg: 'bg-violet-500/10',   border: 'border-violet-500/40',  text: 'text-violet-600 dark:text-violet-400',   minimap: '#8b5cf6', hex: '#8b5cf6' },
+  DataContract:     { bg: 'bg-pink-500/10',     border: 'border-pink-500/40',    text: 'text-pink-600 dark:text-pink-400',       minimap: '#ec4899', hex: '#ec4899' },
 };
+
+const DEFAULT_HEX = '#6b7280';
+
+function hexForType(type: string): string {
+  return TYPE_COLOR[type]?.hex || DEFAULT_HEX;
+}
+
+// ─── Route helpers ──────────────────────────────────────────────────────
 
 const TYPE_ROUTE_MAP: Record<string, string> = {
   DataProduct: '/governance/data-products',
   DataContract: '/governance/data-contracts',
   DataDomain: '/governance/domains',
-};
-
-const TYPE_COLOR: Record<string, { bg: string; border: string; text: string; minimap: string }> = {
-  BusinessTerm:     { bg: 'bg-indigo-500/10',   border: 'border-indigo-500/50',  text: 'text-indigo-600 dark:text-indigo-400',  minimap: '#6366f1' },
-  LogicalEntity:    { bg: 'bg-violet-500/10',   border: 'border-violet-500/40',  text: 'text-violet-600 dark:text-violet-400',  minimap: '#8b5cf6' },
-  LogicalAttribute: { bg: 'bg-fuchsia-500/10',  border: 'border-fuchsia-500/40', text: 'text-fuchsia-600 dark:text-fuchsia-400', minimap: '#d946ef' },
-  System:           { bg: 'bg-blue-500/10',     border: 'border-blue-500/40',    text: 'text-blue-600 dark:text-blue-400',      minimap: '#3b82f6' },
-  DataDomain:       { bg: 'bg-purple-500/10',   border: 'border-purple-500/40',  text: 'text-purple-600 dark:text-purple-400',  minimap: '#a855f7' },
-  DataProduct:      { bg: 'bg-emerald-500/10',  border: 'border-emerald-500/40', text: 'text-emerald-600 dark:text-emerald-400', minimap: '#10b981' },
-  Dataset:          { bg: 'bg-amber-500/10',    border: 'border-amber-500/40',   text: 'text-amber-600 dark:text-amber-400',    minimap: '#f59e0b' },
-  DeliveryChannel:  { bg: 'bg-cyan-500/10',     border: 'border-cyan-500/40',    text: 'text-cyan-600 dark:text-cyan-400',      minimap: '#06b6d4' },
-  Policy:           { bg: 'bg-red-500/10',      border: 'border-red-500/40',     text: 'text-red-600 dark:text-red-400',        minimap: '#ef4444' },
-  Table:            { bg: 'bg-orange-500/10',   border: 'border-orange-500/40',  text: 'text-orange-600 dark:text-orange-400',  minimap: '#f97316' },
-  View:             { bg: 'bg-teal-500/10',     border: 'border-teal-500/40',    text: 'text-teal-600 dark:text-teal-400',      minimap: '#14b8a6' },
-  Column:           { bg: 'bg-slate-500/10',    border: 'border-slate-500/40',   text: 'text-slate-600 dark:text-slate-400',    minimap: '#64748b' },
-  Schema:           { bg: 'bg-violet-500/10',   border: 'border-violet-500/40',  text: 'text-violet-600 dark:text-violet-400',  minimap: '#8b5cf6' },
-  DataContract:     { bg: 'bg-pink-500/10',     border: 'border-pink-500/40',    text: 'text-pink-600 dark:text-pink-400',      minimap: '#ec4899' },
-};
-
-const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  draft: 'outline',
-  active: 'default',
-  deprecated: 'secondary',
-  archived: 'destructive',
 };
 
 function getEntityRoute(entityType: string, entityId: string): string {
@@ -68,212 +53,443 @@ function getEntityRoute(entityType: string, entityId: string): string {
   return `/governance/assets/${entityId}`;
 }
 
-interface LineageNodeData {
-  label: string;
-  entityType: string;
-  entityId: string;
-  icon?: string | null;
-  status?: string | null;
-  description?: string | null;
-  isCenter: boolean;
-  navigate: (path: string) => void;
+function humanizeType(type: string): string {
+  return type.replace(/([A-Z])/g, ' $1').trim();
 }
 
-const LineageNode: React.FC<NodeProps<LineageNodeData>> = ({ data }) => {
-  const Icon = (data.icon && ICON_MAP[data.icon]) || Box;
-  const colors = TYPE_COLOR[data.entityType] || TYPE_COLOR.System;
+// ─── Data conversion ────────────────────────────────────────────────────
 
-  const handleClick = () => {
-    data.navigate(getEntityRoute(data.entityType, data.entityId));
-  };
+function relationshipsToGraph(raw: any, entityType: string, entityId: string, entityName?: string): LineageGraph {
+  const nodes: LineageGraphNode[] = [];
+  const edges: LineageGraph['edges'] = [];
+  const seen = new Set<string>();
 
-  return (
-    <>
-      <Handle type="target" position={Position.Top} id="target" style={{ visibility: 'hidden' }} />
-      <Handle type="target" position={Position.Left} id="target-left" style={{ visibility: 'hidden' }} />
-      <Card
-        onClick={handleClick}
-        className={`w-56 shadow-md hover:shadow-lg transition-shadow rounded-lg cursor-pointer ${colors.bg} ${colors.border} border react-flow__node-default ${
-          data.isCenter ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
-        }`}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClick()}
-      >
-        <CardHeader className="p-2.5 space-y-0">
-          <CardTitle className="text-xs font-medium flex items-center gap-1.5">
-            <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${colors.text}`} />
-            <span className="truncate">{data.label}</span>
-          </CardTitle>
-          <div className="flex items-center gap-1 mt-1">
-            <Badge variant="outline" className="text-[9px] h-3.5 px-1 font-normal">
-              {data.entityType}
-            </Badge>
-            {data.status && (
-              <Badge
-                variant={STATUS_VARIANT[data.status] ?? 'outline'}
-                className="text-[9px] h-3.5 px-1"
-              >
-                {data.status}
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-      </Card>
-      <Handle type="source" position={Position.Bottom} id="source" style={{ visibility: 'hidden' }} />
-      <Handle type="source" position={Position.Right} id="source-right" style={{ visibility: 'hidden' }} />
-    </>
-  );
-};
+  const centerId = `${entityType}:${entityId}`;
+  nodes.push({
+    id: centerId, entity_type: entityType, entity_id: entityId,
+    name: entityName || raw.entity_name || entityType,
+    icon: null, status: null, is_center: true,
+  });
+  seen.add(centerId);
 
-const nodeTypes = { lineageNode: LineageNode };
+  for (const rel of (raw.outgoing || [])) {
+    const nid = `${rel.target_type}:${rel.target_id}`;
+    if (!seen.has(nid)) {
+      seen.add(nid);
+      nodes.push({
+        id: nid, entity_type: rel.target_type, entity_id: rel.target_id,
+        name: rel.target_name || rel.target_id, icon: null, status: null, is_center: false,
+      });
+    }
+    edges.push({ source: centerId, target: nid, relationship_type: rel.relationship_type, label: rel.relationship_label || rel.relationship_type });
+  }
 
-const NODE_WIDTH = 224;
-const NODE_HEIGHT = 64;
+  for (const rel of (raw.incoming || [])) {
+    const nid = `${rel.source_type}:${rel.source_id}`;
+    if (!seen.has(nid)) {
+      seen.add(nid);
+      nodes.push({
+        id: nid, entity_type: rel.source_type, entity_id: rel.source_id,
+        name: rel.source_name || rel.source_id, icon: null, status: null, is_center: false,
+      });
+    }
+    edges.push({ source: nid, target: centerId, relationship_type: rel.relationship_type, label: rel.relationship_label || rel.relationship_type });
+  }
 
-function buildReactFlowGraph(
-  data: LineageGraph,
-  navigate: (path: string) => void,
-  isDark: boolean,
-): { nodes: Node<LineageNodeData>[]; edges: Edge[] } {
-  const nodes: Node<LineageNodeData>[] = data.nodes.map((n) => ({
-    id: n.id,
-    type: 'lineageNode',
-    position: { x: 0, y: 0 },
+  return { center_entity_type: entityType, center_entity_id: entityId, nodes, edges };
+}
+
+// ─── Cytoscape elements builder ─────────────────────────────────────────
+
+function buildElements(data: LineageGraph, grouped: boolean): ElementDefinition[] {
+  const elements: ElementDefinition[] = [];
+  const center = data.nodes.find(n => n.is_center);
+  if (!center) return elements;
+
+  const typeGroups: Record<string, LineageGraphNode[]> = {};
+  for (const n of data.nodes) {
+    if (n.is_center) continue;
+    (typeGroups[n.entity_type] ??= []).push(n);
+  }
+
+  // Compound group nodes (type containers)
+  if (grouped) {
+    for (const [type, members] of Object.entries(typeGroups)) {
+      elements.push({
+        data: {
+          id: `group:${type}`,
+          label: `${humanizeType(type)} (${members.length})`,
+          entityType: type,
+          color: hexForType(type),
+        },
+        classes: 'type-group',
+      });
+    }
+  }
+
+  // Center node
+  elements.push({
     data: {
+      id: center.id,
+      label: center.name,
+      entityType: center.entity_type,
+      entityId: center.entity_id,
+      color: hexForType(center.entity_type),
+    },
+    classes: 'entity-node center-node',
+  });
+
+  // Entity nodes
+  for (const n of data.nodes) {
+    if (n.is_center) continue;
+    const nodeData: any = {
+      id: n.id,
       label: n.name,
       entityType: n.entity_type,
       entityId: n.entity_id,
-      icon: n.icon,
-      status: n.status,
-      description: n.description,
-      isCenter: n.is_center,
-      navigate,
-    },
-  }));
-
-  const edges: Edge[] = data.edges.map((e, i) => ({
-    id: `e-${i}-${e.source}-${e.target}`,
-    source: e.source,
-    target: e.target,
-    type: 'smoothstep',
-    label: e.label || undefined,
-    labelStyle: { fontSize: 9, fill: isDark ? '#94a3b8' : '#64748b' },
-    labelBgStyle: { fill: isDark ? '#1e293b' : '#f8fafc', fillOpacity: 0.9 },
-    labelBgPadding: [4, 2] as [number, number],
-    animated: false,
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      color: isDark ? '#94a3b8' : '#333',
-    },
-    style: {
-      stroke: isDark ? '#475569' : '#94a3b8',
-      strokeWidth: 1.5,
-    },
-  }));
-
-  return { nodes, edges };
-}
-
-function applyDagreLayout(
-  nodes: Node<LineageNodeData>[],
-  edges: Edge[],
-): Node<LineageNodeData>[] {
-  if (nodes.length === 0) return nodes;
-
-  const g = new dagre.graphlib.Graph();
-  g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: 'LR', nodesep: 50, ranksep: 80 });
-
-  nodes.forEach((n) => g.setNode(n.id, { width: NODE_WIDTH, height: NODE_HEIGHT }));
-  edges.forEach((e) => g.setEdge(e.source, e.target));
-
-  dagre.layout(g);
-
-  return nodes.map((n) => {
-    const pos = g.node(n.id);
-    return {
-      ...n,
-      targetPosition: Position.Left,
-      sourcePosition: Position.Right,
-      position: { x: pos.x - NODE_WIDTH / 2, y: pos.y - NODE_HEIGHT / 2 },
+      color: hexForType(n.entity_type),
     };
-  });
+    if (grouped && typeGroups[n.entity_type]) {
+      nodeData.parent = `group:${n.entity_type}`;
+    }
+    elements.push({ data: nodeData, classes: 'entity-node' });
+  }
+
+  // Edges
+  for (const e of data.edges) {
+    elements.push({
+      data: {
+        id: `e:${e.source}:${e.target}:${e.relationship_type || ''}`,
+        source: e.source,
+        target: e.target,
+        label: e.label || e.relationship_type || '',
+      },
+      classes: 'rel-edge',
+    });
+  }
+
+  return elements;
 }
+
+// ─── Layout configs ─────────────────────────────────────────────────────
+
+type LayoutType = 'cose' | 'concentric' | 'circle' | 'breadthfirst';
+
+function getLayoutConfig(name: LayoutType, animate = true): LayoutOptions {
+  const base = { fit: true, padding: 60, animate, animationDuration: animate ? 500 : 0 };
+
+  switch (name) {
+    case 'cose':
+      return {
+        name: 'cose', ...base,
+        idealEdgeLength: () => 120,
+        nodeOverlap: 30,
+        nodeRepulsion: () => 600000,
+        edgeElasticity: () => 100,
+        nestingFactor: 5,
+        gravity: 60,
+        numIter: animate ? 1000 : 500,
+        initialTemp: 200,
+        coolingFactor: 0.95,
+        minTemp: 1.0,
+        randomize: false,
+      };
+    case 'concentric':
+      return {
+        name: 'concentric', ...base,
+        avoidOverlap: true,
+        minNodeSpacing: 30,
+        concentric: (node: any) => node.hasClass('center-node') ? 100 : 1,
+        levelWidth: () => 1,
+      };
+    case 'circle':
+      return { name: 'circle', ...base, avoidOverlap: true, spacingFactor: 1.5 };
+    case 'breadthfirst':
+      return { name: 'breadthfirst', ...base, directed: true, spacingFactor: 1.5, avoidOverlap: true };
+    default:
+      return { name: 'cose', ...base };
+  }
+}
+
+// ─── Main Component ─────────────────────────────────────────────────────
 
 interface BusinessLineageGraphProps {
   entityType: string;
   entityId: string;
+  entityName?: string;
   className?: string;
-  defaultIncludeTechnical?: boolean;
   mode?: 'lineage' | 'impact';
   maxDepth?: number;
+  source?: 'lineage' | 'relationships';
 }
 
 export function BusinessLineageGraph({
   entityType,
   entityId,
+  entityName,
   className,
-  defaultIncludeTechnical = false,
   mode = 'lineage',
   maxDepth = 3,
+  source = 'lineage',
 }: BusinessLineageGraphProps) {
   const navigate = useNavigate();
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const cyRef = useRef<Core | null>(null);
+  const layoutRef = useRef<any>(null);
+  const initialLayoutDoneRef = useRef(false);
 
-  const [includeTechnical, setIncludeTechnical] = useState(defaultIncludeTechnical);
   const [graphData, setGraphData] = useState<LineageGraph | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [layout, setLayout] = useState<LayoutType>('concentric');
+  const [showGroups, setShowGroups] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
 
+  // Watch dark mode changes
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  // Fetch data
   const fetchGraph = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    initialLayoutDoneRef.current = false;
     try {
-      const suffix = mode === 'impact' ? '/impact' : '';
-      const params = new URLSearchParams({
-        max_depth: String(maxDepth),
-        include_technical: String(includeTechnical),
-      });
-      const res = await fetch(
-        `/api/business-lineage/${entityType}/${entityId}${suffix}?${params}`
-      );
-      if (!res.ok) throw new Error(`Failed to load lineage: ${res.status}`);
-      const data: LineageGraph = await res.json();
-      setGraphData(data);
+      if (source === 'relationships') {
+        const res = await fetch(`/api/entities/${entityType}/${entityId}/relationships`);
+        if (!res.ok) throw new Error(`Failed to load relationships: ${res.status}`);
+        const raw = await res.json();
+        setGraphData(relationshipsToGraph(raw, entityType, entityId, entityName));
+      } else {
+        const suffix = mode === 'impact' ? '/impact' : '';
+        const params = new URLSearchParams({ max_depth: String(maxDepth) });
+        const res = await fetch(`/api/business-lineage/${entityType}/${entityId}${suffix}?${params}`);
+        if (!res.ok) throw new Error(`Failed to load lineage: ${res.status}`);
+        setGraphData(await res.json());
+      }
     } catch (e: any) {
-      setError(e.message || 'Failed to load lineage graph');
+      setError(e.message || 'Failed to load graph');
     } finally {
       setIsLoading(false);
     }
-  }, [entityType, entityId, includeTechnical, mode, maxDepth]);
+  }, [entityType, entityId, entityName, mode, maxDepth, source]);
 
+  useEffect(() => { fetchGraph(); }, [fetchGraph]);
+
+  // Build elements
+  const elements = useMemo(() => {
+    if (!graphData || graphData.nodes.length === 0) return [];
+    return buildElements(graphData, showGroups);
+  }, [graphData, showGroups]);
+
+  // Cytoscape stylesheet
+  const stylesheet = useMemo((): any[] => {
+    const textColor = isDarkMode ? '#f1f5f9' : '#1f2937';
+    const textOutline = isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
+    const edgeColor = isDarkMode ? '#71717a' : '#94a3b8';
+    const groupBgOpacity = isDarkMode ? 0.15 : 0.1;
+
+    return [
+      // Base node
+      {
+        selector: 'node',
+        style: {
+          'font-family': 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+          'font-size': 11,
+          'font-weight': 500,
+          'color': textColor,
+          'text-outline-width': 2,
+          'text-outline-color': textOutline,
+          'text-wrap': 'ellipsis',
+          'text-max-width': '120px',
+        },
+      },
+      // Entity nodes
+      {
+        selector: '.entity-node',
+        style: {
+          'shape': 'ellipse',
+          'width': 28,
+          'height': 28,
+          'background-color': 'data(color)',
+          'border-width': 2,
+          'border-color': isDarkMode ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.9)',
+          'label': 'data(label)',
+          'text-valign': 'bottom',
+          'text-halign': 'center',
+          'text-margin-y': 6,
+        },
+      },
+      // Center node highlight
+      {
+        selector: '.center-node',
+        style: {
+          'width': 48,
+          'height': 48,
+          'border-width': 4,
+          'border-color': '#FFD700',
+          'font-size': 13,
+          'font-weight': 700,
+          'z-index': 10,
+        },
+      },
+      // Hover
+      {
+        selector: '.entity-node.hover',
+        style: {
+          'width': 38,
+          'height': 38,
+          'border-width': 3,
+          'font-size': 13,
+          'font-weight': 600,
+          'z-index': 999,
+        },
+      },
+      // Center hover (keep it larger)
+      {
+        selector: '.center-node.hover',
+        style: {
+          'width': 56,
+          'height': 56,
+        },
+      },
+      // Selected
+      {
+        selector: '.entity-node:selected',
+        style: {
+          'width': 44,
+          'height': 44,
+          'border-width': 4,
+          'border-color': '#FFD700',
+          'font-size': 14,
+          'font-weight': 700,
+        },
+      },
+      // Type group compound nodes
+      {
+        selector: '.type-group',
+        style: {
+          'shape': 'round-rectangle',
+          'background-color': 'data(color)',
+          'background-opacity': groupBgOpacity,
+          'border-width': 2,
+          'border-color': 'data(color)',
+          'border-opacity': 0.4,
+          'label': 'data(label)',
+          'text-valign': 'top',
+          'text-halign': 'center',
+          'font-size': 12,
+          'font-weight': 600,
+          'color': textColor,
+          'text-margin-y': -8,
+          'padding': 24,
+        },
+      },
+      // Edges
+      {
+        selector: 'edge',
+        style: {
+          'width': 1.5,
+          'line-color': edgeColor,
+          'target-arrow-color': edgeColor,
+          'target-arrow-shape': 'triangle',
+          'arrow-scale': 0.8,
+          'curve-style': 'bezier',
+          'opacity': 0.6,
+          'label': 'data(label)',
+          'font-size': 9,
+          'font-weight': 400,
+          'color': isDarkMode ? '#94a3b8' : '#64748b',
+          'text-rotation': 'autorotate',
+          'text-outline-width': 2,
+          'text-outline-color': isDarkMode ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)',
+          'text-background-opacity': 0,
+        },
+      },
+      // Edge hover
+      {
+        selector: 'edge.hover',
+        style: {
+          'width': 2.5,
+          'opacity': 1,
+          'line-color': '#FFD700',
+          'target-arrow-color': '#FFD700',
+          'font-size': 10,
+          'font-weight': 600,
+        },
+      },
+    ];
+  }, [isDarkMode]);
+
+  // Wire up event handlers
   useEffect(() => {
-    fetchGraph();
-  }, [fetchGraph]);
+    const cy = cyRef.current;
+    if (!cy) return;
 
-  const { layoutedNodes, layoutedEdges } = useMemo(() => {
-    if (!graphData || graphData.nodes.length === 0) {
-      return { layoutedNodes: [], layoutedEdges: [] };
-    }
-    const { nodes, edges } = buildReactFlowGraph(graphData, navigate, isDark);
-    const laid = applyDagreLayout(nodes, edges);
-    return { layoutedNodes: laid, layoutedEdges: edges };
-  }, [graphData, navigate, isDark]);
+    cy.removeAllListeners();
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
+    cy.on('tap', '.entity-node', (evt) => {
+      const d = evt.target.data();
+      if (d.entityId && !evt.target.hasClass('center-node')) {
+        navigate(getEntityRoute(d.entityType, d.entityId));
+      }
+    });
 
+    cy.on('mouseover', '.entity-node', (evt) => evt.target.addClass('hover'));
+    cy.on('mouseout', '.entity-node', (evt) => evt.target.removeClass('hover'));
+    cy.on('mouseover', 'edge', (evt) => evt.target.addClass('hover'));
+    cy.on('mouseout', 'edge', (evt) => evt.target.removeClass('hover'));
+
+    return () => { cy.removeAllListeners(); };
+  }, [navigate, elements]);
+
+  // Run layout when layout type or elements change
   useEffect(() => {
-    setNodes(layoutedNodes);
-    setEdges(layoutedEdges);
-  }, [layoutedNodes, layoutedEdges, setNodes, setEdges]);
+    const cy = cyRef.current;
+    if (!cy) return;
+
+    const tid = setTimeout(() => {
+      const c = cyRef.current;
+      if (!c || c.elements().length === 0) return;
+
+      if (layoutRef.current) layoutRef.current.stop();
+      const instance = c.layout(getLayoutConfig(layout, true));
+      layoutRef.current = instance;
+      instance.run();
+    }, 50);
+
+    return () => {
+      clearTimeout(tid);
+      if (layoutRef.current) { layoutRef.current.stop(); layoutRef.current = null; }
+    };
+  }, [layout, elements.length, showGroups]);
+
+  // Toolbar actions
+  const handleFit = () => cyRef.current?.fit(undefined, 60);
+  const handleZoomIn = () => { const cy = cyRef.current; if (cy) cy.zoom(cy.zoom() * 1.3); };
+  const handleZoomOut = () => { const cy = cyRef.current; if (cy) cy.zoom(cy.zoom() / 1.3); };
+  const handleReset = () => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    if (layoutRef.current) layoutRef.current.stop();
+    const instance = cy.layout(getLayoutConfig(layout, true));
+    layoutRef.current = instance;
+    instance.run();
+  };
+
+  // ─── Render ─────────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center ${className || 'h-64'}`}>
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-sm text-muted-foreground">Loading lineage...</span>
+        <span className="ml-2 text-sm text-muted-foreground">Loading relationships...</span>
       </div>
     );
   }
@@ -291,57 +507,91 @@ export function BusinessLineageGraph({
   if (!graphData || graphData.nodes.length === 0) {
     return (
       <div className={`flex items-center justify-center ${className || 'h-64'}`}>
-        <p className="text-sm text-muted-foreground">No lineage data found for this entity.</p>
+        <p className="text-sm text-muted-foreground">No relationship data found for this entity.</p>
       </div>
     );
   }
 
+  const entityCount = graphData.nodes.length;
+  const edgeCount = graphData.edges.length;
+
   return (
-    <div className={`flex flex-col ${className || 'h-[500px]'}`}>
-      <div className="flex items-center gap-4 px-3 py-2 border-b bg-muted/30">
+    <div className={`flex flex-col border rounded-lg bg-background overflow-hidden ${className || 'h-[500px]'}`}>
+      {/* Toolbar */}
+      <div className="px-4 py-2 border-b flex items-center justify-between bg-muted/20">
         <div className="flex items-center gap-2">
-          <Switch
-            id="include-technical"
-            checked={includeTechnical}
-            onCheckedChange={setIncludeTechnical}
-          />
-          <Label htmlFor="include-technical" className="text-xs">
-            Show Technical Detail
-          </Label>
+          <Select value={layout} onValueChange={(v) => setLayout(v as LayoutType)}>
+            <SelectTrigger className="w-[160px] h-8">
+              <SelectValue placeholder="Layout" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="concentric">Concentric</SelectItem>
+              <SelectItem value="cose">Force-Directed</SelectItem>
+              <SelectItem value="circle">Circular</SelectItem>
+              <SelectItem value="breadthfirst">Hierarchical</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant={showGroups ? 'secondary' : 'ghost'}
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setShowGroups(g => !g)}
+            title={showGroups ? 'Ungroup by type' : 'Group by type'}
+          >
+            {showGroups ? <Group className="h-4 w-4" /> : <Ungroup className="h-4 w-4" />}
+          </Button>
+
+          <Badge variant="secondary" className="text-xs">
+            {entityCount} entities, {edgeCount} relationships
+          </Badge>
         </div>
-        <span className="text-xs text-muted-foreground ml-auto">
-          {graphData.nodes.length} nodes, {graphData.edges.length} edges
-        </span>
+
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut} title="Zoom Out">
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn} title="Zoom In">
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleFit} title="Fit to View">
+            <Maximize className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleReset} title="Reset Layout">
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      <div className="flex-1 border rounded-b-lg">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          nodeTypes={nodeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-          attributionPosition="bottom-right"
-          className="bg-background"
+      {/* Graph */}
+      <div className="flex-1 relative" style={{ minHeight: 0 }}>
+        <CytoscapeComponent
+          key={`rel-graph-${showGroups}`}
+          cy={(cy: Core) => {
+            cyRef.current = cy;
+            if (!initialLayoutDoneRef.current) {
+              initialLayoutDoneRef.current = true;
+              setTimeout(() => {
+                if (cyRef.current && cyRef.current.elements().length > 0) {
+                  const instance = cyRef.current.layout(getLayoutConfig(layout, true));
+                  layoutRef.current = instance;
+                  instance.run();
+                }
+              }, 50);
+            }
+          }}
+          elements={elements}
+          stylesheet={stylesheet}
+          layout={{ name: 'preset' }}
+          style={{ width: '100%', height: '100%' }}
           minZoom={0.1}
-          maxZoom={2}
-          nodesDraggable
-          nodesConnectable={false}
-        >
-          <Controls />
-          <MiniMap
-            nodeStrokeWidth={3}
-            zoomable
-            pannable
-            nodeColor={(n: Node) => {
-              const type = (n.data as LineageNodeData)?.entityType;
-              return TYPE_COLOR[type]?.minimap || '#6b7280';
-            }}
-          />
-          <Background color={isDark ? '#334155' : '#e2e8f0'} gap={16} />
-        </ReactFlow>
+          maxZoom={4}
+          wheelSensitivity={0.3}
+          boxSelectionEnabled={false}
+          autounselectify={false}
+          userPanningEnabled={true}
+          userZoomingEnabled={true}
+        />
       </div>
     </div>
   );

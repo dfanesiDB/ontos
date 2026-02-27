@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Link2, ArrowRight, ArrowLeft, Loader2, AlertCircle, ExternalLink,
   PlusCircle, Trash2, Search,
@@ -100,6 +100,9 @@ export function EntityRelationshipPanel({
   // Delete state
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Type filter for relationship table
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
   const { get: apiGet, post: apiPost, delete: apiDelete } = useApi();
   const { toast } = useToast();
@@ -219,6 +222,31 @@ export function EntityRelationshipPanel({
     setIsAddOpen(true);
   };
 
+  const outgoing = data?.outgoing || [];
+  const incoming = data?.incoming || [];
+  const total = outgoing.length + incoming.length;
+
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const rel of outgoing) {
+      const t = rel.target_type;
+      counts[t] = (counts[t] || 0) + 1;
+    }
+    for (const rel of incoming) {
+      const t = rel.source_type;
+      counts[t] = (counts[t] || 0) + 1;
+    }
+    return counts;
+  }, [outgoing, incoming]);
+
+  const filteredOutgoing = typeFilter
+    ? outgoing.filter(r => r.target_type === typeFilter)
+    : outgoing;
+  const filteredIncoming = typeFilter
+    ? incoming.filter(r => r.source_type === typeFilter)
+    : incoming;
+  const filteredTotal = filteredOutgoing.length + filteredIncoming.length;
+
   if (loading) {
     return (
       <Card className={className}>
@@ -256,10 +284,6 @@ export function EntityRelationshipPanel({
     );
   }
 
-  const outgoing = data?.outgoing || [];
-  const incoming = data?.incoming || [];
-  const total = outgoing.length + incoming.length;
-
   return (
     <>
       <Card className={className}>
@@ -284,99 +308,112 @@ export function EntityRelationshipPanel({
             </p>
           ) : (
             <div className="space-y-3">
-              {outgoing.length > 0 && (
-                <div>
-                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Outgoing ({outgoing.length})
-                  </div>
-                  <div className="space-y-1">
-                    {outgoing.map((rel) => (
-                      <div key={rel.id} className="group flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors">
-                        <button
-                          onClick={() => navigate(getEntityRoute(rel.target_type, rel.target_id))}
-                          className="flex items-center gap-2 flex-1 text-left min-w-0"
-                        >
-                          <ArrowRight className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-                          <Badge variant="outline" className="text-xs flex-shrink-0">
-                            {rel.relationship_label || rel.relationship_type}
-                          </Badge>
-                          <span className="text-sm truncate flex-1">
-                            {rel.target_name || rel.target_id}
-                          </span>
-                          <Badge variant="secondary" className="text-xs flex-shrink-0">
-                            {rel.target_type}
-                          </Badge>
-                          <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                        </button>
-                        {canEdit && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                                  onClick={() => setDeleteId(rel.id)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Remove relationship</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Type filter bar */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setTypeFilter(null)}
+                  className={`text-xs px-2 py-1 rounded transition-colors ${
+                    !typeFilter ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+                  }`}
+                >
+                  {total} All
+                </button>
+                {Object.entries(typeCounts).map(([type, count]) => (
+                  <button
+                    key={type}
+                    onClick={() => setTypeFilter(typeFilter === type ? null : type)}
+                    className={`text-xs px-2 py-1 rounded transition-colors ${
+                      typeFilter === type ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+                    }`}
+                  >
+                    {count} {type.replace(/([A-Z])/g, ' $1').trim()}
+                  </button>
+                ))}
+              </div>
 
-              {outgoing.length > 0 && incoming.length > 0 && <Separator />}
+              <Separator />
 
-              {incoming.length > 0 && (
-                <div>
-                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Incoming ({incoming.length})
-                  </div>
-                  <div className="space-y-1">
-                    {incoming.map((rel) => (
-                      <div key={rel.id} className="group flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors">
-                        <button
-                          onClick={() => navigate(getEntityRoute(rel.source_type, rel.source_id))}
-                          className="flex items-center gap-2 flex-1 text-left min-w-0"
-                        >
-                          <ArrowLeft className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
-                          <Badge variant="secondary" className="text-xs flex-shrink-0">
-                            {rel.source_type}
-                          </Badge>
-                          <span className="text-sm truncate flex-1">
-                            {rel.source_name || rel.source_id}
-                          </span>
-                          <Badge variant="outline" className="text-xs flex-shrink-0">
-                            {rel.relationship_label || rel.relationship_type}
-                          </Badge>
-                          <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                        </button>
-                        {canEdit && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                                  onClick={() => setDeleteId(rel.id)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Remove relationship</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+              {filteredTotal === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No relationships match this filter
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {filteredOutgoing.map((rel) => (
+                    <div key={rel.id} className="group flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors">
+                      <button
+                        onClick={() => navigate(getEntityRoute(rel.target_type, rel.target_id))}
+                        className="flex items-center gap-2 flex-1 text-left min-w-0"
+                      >
+                        <ArrowRight className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                        <span className="text-sm truncate flex-1">
+                          {rel.target_name || rel.target_id}
+                        </span>
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          {rel.target_type.replace(/([A-Z])/g, ' $1').trim()}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground flex-shrink-0 hidden sm:inline">
+                          this Asset <span className="font-medium text-foreground">{rel.relationship_label || rel.relationship_type}</span> {rel.target_name || rel.target_id}
+                        </span>
+                        <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                      </button>
+                      {canEdit && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                                onClick={() => setDeleteId(rel.id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove relationship</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  ))}
+                  {filteredOutgoing.length > 0 && filteredIncoming.length > 0 && <Separator />}
+                  {filteredIncoming.map((rel) => (
+                    <div key={rel.id} className="group flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors">
+                      <button
+                        onClick={() => navigate(getEntityRoute(rel.source_type, rel.source_id))}
+                        className="flex items-center gap-2 flex-1 text-left min-w-0"
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        <span className="text-sm truncate flex-1">
+                          {rel.source_name || rel.source_id}
+                        </span>
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          {rel.source_type.replace(/([A-Z])/g, ' $1').trim()}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground flex-shrink-0 hidden sm:inline">
+                          <span className="font-medium text-foreground">{rel.source_name || rel.source_id}</span> <span className="font-medium text-foreground">{rel.relationship_label || rel.relationship_type}</span> this Asset
+                        </span>
+                        <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                      </button>
+                      {canEdit && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                                onClick={() => setDeleteId(rel.id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove relationship</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

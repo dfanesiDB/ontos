@@ -54,10 +54,19 @@ class AssetsManager(SearchableAsset):
         read.relationships = rels
         return read
 
+    # Hierarchical relationship types where source = parent, target = child
+    _HIERARCHICAL_RELS = {"hasColumn", "hasTable", "hasView", "hasDataset", "hasPart", "contains"}
+
     def _asset_to_summary(self, db_asset: AssetDb) -> AssetSummary:
         summary = AssetSummary.model_validate(db_asset)
         if db_asset.asset_type:
             summary.asset_type_name = db_asset.asset_type.name
+        if db_asset.target_relationships:
+            for rel in db_asset.target_relationships:
+                if rel.relationship_type in self._HIERARCHICAL_RELS and rel.source_asset:
+                    summary.parent_id = rel.source_asset.id
+                    summary.parent_name = rel.source_asset.name
+                    break
         return summary
 
     # --- JSON Schema validation ---

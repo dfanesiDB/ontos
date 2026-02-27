@@ -69,6 +69,8 @@ export interface AssetRead {
   properties?: Record<string, any> | null;
   tags?: string[] | null;
   status: AssetStatus;
+  parent_id?: string | null;
+  parent_name?: string | null;
   relationships: AssetRelationship[];
   created_by?: string | null;
   created_at: string;

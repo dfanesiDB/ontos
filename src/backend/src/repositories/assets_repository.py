@@ -89,7 +89,11 @@ class AssetRepository(CRUDBase[AssetDb, AssetCreate, AssetUpdate]):
         try:
             query = (
                 db.query(self.model)
-                .options(selectinload(self.model.asset_type))
+                .options(
+                    selectinload(self.model.asset_type),
+                    selectinload(self.model.target_relationships)
+                    .selectinload(AssetRelationshipDb.source_asset),
+                )
                 .order_by(self.model.name)
             )
             if asset_type_id:

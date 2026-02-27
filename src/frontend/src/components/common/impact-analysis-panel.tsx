@@ -40,7 +40,7 @@ export function ImpactAnalysisPanel({
     setError(null);
     try {
       const res = await fetch(
-        `/api/business-lineage/${entityType}/${entityId}/impact?max_depth=${maxDepth}&include_technical=false`
+        `/api/business-lineage/${entityType}/${entityId}/impact?max_depth=${maxDepth}`
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       setGraphData(await res.json());

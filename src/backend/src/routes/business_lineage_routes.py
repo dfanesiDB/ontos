@@ -37,20 +37,17 @@ def get_business_lineage(
     entity_id: str,
     db: DBSessionDep,
     max_depth: int = Query(3, ge=1, le=10),
-    include_technical: bool = Query(False),
     manager: EntityRelationshipsManager = Depends(get_entity_relationships_manager),
 ):
-    """Get business lineage graph centered on an entity.
+    """Get lineage graph centered on an entity.
 
-    Returns nodes and edges for rendering a business-level lineage graph.
-    By default only shows business types; set include_technical=true for full detail.
+    Returns nodes and edges for rendering a lineage graph.
     """
     return manager.get_business_lineage(
         db=db,
         entity_type=entity_type,
         entity_id=entity_id,
         max_depth=max_depth,
-        include_technical=include_technical,
     )
 
 
@@ -64,7 +61,6 @@ def get_impact_analysis(
     entity_id: str,
     db: DBSessionDep,
     max_depth: int = Query(4, ge=1, le=10),
-    include_technical: bool = Query(False),
     manager: EntityRelationshipsManager = Depends(get_entity_relationships_manager),
 ):
     """Get downstream impact graph from an entity (e.g. Policy or BusinessTerm).
@@ -76,7 +72,6 @@ def get_impact_analysis(
         entity_type=entity_type,
         entity_id=entity_id,
         max_depth=max_depth,
-        include_technical=include_technical,
         direction="downstream",
     )
 
