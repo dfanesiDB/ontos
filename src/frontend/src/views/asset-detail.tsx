@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Loader2, AlertCircle, Pencil, Trash2,
   MapPin, Globe, Calendar, User, Tag, FileJson, Network, GitBranch,
+  LayoutGrid, Share2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import { AssetRead } from '@/types/asset';
 import { EntityTypeDefinition } from '@/types/ontology-schema';
 import { AssetFormDialog } from '@/components/common/asset-form-dialog';
 import { BusinessLineageGraph } from '@/components/common/business-lineage-graph';
+import { LineageFlowGraph } from '@/components/common/lineage-flow-graph';
 import { ImpactAnalysisPanel } from '@/components/common/impact-analysis-panel';
 import { LineageEditor } from '@/components/common/lineage-editor';
 import { useApi } from '@/hooks/use-api';
@@ -102,6 +104,7 @@ export default function AssetDetailView() {
   const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false);
   const [ontologyIri, setOntologyIri] = useState<string | null>(null);
   const [isLineageEditorOpen, setIsLineageEditorOpen] = useState(false);
+  const [relViewMode, setRelViewMode] = useState<'table' | 'graph'>('table');
 
   const { get: apiGet, delete: apiDelete, loading: apiIsLoading } = useApi();
   const { toast } = useToast();
@@ -212,7 +215,7 @@ export default function AssetDetailView() {
   if (error || !asset) {
     return (
       <div className="py-6 space-y-4">
-        <Button variant="ghost" onClick={() => navigate(-1)}>
+        <Button variant="outline" onClick={() => navigate(-1)} size="sm">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
         <Alert variant="destructive">
@@ -227,33 +230,10 @@ export default function AssetDetailView() {
   return (
     <div className="py-6 space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{asset.name}</h1>
-              <Badge variant={STATUS_VARIANT[asset.status] ?? 'outline'}>
-                {asset.status}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-              <Badge variant="outline" className="text-xs">{entityType}</Badge>
-              {asset.platform && (
-                <>
-                  <span className="text-muted-foreground">&middot;</span>
-                  <span>{asset.platform}</span>
-                </>
-              )}
-            </div>
-            {asset.description && (
-              <p className="text-sm text-muted-foreground mt-2 max-w-2xl">{asset.description}</p>
-            )}
-          </div>
-        </div>
-
+      <div className="flex items-center justify-between">
+        <Button variant="outline" onClick={() => navigate(-1)} size="sm">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
+        </Button>
         <div className="flex items-center gap-2">
           <CommentSidebar
             entityType="asset"
@@ -293,6 +273,27 @@ export default function AssetDetailView() {
         </div>
       </div>
 
+      <div>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">{asset.name}</h1>
+          <Badge variant={STATUS_VARIANT[asset.status] ?? 'outline'}>
+            {asset.status}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+          <Badge variant="outline" className="text-xs">{entityType}</Badge>
+          {asset.platform && (
+            <>
+              <span className="text-muted-foreground">&middot;</span>
+              <span>{asset.platform}</span>
+            </>
+          )}
+        </div>
+        {asset.description && (
+          <p className="text-sm text-muted-foreground mt-2 max-w-2xl">{asset.description}</p>
+        )}
+      </div>
+
       {/* Tabs */}
       <Tabs defaultValue="overview">
         <TabsList>
@@ -301,7 +302,7 @@ export default function AssetDetailView() {
           {showLineageTab && (
             <TabsTrigger value="lineage">
               <GitBranch className="mr-1 h-3.5 w-3.5" />
-              Business Lineage
+              Lineage
             </TabsTrigger>
           )}
           {(isPolicy || isBusinessTerm) && (
@@ -481,18 +482,46 @@ export default function AssetDetailView() {
           />
         </TabsContent>
 
-        <TabsContent value="relationships" className="mt-4">
-          <EntityRelationshipPanel
-            entityType={ontologyTypeName}
-            entityId={asset.id}
-            title="All Entity Relationships"
-            canEdit={canWrite}
-          />
+        <TabsContent value="relationships" className="mt-4 space-y-3">
+          <div className="flex items-center gap-1">
+            <Button
+              variant={relViewMode === 'table' ? 'default' : 'outline'}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setRelViewMode('table')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={relViewMode === 'graph' ? 'default' : 'outline'}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setRelViewMode('graph')}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
+          {relViewMode === 'table' ? (
+            <EntityRelationshipPanel
+              entityType={ontologyTypeName}
+              entityId={asset.id}
+              title="All Entity Relationships"
+              canEdit={canWrite}
+            />
+          ) : (
+            <BusinessLineageGraph
+              entityType={ontologyTypeName}
+              entityId={asset.id}
+              entityName={asset.name}
+              className="h-[600px]"
+              source="relationships"
+            />
+          )}
         </TabsContent>
 
         {showLineageTab && (
           <TabsContent value="lineage" className="mt-4">
-            <BusinessLineageGraph
+            <LineageFlowGraph
               entityType={ontologyTypeName}
               entityId={asset.id}
               className="h-[600px]"
