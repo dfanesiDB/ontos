@@ -10,6 +10,7 @@ import { ListViewSkeleton } from '@/components/common/list-view-skeleton';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -254,7 +255,18 @@ export default function AssetExplorerView() {
       cell: ({ row }) => (
         <div>
           <span className="font-medium">{row.original.name}</span>
-          {row.original.description && (
+          {row.original.parent_name && (
+            <div
+              className="text-xs text-muted-foreground cursor-pointer hover:underline truncate max-w-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (row.original.parent_id) navigate(`/governance/assets/${row.original.parent_id}`);
+              }}
+            >
+              in {row.original.parent_name}
+            </div>
+          )}
+          {!row.original.parent_name && row.original.description && (
             <div className="text-xs text-muted-foreground truncate max-w-sm">{row.original.description}</div>
           )}
         </div>
@@ -300,12 +312,27 @@ export default function AssetExplorerView() {
       cell: ({ row }) => {
         const tags = row.original.tags;
         if (!tags || tags.length === 0) return <span className="text-muted-foreground">-</span>;
+        const visible = tags.slice(0, 2);
+        const overflow = tags.slice(2);
         return (
           <div className="flex flex-wrap gap-1">
-            {tags.slice(0, 3).map((tag) => (
+            {visible.map((tag) => (
               <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
             ))}
-            {tags.length > 3 && <Badge variant="outline" className="text-xs">+{tags.length - 3}</Badge>}
+            {overflow.length > 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-xs cursor-default">+{overflow.length}</Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="flex flex-col gap-1">
+                    {overflow.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                    ))}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         );
       },
