@@ -18,8 +18,18 @@
 -- 11. Semantic Links
 -- 12. Metadata (notes, links, documents)
 --
--- UUID Format: {type:3}{seq:5}-0000-4000-8000-000000000001
+-- UUID Format: {type:3}{seq:5}-{dataset:4}-4000-8000-00000000000N
 -- All type codes are valid hex (0-9, a-f).
+--
+-- Fields:
+--   xxx   = entity type code (see below)
+--   yyyyy = record sequence number (hex)
+--   zzzz  = dataset identifier
+--     0000 = base/default (this file: demo_data.sql)
+--     0001 = HLS (demo_data_hls.sql)
+--     0002 = FSI (demo_data_fsi.sql)
+--     0003 = MFG (demo_data_mfg.sql)
+--   N     = record sequence (decimal, mirrors yyyyy)
 --
 -- Type Codes:
 --   000 = data_domains
