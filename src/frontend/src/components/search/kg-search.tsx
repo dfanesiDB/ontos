@@ -172,7 +172,7 @@ export default function KGSearch({
     if (newConceptsOnly) params.set('concepts_only', 'true');
 
     const queryString = params.toString();
-    const newUrl = queryString ? `/governance/kg?${queryString}` : '/governance/kg';
+    const newUrl = queryString ? `/ontology?${queryString}` : '/ontology';
     navigate(newUrl, { replace: true });
   };
 

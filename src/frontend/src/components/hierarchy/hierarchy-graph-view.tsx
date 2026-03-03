@@ -30,9 +30,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const TYPE_ROUTE_MAP: Record<string, string> = {
-  DataProduct: '/governance/data-products',
-  DataContract: '/governance/data-contracts',
-  DataDomain: '/governance/domains',
+  DataProduct: '/data-products',
+  DataContract: '/data-contracts',
+  DataDomain: '/data-domains',
 };
 
 const TYPE_COLOR: Record<string, { bg: string; border: string; text: string }> = {
@@ -57,7 +57,7 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
 function getEntityRoute(entityType: string, entityId: string): string {
   const base = TYPE_ROUTE_MAP[entityType];
   if (base) return `${base}/${entityId}`;
-  return `/governance/assets/${entityId}`;
+  return `/assets/${entityId}`;
 }
 
 interface HierarchyNodeData {

@@ -24,9 +24,6 @@ class AppRoleDb(Base):
     home_sections = Column(Text, nullable=False, default='[]')
     # Approval privileges JSON (e.g., {"CONTRACTS": true, "PRODUCTS": true})
     approval_privileges = Column(Text, nullable=False, default='{}')
-    # Personas this role can access (JSON array of persona IDs, e.g. ["data_consumer", "data_producer"])
-    allowed_personas = Column(Text, nullable=False, default='[]', comment="Persona IDs users with this role can select in the UI")
-
     # Deployment policy JSON (catalog/schema restrictions, nullable for backward compatibility)
     deployment_policy = Column(Text, nullable=True, comment="Deployment policy for this role (catalog/schema restrictions)")
 

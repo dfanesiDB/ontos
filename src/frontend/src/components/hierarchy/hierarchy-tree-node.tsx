@@ -18,9 +18,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const TYPE_ROUTE_MAP: Record<string, string> = {
-  DataProduct: '/governance/data-products',
-  DataContract: '/governance/data-contracts',
-  DataDomain: '/governance/domains',
+  DataProduct: '/data-products',
+  DataContract: '/data-contracts',
+  DataDomain: '/data-domains',
 };
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -38,7 +38,7 @@ function getIconComponent(iconName?: string | null): React.ElementType {
 function getEntityRoute(entityType: string, entityId: string): string {
   const base = TYPE_ROUTE_MAP[entityType];
   if (base) return `${base}/${entityId}`;
-  return `/governance/assets/${entityId}`;
+  return `/assets/${entityId}`;
 }
 
 interface HierarchyTreeNodeProps {

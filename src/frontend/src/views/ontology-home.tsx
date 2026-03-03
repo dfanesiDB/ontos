@@ -139,7 +139,7 @@ export default function OntologyHomeView() {
 
   // Navigate to concept in Business Terms view on node click
   const handleNodeClick = useCallback((concept: OntologyConcept) => {
-    navigate(`/governance/glossary?concept=${encodeURIComponent(concept.iri)}`);
+    navigate(`/semantic-models?concept=${encodeURIComponent(concept.iri)}`);
   }, [navigate]);
 
   // Toggle root visibility in the graph

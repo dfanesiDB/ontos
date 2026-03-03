@@ -36,25 +36,6 @@ export type ApprovalPrivileges = Partial<Record<ApprovalEntity, boolean>>;
 // Sentinel value for "no role required" in role request permissions
 export const NO_ROLE_SENTINEL = '__NO_ROLE__';
 
-/** Persona IDs for UI view selection (roles grant access to personas). */
-export const ALL_PERSONA_IDS = [
-    'data_consumer',
-    'data_producer',
-    'data_steward',
-    'data_governance_officer',
-    'security_officer',
-    'administrator',
-] as const;
-
-/** Legacy persona IDs that are mapped to surviving personas. */
-export const PERSONA_MIGRATION_MAP: Record<string, PersonaId> = {
-    data_product_owner: 'data_producer',
-    ontology_engineer: 'data_governance_officer',
-    business_term_owner: 'data_steward',
-};
-
-export type PersonaId = typeof ALL_PERSONA_IDS[number];
-
 export interface AppRole {
     id: string;
     name: string;
@@ -67,8 +48,6 @@ export interface AppRole {
     // Role hierarchy fields
     requestable_by_roles?: string[];  // Role IDs that can request this role (use '__NO_ROLE__' for users without any role)
     approver_roles?: string[];  // Role IDs that can approve access requests for this role
-    /** Persona IDs that users with this role can select in the UI. */
-    allowed_personas?: string[];
 }
 
 export type UserPermissions = Record<string, FeatureAccessLevel>;

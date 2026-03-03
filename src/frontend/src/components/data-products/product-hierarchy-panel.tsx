@@ -84,7 +84,7 @@ function TableNode({ table, type }: { table: HierarchyTableOrView; type: 'table'
           className="h-6 w-6 flex-shrink-0"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/governance/assets/${table.id}`);
+            navigate(`/assets/${table.id}`);
           }}
         >
           <ExternalLink className="h-3 w-3" />
@@ -141,7 +141,7 @@ function DatasetNode({ dataset }: { dataset: HierarchyDataset }) {
           className="h-6 w-6 flex-shrink-0"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/governance/assets/${dataset.dataset_id}`);
+            navigate(`/assets/${dataset.dataset_id}`);
           }}
         >
           <ExternalLink className="h-3 w-3" />

@@ -113,8 +113,8 @@ export default function BusinessTermsView() {
 
   useEffect(() => {
     setStaticSegments([
-      { label: t('semantic-models:title'), path: '/governance/ontology' },
-      { label: t('semantic-models:tabs.concepts'), path: '/governance/glossary' },
+      { label: t('semantic-models:title'), path: '/ontology' },
+      { label: t('semantic-models:tabs.concepts'), path: '/semantic-models' },
     ]);
   }, [setStaticSegments, t]);
 

@@ -85,7 +85,7 @@ export default function ConceptsSearch({
     }
 
     const queryString = params.toString();
-    const newUrl = queryString ? `/governance/ontology?${queryString}` : '/governance/ontology';
+    const newUrl = queryString ? `/ontology?${queryString}` : '/ontology';
     navigate(newUrl, { replace: true });
   };
 

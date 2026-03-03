@@ -177,8 +177,7 @@ export default function DataContractDetails() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const listPath = pathname.replace(/\/[^/]+$/, '')
-  const personaPrefix = pathname.match(/^\/[a-z]+/)?.[0] || ''
-  const productBasePath = personaPrefix ? `${personaPrefix}/products` : '/producer/products'
+  const productBasePath = '/data-products'
   const { toast } = useToast()
   const { getDomainName } = useDomains()
   const { getPermissionLevel } = usePermissions()

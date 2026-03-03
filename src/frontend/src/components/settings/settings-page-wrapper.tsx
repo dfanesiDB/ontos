@@ -35,7 +35,7 @@ export default function SettingsPageWrapper({ title, children }: SettingsPageWra
 
   if (permissionsLoading) {
     return (
-      <div className="py-6 flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -43,34 +43,28 @@ export default function SettingsPageWrapper({ title, children }: SettingsPageWra
 
   if (!hasSettingsAccess) {
     return (
-      <div className="py-6">
-        <div className="max-w-2xl mx-auto">
-          <Alert variant="destructive" className="border-2">
-            <ShieldX className="h-5 w-5" />
-            <AlertTitle className="text-lg font-semibold">
-              {t('settings:accessDenied.title', 'Access Denied')}
-            </AlertTitle>
-            <AlertDescription className="mt-2">
-              <p className="mb-4">
-                {t('settings:accessDenied.message', 'You do not have permission to access this page. This page is restricted to users with administrative privileges.')}
-              </p>
-              <p className="text-sm">
-                {t('settings:accessDenied.action', 'If you believe you should have access, please contact your administrator or ')}
-                <Link to="/" className="font-semibold underline hover:text-destructive-foreground">
-                  {t('settings:accessDenied.returnHome', 'return to the home page')}
-                </Link>
-                {t('settings:accessDenied.requestRole', ' to request an appropriate role.')}
-              </p>
-            </AlertDescription>
-          </Alert>
-        </div>
+      <div className="max-w-2xl mx-auto">
+        <Alert variant="destructive" className="border-2">
+          <ShieldX className="h-5 w-5" />
+          <AlertTitle className="text-lg font-semibold">
+            {t('settings:accessDenied.title', 'Access Denied')}
+          </AlertTitle>
+          <AlertDescription className="mt-2">
+            <p className="mb-4">
+              {t('settings:accessDenied.message', 'You do not have permission to access this page. This page is restricted to users with administrative privileges.')}
+            </p>
+            <p className="text-sm">
+              {t('settings:accessDenied.action', 'If you believe you should have access, please contact your administrator or ')}
+              <Link to="/" className="font-semibold underline hover:text-destructive-foreground">
+                {t('settings:accessDenied.returnHome', 'return to the home page')}
+              </Link>
+              {t('settings:accessDenied.requestRole', ' to request an appropriate role.')}
+            </p>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
-  return (
-    <div className="py-6">
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }

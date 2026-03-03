@@ -22,10 +22,6 @@ import { ACCESS_LEVEL_ORDER } from '../../lib/permissions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNavigate } from 'react-router-dom';
 import UserProfileDialog from '@/components/ui/user-profile-dialog';
-import { usePersonaStore } from '@/stores/persona-store';
-import { PERSONA_BASE_PATHS } from '@/config/persona-nav';
-import type { PersonaId } from '@/types/settings';
-
 interface UserInfoData {
   email: string | null;
   username: string | null;
@@ -187,17 +183,13 @@ export default function UserInfo() {
 
   // Handle RadioGroup changes
   const handleRoleChange = async (value: string) => {
-      setRadioValue(value); // Update local state for the radio button
-      // Await the full override cycle (POST + permission refresh + persona refresh)
+      setRadioValue(value);
       if (value === 'actual') {
           await setRoleOverride(null);
       } else {
-          await setRoleOverride(value); // value is the role.id for overrides
+          await setRoleOverride(value);
       }
-      // Navigate to the new persona's base path (or home if no persona selected)
-      const newPersona = usePersonaStore.getState().currentPersona;
-      const targetPath = newPersona ? (PERSONA_BASE_PATHS[newPersona as PersonaId] || '/') : '/';
-      navigate(targetPath);
+      navigate('/');
   };
 
   return (

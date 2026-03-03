@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.controller.notifications_manager import NotificationsManager
 from src.models.notifications import NotificationType, Notification
-from src.models.settings import JobCluster, AppRole, AppRoleCreate, AppRoleUpdate, HomeSection, ApprovalEntity, ALL_PERSONA_IDS
+from src.models.settings import JobCluster, AppRole, AppRoleCreate, AppRoleUpdate, HomeSection, ApprovalEntity
 from src.models.workflow_installations import WorkflowInstallation
 from src.common.features import get_feature_config, FeatureAccessLevel, get_all_access_levels, APP_FEATURES, ACCESS_LEVEL_ORDER
 from src.common.logging import get_logger
@@ -326,50 +326,6 @@ class SettingsManager:
             raise ValueError(f"Role with id '{role_id}' not found")
         return role.feature_permissions or {}
 
-    @staticmethod
-    def _migrate_persona_ids(persona_ids: List[str]) -> List[str]:
-        """Map legacy persona IDs to their consolidated equivalents and deduplicate."""
-        from src.models.settings import PERSONA_MIGRATION_MAP, ALL_PERSONA_IDS
-        valid = set(ALL_PERSONA_IDS)
-        result: List[str] = []
-        seen: set = set()
-        for pid in persona_ids:
-            mapped = PERSONA_MIGRATION_MAP.get(pid, pid)
-            if mapped in valid and mapped not in seen:
-                seen.add(mapped)
-                result.append(mapped)
-        return result
-
-    def get_allowed_personas_for_user(
-        self, user_groups: Optional[List[str]], user_email: Optional[str] = None
-    ) -> List[str]:
-        """Return the list of persona IDs the user is allowed to use (union across their roles, or single role if override)."""
-        # If user has an applied role override, return that role's allowed_personas only
-        if user_email:
-            override_id = self.get_applied_role_override_for_user(user_email)
-            if override_id:
-                role = self.get_app_role(override_id)
-                if role and role.allowed_personas:
-                    return self._migrate_persona_ids(list(role.allowed_personas))
-                if role:
-                    return []
-        # Otherwise union allowed_personas from all roles that match user's groups
-        if not user_groups:
-            return []
-        user_group_set = set(g.lower() for g in user_groups)
-        roles = self.list_app_roles()
-        result: List[str] = []
-        seen: set = set()
-        for role in roles:
-            role_groups = set((g or "").lower() for g in (role.assigned_groups or []))
-            if not role_groups.intersection(user_group_set):
-                continue
-            for pid in role.allowed_personas or []:
-                if pid and pid not in seen:
-                    seen.add(pid)
-                    result.append(pid)
-        return self._migrate_persona_ids(result)
-
     def get_canonical_role_for_groups(self, user_groups: Optional[List[str]]) -> Optional[AppRole]:
         """Map a user's groups to the closest configured AppRole.
 
@@ -607,7 +563,6 @@ class SettingsManager:
                         "BUSINESS_TERMS": True,
                         "ASSET_REVIEWS": True,
                     }
-                    role_data["allowed_personas"] = role_data.get("allowed_personas") or list(ALL_PERSONA_IDS)
                 else:
                     role_data["assigned_groups"] = role_data.get("assigned_groups") or []
                     # Prefer permissions from YAML when provided; otherwise fall back to in-code defaults
@@ -676,21 +631,6 @@ class SettingsManager:
                             }
                         else:
                             role_data["approval_privileges"] = {}
-
-                    # Default allowed_personas per role (persona-based UI)
-                    if role_data.get("allowed_personas") is None or role_data.get("allowed_personas") == []:
-                        if role_name == "Data Consumer":
-                            role_data["allowed_personas"] = ["data_consumer"]
-                        elif role_name == "Data Producer":
-                            role_data["allowed_personas"] = ["data_producer"]
-                        elif role_name == "Data Steward":
-                            role_data["allowed_personas"] = ["data_steward"]
-                        elif role_name == "Data Governance Officer":
-                            role_data["allowed_personas"] = ["data_governance_officer"]
-                        elif role_name == "Security Officer":
-                            role_data["allowed_personas"] = ["data_governance_officer"]
-                        else:
-                            role_data["allowed_personas"] = ["data_consumer"]
 
                 logger.debug(f"Final permissions data for role '{role_name}': {role_data['feature_permissions']}")
 
@@ -1605,16 +1545,8 @@ class SettingsManager:
             logger.warning(f"Could not get approver_roles for role ID {role_db.id}: {e}")
             approver_roles = []
 
-        # Parse allowed_personas
-        try:
-            allowed_personas_raw = json.loads(getattr(role_db, 'allowed_personas', '[]') or '[]')
-            allowed_personas = [s for s in allowed_personas_raw if isinstance(s, str)]
-        except (json.JSONDecodeError, TypeError, ValueError) as e:
-            logger.warning(f"Could not parse allowed_personas JSON for role ID {role_db.id}: {getattr(role_db, 'allowed_personas', None)}. Error: {e}")
-            allowed_personas = []
-
         return AppRole(
-            id=role_db.id, # Keep UUID
+            id=role_db.id,
             name=role_db.name,
             description=role_db.description,
             assigned_groups=assigned_groups,
@@ -1624,7 +1556,6 @@ class SettingsManager:
             deployment_policy=deployment_policy,
             requestable_by_roles=requestable_by_roles,
             approver_roles=approver_roles,
-            allowed_personas=allowed_personas,
             # created_at=role_db.created_at, # Uncomment if needed
             # updated_at=role_db.updated_at  # Uncomment if needed
         )
@@ -1690,30 +1621,6 @@ class SettingsManager:
                     if defaults:
                         self.app_role_repo.update(db=self._db, db_obj=role_db, obj_in={'approval_privileges': defaults})
                         updated_any = True
-
-                # Backfill allowed_personas defaults if missing
-                try:
-                    apers_raw = json.loads(getattr(role_db, 'allowed_personas', '[]') or '[]')
-                except Exception:
-                    apers_raw = []
-                if not apers_raw:
-                    name = (role_db.name or '').strip()
-                    if name == "Admin":
-                        default_personas = list(ALL_PERSONA_IDS)
-                    elif name == "Data Consumer":
-                        default_personas = ["data_consumer"]
-                    elif name == "Data Producer":
-                        default_personas = ["data_producer"]
-                    elif name == "Data Steward":
-                        default_personas = ["data_steward"]
-                    elif name == "Data Governance Officer":
-                        default_personas = ["data_governance_officer"]
-                    elif name == "Security Officer":
-                        default_personas = ["security_officer"]
-                    else:
-                        default_personas = ["data_consumer"]
-                    self.app_role_repo.update(db=self._db, db_obj=role_db, obj_in={'allowed_personas': default_personas})
-                    updated_any = True
 
             if updated_any:
                 # Flush once after backfill

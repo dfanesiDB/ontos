@@ -31,19 +31,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePermissions } from '@/stores/permissions-store';
-import { usePersonaStore } from '@/stores/persona-store';
 import { FeatureAccessLevel } from '@/types/settings';
 import useBreadcrumbStore from '@/stores/breadcrumb-store';
 import { cn } from '@/lib/utils';
-
-const PERSONA_TO_ONTOLOGY_TAG: Record<string, string[]> = {
-  data_consumer: ['consumer'],
-  data_producer: ['producer', 'steward'],
-  data_steward: ['steward'],
-  data_governance_officer: ['steward', 'admin'],
-  security_officer: ['admin'],
-  administrator: ['admin'],
-};
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Table2, Eye, Columns2, LayoutDashboard, Globe, FileCode, Brain, Activity,
@@ -91,7 +81,6 @@ export default function AssetExplorerView() {
   const { get: apiGet, delete: apiDelete, loading: apiIsLoading } = useApi();
   const { toast } = useToast();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
-  const currentPersona = usePersonaStore((s) => s.currentPersona);
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
 
@@ -202,24 +191,7 @@ export default function AssetExplorerView() {
     [assetTypes, selectedTypeId]
   );
 
-  const visibleAssetTypes = useMemo(() => {
-    if (!currentPersona || ontologyTypes.length === 0) return assetTypes;
-    const personaTags = PERSONA_TO_ONTOLOGY_TAG[currentPersona] || [];
-    if (personaTags.length === 0) return assetTypes;
-
-    const visibleNames = new Set<string>();
-    for (const ot of ontologyTypes) {
-      const vis = ot.persona_visibility;
-      if (!vis || vis.length === 0) {
-        visibleNames.add(ot.label);
-        continue;
-      }
-      if (personaTags.some(tag => vis.includes(tag))) {
-        visibleNames.add(ot.label);
-      }
-    }
-    return assetTypes.filter(t => visibleNames.has(t.name));
-  }, [assetTypes, ontologyTypes, currentPersona]);
+  const visibleAssetTypes = assetTypes;
 
   const groupedTypes = useMemo(() => {
     const groups: Record<string, AssetTypeRead[]> = {};
@@ -279,7 +251,7 @@ export default function AssetExplorerView() {
               className="text-xs text-muted-foreground cursor-pointer hover:underline truncate max-w-sm"
               onClick={(e) => {
                 e.stopPropagation();
-                if (row.original.parent_id) navigate(`/governance/assets/${row.original.parent_id}`);
+                if (row.original.parent_id) navigate(`/assets/${row.original.parent_id}`);
               }}
             >
               in {row.original.parent_name}
@@ -380,7 +352,7 @@ export default function AssetExplorerView() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigate(`/governance/assets/${row.original.id}`)}
+              onClick={() => navigate(`/assets/${row.original.id}`)}
             >
               View details
             </DropdownMenuItem>
@@ -595,7 +567,7 @@ export default function AssetExplorerView() {
                   data={assets}
                   searchColumn="name"
                   storageKey={`asset-explorer-${selectedTypeId || 'all'}`}
-                  onRowClick={(row) => navigate(`/governance/assets/${row.id}`)}
+                  onRowClick={(row) => navigate(`/assets/${row.id}`)}
                   rowSelection={rowSelection}
                   onRowSelectionChange={setRowSelection}
                   manualPagination

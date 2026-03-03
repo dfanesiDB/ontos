@@ -42,9 +42,6 @@ class AppRoleRepository(CRUDBase[AppRoleDb, AppRoleCreate, AppRoleUpdate]):
         # Keys are enums or strings; normalize to strings
         approval_privs_str = { (k.value if hasattr(k, 'value') else str(k)): bool(v) for k, v in approval_privs.items() }
         db_obj_data['approval_privileges'] = json.dumps(approval_privs_str)
-        # Allowed personas stored as JSON array of strings
-        allowed_personas_list = getattr(obj_in, 'allowed_personas', []) or []
-        db_obj_data['allowed_personas'] = json.dumps(allowed_personas_list)
         # Deployment policy stored as JSON
         deployment_policy = getattr(obj_in, 'deployment_policy', None)
         if deployment_policy:
@@ -87,8 +84,6 @@ class AppRoleRepository(CRUDBase[AppRoleDb, AppRoleCreate, AppRoleUpdate]):
             ap = update_data['approval_privileges'] or {}
             ap_norm = { (k.value if hasattr(k, 'value') else str(k)): bool(v) for k, v in ap.items() }
             update_data['approval_privileges'] = json.dumps(ap_norm)
-        if 'allowed_personas' in update_data and update_data['allowed_personas'] is not None:
-            update_data['allowed_personas'] = json.dumps(update_data['allowed_personas'])
         if 'deployment_policy' in update_data:
             dp = update_data['deployment_policy']
             if dp is not None:

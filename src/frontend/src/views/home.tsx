@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link, Navigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SearchBar from '@/components/ui/search-bar';
 import { Card, CardContent, CardTitle, CardHeader, CardDescription } from '@/components/ui/card';
@@ -17,25 +17,15 @@ import RequiredActionsSection from '@/components/home/required-actions-section';
 import RequestRoleSection from '@/components/home/request-role-section';
 import QuickActions from '@/components/home/quick-actions';
 import RecentActivity from '@/components/home/recent-activity';
-import MarketplaceView from '@/components/home/marketplace-view';
-import ProducerHome from '@/components/home/producer-home';
-import StewardHome from '@/components/home/steward-home';
-import GovernanceHome from '@/components/home/governance-home';
-import SecurityHome from '@/components/home/security-home';
-import AdminHome from '@/components/home/admin-home';
 import { useUserStore } from '@/stores/user-store';
-import { useViewModeStore, ViewMode } from '@/stores/view-mode-store';
-import { usePersonaStore } from '@/stores/persona-store';
-import { PERSONA_BASE_PATHS } from '@/config/persona-nav';
-import type { PersonaId } from '@/types/settings';
 
 interface Stats {
   dataContracts: { count: number; loading: boolean; error: string | null };
   dataProducts: { count: number; loading: boolean; error: string | null };
   ontologies: {
     count: {
-      models: number;  // database-sourced semantic models
-      totalTerms: number;  // total concepts + properties
+      models: number;
+      totalTerms: number;
     };
     loading: boolean;
     error: string | null
@@ -55,11 +45,8 @@ interface ComplianceData {
   compliance: number;
 }
 
-// Quick actions and recent activity are rendered via components
-
 export default function Home() {
   const { t, i18n } = useTranslation(['home', 'common']);
-  const { viewMode } = useViewModeStore();
   const [stats, setStats] = useState<Stats>({
     dataContracts: { count: 0, loading: true, error: null },
     dataProducts: { count: 0, loading: true, error: null },
@@ -79,12 +66,7 @@ export default function Home() {
   const allowedMaturities = useFeatureVisibilityStore((state) => state.allowedMaturities);
   const { permissions, isLoading: permissionsLoading, hasPermission, requestableRoles, appliedRoleId } = usePermissions();
 
-  const personaRef = usePersonaStore.getState().currentPersona;
-  const hasPersonaDashboard = !!personaRef && personaRef !== 'data_consumer';
-
   useEffect(() => {
-    if (hasPersonaDashboard) return;
-
     fetch('/api/data-products')
       .then(response => {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -199,7 +181,6 @@ export default function Home() {
             }
         }
 
-
         setStats(prev => ({
           ...prev,
           estates: {
@@ -239,7 +220,7 @@ export default function Home() {
         setComplianceError(error.message);
         setComplianceLoading(false);
       });
-  }, [hasPersonaDashboard]);
+  }, []);
 
   const baseSummaryTiles = useMemo(() => [
     {
@@ -312,36 +293,27 @@ export default function Home() {
       );
   }, [baseSummaryTiles, allowedMaturities, permissionsLoading, hasPermission, appliedRoleId]);
 
-  // const summaryTiles = baseSummaryTiles.filter(tile => allowedMaturities.includes(tile.maturity as FeatureMaturity));
   const isComplianceVisible = filteredSummaryTiles.some(tile => tile.id === 'compliance');
 
-  // Check if user has any permissions at all (besides NONE)
   const hasAnyAccess = useMemo(() => {
       if (permissionsLoading || !permissions) return false;
       return Object.values(permissions).some(level => level !== FeatureAccessLevel.NONE);
   }, [permissions, permissionsLoading]);
 
-  // Determine configured home sections from applied role (if any)
   const { availableRoles } = usePermissions();
   const { userInfo } = useUserStore();
   const userGroups = (userInfo as any)?.groups || [];
 
-  // Determine configured sections:
-  // - If a role override is applied, use that role's sections.
-  // - Otherwise, union sections from all roles assigned to user's groups.
   const configuredSections: HomeSection[] = useMemo(() => {
-    // Applied override
     if (appliedRoleId) {
       const r = availableRoles.find(role => role.id === appliedRoleId);
       return (r?.home_sections || []) as HomeSection[];
     }
-    // Union across matched roles
     if (Array.isArray(userGroups) && userGroups.length > 0) {
       const groupSet = new Set<string>(userGroups as string[]);
       const matched = availableRoles.filter(r => Array.isArray(r.assigned_groups) && r.assigned_groups.some(g => groupSet.has(g)));
       const union = new Set<HomeSection>();
       matched.forEach(r => (r.home_sections || []).forEach(s => union.add(s as HomeSection)));
-      // Normalize order
       const order: HomeSection[] = [HomeSection.REQUIRED_ACTIONS, HomeSection.DATA_CURATION, HomeSection.DISCOVERY];
       const result = order.filter(s => union.has(s));
       return result.length > 0 ? result : [HomeSection.DISCOVERY];
@@ -349,65 +321,12 @@ export default function Home() {
     return [];
   }, [availableRoles, appliedRoleId, userGroups]);
 
-  // Fallback: If no sections configured on the role, default to Discovery only
   const defaultSections: HomeSection[] = [HomeSection.DISCOVERY];
-
   const orderedSections = configuredSections.length > 0 ? configuredSections : defaultSections;
-
-  // Note: sections themselves handle fine-grained permission visibility internally
-
-  // Determine if user has management capabilities (can create/edit, not just view)
-  // Users with only READ_ONLY on data-products are considered "consumer only"
-  const hasManagementAccess = useMemo(() => {
-    if (permissionsLoading || !permissions) return false;
-    // Check for any write/admin permission on key features
-    const managementFeatures = ['data-products', 'data-contracts', 'data-domains', 'semantic-models'];
-    return managementFeatures.some(feature => {
-      const level = permissions[feature];
-      return level === FeatureAccessLevel.READ_WRITE || level === FeatureAccessLevel.ADMIN;
-    });
-  }, [permissions, permissionsLoading]);
-
-  const currentPersona = usePersonaStore((state) => state.currentPersona);
-  const hasPersona = !!currentPersona;
-  const isConsumerPersona = currentPersona === 'data_consumer';
-  const effectiveViewMode: ViewMode = hasAnyAccess && !hasManagementAccess ? 'consumer' : viewMode;
-  const showMarketplace = hasPersona ? isConsumerPersona : (effectiveViewMode === 'consumer' && hasAnyAccess);
-
-  const PERSONA_HOME_MAP: Partial<Record<PersonaId, React.ComponentType>> = {
-    data_producer: ProducerHome,
-    data_steward: StewardHome,
-    data_governance_officer: GovernanceHome,
-    security_officer: SecurityHome,
-    administrator: AdminHome,
-  };
-
-  const PersonaHomeComponent = currentPersona ? PERSONA_HOME_MAP[currentPersona] : null;
-  const showPersonaDashboard = hasPersona && !isConsumerPersona && !!PersonaHomeComponent;
-  const showGenericManagement = !showMarketplace && !showPersonaDashboard && (hasPersona ? !isConsumerPersona : effectiveViewMode === 'management');
-
-  const { pathname } = useLocation();
-
-  // Redirect bare "/" to the current persona's home path
-  if (pathname === '/' && currentPersona && PERSONA_BASE_PATHS[currentPersona]) {
-    return <Navigate to={PERSONA_BASE_PATHS[currentPersona]} replace />;
-  }
-
-  if (showPersonaDashboard && PersonaHomeComponent) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <PersonaHomeComponent />
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {showMarketplace && hasAnyAccess && (
-        <MarketplaceView />
-      )}
-
-      {showGenericManagement && (
+      {hasAnyAccess && (
         <>
           <div className="max-w-2xl mx-auto text-center mb-8">
             <div className="flex items-center justify-center mb-4">
@@ -427,126 +346,127 @@ export default function Home() {
             </div>
           </div>
 
-      {hasAnyAccess && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">{t('home:overview.title')}</h2>
-           {permissionsLoading ? (
-                <div className="flex justify-center items-center h-24 col-span-full">
-                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-           ) : filteredSummaryTiles.length > 0 ? (
+          {/* Overview Tiles */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4">{t('home:overview.title')}</h2>
+            {permissionsLoading ? (
+              <div className="flex justify-center items-center h-24 col-span-full">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : filteredSummaryTiles.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {filteredSummaryTiles.map((tile) => (
+                {filteredSummaryTiles.map((tile) => (
                   <Link key={tile.title} to={tile.link} className="block group">
-                  <Card className="transition-colors h-full group-hover:bg-accent/50">
+                    <Card className="transition-colors h-full group-hover:bg-accent/50">
                       <CardContent className="p-6 flex flex-col justify-between h-full">
-                      <div>
+                        <div>
                           <div className="flex items-center justify-between">
-                          <CardTitle className="text-sm font-medium">
+                            <CardTitle className="text-sm font-medium">
                               {tile.title}
-                          </CardTitle>
-                          <div className="h-4 w-4 text-muted-foreground">
+                            </CardTitle>
+                            <div className="h-4 w-4 text-muted-foreground">
                               {tile.icon}
-                          </div>
+                            </div>
                           </div>
                           {tile.loading ? (
-                          <div className="flex justify-center items-center h-16">
+                            <div className="flex justify-center items-center h-16">
                               <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                          </div>
+                            </div>
                           ) : tile.error ? (
-                          <div className="text-center text-destructive mt-2">
+                            <div className="text-center text-destructive mt-2">
                               {t('home:overview.error')}
-                          </div>
+                            </div>
                           ) : (
-                          <div className="text-2xl font-bold mt-2">{tile.value}</div>
+                            <div className="text-2xl font-bold mt-2">{tile.value}</div>
                           )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
                           {tile.description}
-                      </p>
+                        </p>
                       </CardContent>
-                  </Card>
+                    </Card>
                   </Link>
-              ))}
+                ))}
               </div>
-          ) : (
-               <p className="text-muted-foreground text-center col-span-full">
-                   {t('home:overview.noData')}
-               </p>
-           )}
-        </div>
-      )}
+            ) : (
+              <p className="text-muted-foreground text-center col-span-full">
+                {t('home:overview.noData')}
+              </p>
+            )}
+          </div>
 
-      {hasAnyAccess && isComplianceVisible && (
-          <div className="mb-8">
-            <Card>
-            <CardHeader>
-                <div className="flex items-center space-x-4">
+          {/* Compliance Trend */}
+          {isComplianceVisible && (
+            <div className="mb-8">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <TrendingUp className="h-6 w-6 text-primary" />
+                      <TrendingUp className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <CardTitle>{t('home:complianceTrend.title')}</CardTitle>
-                        <CardDescription>{t('home:complianceTrend.period')}</CardDescription>
+                      <CardTitle>{t('home:complianceTrend.title')}</CardTitle>
+                      <CardDescription>{t('home:complianceTrend.period')}</CardDescription>
                     </div>
-                </div>
-            </CardHeader>
-            <CardContent className="p-6 pt-0">
-                <div className="h-[200px]">
-                {complianceLoading ? (
-                    <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                ) : complianceError ? (
-                    <div className="flex items-center justify-center h-full text-destructive">
-                    {t('home:complianceTrend.error', { error: complianceError })}
-                    </div>
-                ) : complianceData.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 pt-0">
+                  <div className="h-[200px]">
+                    {complianceLoading ? (
+                      <div className="flex items-center justify-center h-full">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
+                    ) : complianceError ? (
+                      <div className="flex items-center justify-center h-full text-destructive">
+                        {t('home:complianceTrend.error', { error: complianceError })}
+                      </div>
+                    ) : complianceData.length === 0 ? (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
                         {t('home:complianceTrend.noData')}
-                    </div>
-                ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={complianceData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis
-                        dataKey="date"
-                        tickFormatter={(date) => new Date(date).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })}
-                        axisLine={false}
-                        tickLine={false}
-                        style={{ fontSize: '0.75rem' }}
-                        />
-                        <YAxis
-                        domain={[0, 100]}
-                        tickFormatter={(value) => `${value}%`}
-                        axisLine={false}
-                        tickLine={false}
-                        style={{ fontSize: '0.75rem' }}
-                        width={50}
-                        />
-                        <Tooltip
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={complianceData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis
+                            dataKey="date"
+                            tickFormatter={(date) => new Date(date).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })}
+                            axisLine={false}
+                            tickLine={false}
+                            style={{ fontSize: '0.75rem' }}
+                          />
+                          <YAxis
+                            domain={[0, 100]}
+                            tickFormatter={(value) => `${value}%`}
+                            axisLine={false}
+                            tickLine={false}
+                            style={{ fontSize: '0.75rem' }}
+                            width={50}
+                          />
+                          <Tooltip
                             contentStyle={{ fontSize: '0.875rem', borderRadius: '0.5rem', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}
                             labelFormatter={(label) => new Date(label).toLocaleDateString(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' })}
                             formatter={(value: number) => [`${value}%`, t('home:complianceTrend.chartLabel')]}
-                        />
-                        <Line
+                          />
+                          <Line
                             type="monotone"
                             dataKey="compliance"
                             stroke="hsl(var(--primary))"
                             strokeWidth={2}
                             dot={false}
                             activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
-                        />
-                    </LineChart>
-                    </ResponsiveContainer>
-                )}
-                </div>
-            </CardContent>
-            </Card>
-         </div>
-       )}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-          {hasAnyAccess && orderedSections.map(section => (
+          {/* Role-based sections */}
+          {orderedSections.map(section => (
             section === HomeSection.REQUIRED_ACTIONS ? (
               <RequiredActionsSection key={section} />
             ) : section === HomeSection.DATA_CURATION ? (
@@ -556,23 +476,22 @@ export default function Home() {
             )
           ))}
 
-          {hasAnyAccess && (
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <QuickActions />
-              <RecentActivity />
-            </section>
-          )}
+          {/* Quick Actions and Recent Activity */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <QuickActions />
+            <RecentActivity />
+          </section>
         </>
       )}
 
-      {/* Request Role Section - show for users with no access regardless of mode */}
+      {/* Request Role Section */}
       {!permissionsLoading && !hasAnyAccess && requestableRoles && requestableRoles.length > 0 && (
         <div className="mb-8">
           <RequestRoleSection />
         </div>
       )}
 
-      {/* Fallback message for users with no access */}
+      {/* No access fallback */}
       {!permissionsLoading && !hasAnyAccess && (!requestableRoles || requestableRoles.length === 0) && (
         <Alert variant="default" className="mb-8 bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-200">
           <AlertCircle className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />

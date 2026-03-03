@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { useEffect } from 'react';
 import { UserPermissions, FeatureAccessLevel, AppRole } from '@/types/settings'; // Import AppRole
 import { ACCESS_LEVEL_ORDER } from '@/lib/permissions';
-import { usePersonaStore } from './persona-store';
-
 interface PermissionsState {
     permissions: UserPermissions; // User's effective permissions (may be overridden)
     actualPermissions: UserPermissions; // User's actual permissions based on groups (never overridden)
@@ -201,10 +199,6 @@ const usePermissionsStore = create<PermissionsState>((set, get) => ({
                 get().fetchAvailableRoles(),
                 get().fetchAppliedOverride()
             ]);
-        } catch { /* ignore */ }
-        // Refresh allowed personas so the persona switcher and sidebar reflect the new role
-        try {
-            await usePersonaStore.getState().fetchAllowedPersonas();
         } catch { /* ignore */ }
     },
 

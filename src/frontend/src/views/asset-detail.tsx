@@ -161,7 +161,7 @@ export default function AssetDetailView() {
   useEffect(() => {
     if (asset) {
       setStaticSegments([
-        { label: 'Asset Explorer', href: '/governance/assets' },
+        { label: 'Asset Explorer', href: '/assets' },
       ]);
       setDynamicTitle(asset.name);
       // Resolve ontology IRI for the asset type
@@ -245,7 +245,7 @@ export default function AssetDetailView() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(`/governance/hierarchy?type=${ontologyTypeName}&id=${assetId}`)}
+            onClick={() => navigate(`/hierarchy?type=${ontologyTypeName}&id=${assetId}`)}
           >
             <Network className="mr-2 h-4 w-4" /> View in Hierarchy
           </Button>
