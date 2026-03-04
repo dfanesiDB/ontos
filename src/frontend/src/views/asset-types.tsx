@@ -19,7 +19,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
-import useBreadcrumbStore from '@/stores/breadcrumb-store';
+import SettingsPageWrapper from '@/components/settings/settings-page-wrapper';
 import { useTranslation } from 'react-i18next';
 
 export default function AssetTypesView() {
@@ -32,8 +32,6 @@ export default function AssetTypesView() {
   const { get: apiGet, delete: apiDelete, loading: apiIsLoading } = useApi();
   const { toast } = useToast();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
-  const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
-  const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
 
   const featureId = 'assets';
   const canRead = !permissionsLoading && hasPermission(featureId, FeatureAccessLevel.READ_ONLY);
@@ -59,10 +57,7 @@ export default function AssetTypesView() {
 
   useEffect(() => {
     fetchAssetTypes();
-    setStaticSegments([]);
-    setDynamicTitle(t('title'));
-    return () => { setStaticSegments([]); setDynamicTitle(null); };
-  }, [fetchAssetTypes, setStaticSegments, setDynamicTitle, t]);
+  }, [fetchAssetTypes]);
 
   const openDeleteDialog = (id: string) => {
     if (!canAdmin) {
@@ -177,7 +172,7 @@ export default function AssetTypesView() {
   ], [canWrite, canAdmin, t]);
 
   return (
-    <div className="py-6">
+    <SettingsPageWrapper title={t('title')}>
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
           <Shapes className="w-8 h-8" />
@@ -228,6 +223,6 @@ export default function AssetTypesView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </SettingsPageWrapper>
   );
 }

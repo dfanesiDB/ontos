@@ -21,7 +21,7 @@ import TagChip from '@/components/ui/tag-chip';
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
 import { Toaster } from "@/components/ui/toaster";
-import useBreadcrumbStore from '@/stores/breadcrumb-store';
+import SettingsPageWrapper from '@/components/settings/settings-page-wrapper';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DataDomainGraphView from '@/components/data-domains/data-domain-graph-view';
 import { ViewModeToggle } from '@/components/common/view-mode-toggle';
@@ -62,8 +62,6 @@ export default function DataDomainsView() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
-  const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
-  const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
   const { currentProject, hasProjectContext } = useProjectContext();
   const { t } = useTranslation(['data-domains', 'common']);
 
@@ -103,13 +101,7 @@ export default function DataDomainsView() {
 
   useEffect(() => {
     fetchDataDomains();
-    setStaticSegments([]);
-    setDynamicTitle(t('title'));
-    return () => {
-        setStaticSegments([]);
-        setDynamicTitle(null);
-    };
-  }, [fetchDataDomains, setStaticSegments, setDynamicTitle, t]);
+  }, [fetchDataDomains]);
 
   const handleOpenCreateDialog = () => {
     if (!canWrite) {
@@ -290,12 +282,13 @@ export default function DataDomainsView() {
   ], [canWrite, canAdmin, navigate, pathname, t]);
 
   return (
-    <div className="py-6">
+    <SettingsPageWrapper title={t('title')}>
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2">
            <BoxSelect className="w-8 h-8" />
            {t('title')}
         </h1>
+        <p className="text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
       {(apiIsLoading || permissionsLoading) ? (
@@ -368,6 +361,6 @@ export default function DataDomainsView() {
       </AlertDialog>
 
       <Toaster />
-    </div>
+    </SettingsPageWrapper>
   );
 }
