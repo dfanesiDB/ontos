@@ -266,6 +266,8 @@
   "userMenu": {
     "role": "Rol",
     "profile": "Perfil",
+    "settings": "Configuración",
+    "about": "Acerca de",
     "applyRoleOverride": "Aplicar anulación de rol",
     "featurePreviews": "Vistas previas de funciones",
     "showBetaFeatures": "Mostrar funciones beta",

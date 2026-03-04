@@ -3543,7 +3543,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         workflow_id = "dqx_profile_datasets"
         installation = workflow_installation_repo.get_by_workflow_id(db=db, workflow_id=workflow_id)
         if not installation:
-            raise ValueError(f"Workflow '{workflow_id}' not installed. Please install it via Settings > Jobs & Workflows.")
+            raise ValueError(f"Workflow '{workflow_id}' not installed. Please install it via Settings > Jobs.")
         
         # Trigger workflow with parameters
         # Only pass workflow-specific parameters

@@ -24,7 +24,7 @@
         "description": "Total data products"
       },
       "semanticModels": {
-        "title": "Business Glossary",
+        "title": "Concept Browser",
         "description": "Models / Terms"
       },
       "estates": {
@@ -69,7 +69,7 @@
     "noActions": "No actions available.",
     "actions": {
       "browseProducts": "Browse Data Products",
-      "browseGlossary": "Browse Business Glossary",
+      "browseGlossary": "Browse Concept Browser",
       "createProduct": "Create Data Product",
       "defineContract": "Define Data Contract",
       "reviewAssets": "Review Data Assets",

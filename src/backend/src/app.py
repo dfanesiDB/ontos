@@ -221,7 +221,7 @@ openapi_tags = [
     {"name": "Process Workflows", "description": "Manage process workflows"},
     {"name": "Data Asset Reviews", "description": "Manage data asset review workflows"},
 
-    # Business Glossary - Semantic models and ontologies
+    # Concept Browser - Semantic models and ontologies
     {"name": "Semantic Models", "description": "Manage semantic models and ontologies"},
     {"name": "Semantic Links", "description": "Manage semantic links between entities"},
     {"name": "Industry Ontologies", "description": "Industry Ontology Library for importing standard ontologies"},

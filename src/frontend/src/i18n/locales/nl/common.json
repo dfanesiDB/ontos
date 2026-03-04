@@ -264,6 +264,8 @@
   "userMenu": {
     "role": "Rol",
     "profile": "Profiel",
+    "settings": "Instellingen",
+    "about": "Over",
     "applyRoleOverride": "Rol Overschrijving Toepassen",
     "featurePreviews": "Functie Voorbeelden",
     "showBetaFeatures": "Toon Beta Functies",

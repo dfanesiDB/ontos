@@ -4,7 +4,13 @@
     "general": "一般",
     "databricks": "Databricks",
     "git": "Git",
-    "jobs": "ジョブとワークフロー",
+    "jobs": "ジョブ",
+    "audit": "監査ログ",
+    "businessRoles": "ビジネスロール",
+    "assetTypes": "アセットタイプ",
+    "dataDomains": "ドメイン",
+    "teams": "チーム",
+    "projects": "プロジェクト",
     "roles": "ロール",
     "semanticModels": "セマンティックモデル",
     "tags": "タグ",
@@ -109,8 +115,17 @@
       "token": "ghp_... または類似"
     }
   },
+  "nav": {
+    "groups": {
+      "configuration": "構成",
+      "integrations": "連携",
+      "operations": "運用",
+      "accessControl": "アクセス制御",
+      "referenceData": "参照データ"
+    }
+  },
   "jobs": {
-    "title": "ジョブとワークフローの設定",
+    "title": "ジョブの設定",
     "description": "Databricksジョブクラスタを設定し、バックグラウンドワークフローを有効化",
     "jobClusterId": {
       "label": "ジョブクラスタID",

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 export default function SettingsJobsView() {
   const { t } = useTranslation(['settings']);
   return (
-    <SettingsPageWrapper title={t('settings:tabs.jobs', 'Jobs & Workflows')}>
+    <SettingsPageWrapper title={t('settings:tabs.jobs', 'Jobs')}>
       <JobsSettings />
     </SettingsPageWrapper>
   );

@@ -266,6 +266,8 @@
   "userMenu": {
     "role": "ロール",
     "profile": "プロフィール",
+    "settings": "設定",
+    "about": "情報",
     "applyRoleOverride": "ロールオーバーライドを適用",
     "featurePreviews": "機能プレビュー",
     "showBetaFeatures": "ベータ機能を表示",

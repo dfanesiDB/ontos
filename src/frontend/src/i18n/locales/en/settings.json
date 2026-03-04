@@ -3,7 +3,7 @@
     "home": "Home",
     "marketplace": "Marketplace",
     "dataCatalog": "Data Catalog",
-    "businessGlossary": "Business Glossary",
+    "businessGlossary": "Concept Browser",
     "mySubscriptions": "My Subscriptions",
     "accessRequests": "Access Requests",
     "dataProducts": "Data Products",
@@ -94,7 +94,13 @@
     "databricks": "Databricks",
     "git": "Git",
     "delivery": "Delivery Modes",
-    "jobs": "Jobs & Workflows",
+    "jobs": "Jobs",
+    "audit": "Audit Trail",
+    "businessRoles": "Business Roles",
+    "assetTypes": "Asset Types",
+    "dataDomains": "Domains",
+    "teams": "Teams",
+    "projects": "Projects",
     "roles": "Roles",
     "semanticModels": "Semantic Models",
     "tags": "Tags",
@@ -201,8 +207,17 @@
       "token": "ghp_... or similar"
     }
   },
+  "nav": {
+    "groups": {
+      "configuration": "Configuration",
+      "integrations": "Integrations",
+      "operations": "Operations",
+      "accessControl": "Access Control",
+      "referenceData": "Reference Data"
+    }
+  },
   "jobs": {
-    "title": "Jobs & Workflows Configuration",
+    "title": "Jobs Configuration",
     "description": "Configure Databricks job cluster and enable background workflows",
     "jobClusterId": {
       "label": "Job Cluster ID (optional)",

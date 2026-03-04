@@ -269,6 +269,8 @@
   "userMenu": {
     "role": "Role",
     "profile": "Profile",
+    "settings": "Settings",
+    "about": "About",
     "applyRoleOverride": "Apply Role Override",
     "featurePreviews": "Feature Previews",
     "showBetaFeatures": "Show Beta Features",

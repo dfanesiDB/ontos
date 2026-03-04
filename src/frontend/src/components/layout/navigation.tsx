@@ -28,7 +28,7 @@ export function Navigation({ isCollapsed }: NavigationProps) {
 
   const rawNavigationGroups = getNavigationGroups(allowedMaturities);
 
-  const ungroupedFeatureIds = ['data-domains', 'teams', 'projects'];
+  const ungroupedFeatureIds: string[] = [];
 
   const { navigationGroups, ungroupedItems } = React.useMemo(() => {
     if (permissionsLoading || Object.keys(permissions).length === 0) {
@@ -41,7 +41,7 @@ export function Navigation({ isCollapsed }: NavigationProps) {
       .map(group => ({
         ...group,
         items: group.items.filter(item => {
-          const hasAccess = item.id === 'about' || hasPermission(item.permissionId || item.id, FeatureAccessLevel.READ_ONLY);
+          const hasAccess = hasPermission(item.permissionId || item.id, FeatureAccessLevel.READ_ONLY);
           
           if (ungroupedFeatureIds.includes(item.id) && hasAccess) {
             extractedUngroupedItems.push(item);
@@ -73,16 +73,15 @@ export function Navigation({ isCollapsed }: NavigationProps) {
     path: '/',
     description: 'Dashboard overview',
     icon: HomeIcon,
-    group: 'System',
+    group: 'Discover',
     maturity: 'ga',
   };
 
   const groupKeyMap: Record<string, string> = {
-    'Data Products': 'dataProducts',
-    'Governance': 'governance',
-    'Operations': 'operations',
-    'Security': 'security',
-    'System': 'system',
+    'Discover': 'discover',
+    'Build': 'build',
+    'Govern': 'govern',
+    'Deploy': 'deploy',
   };
 
   const translateGroupName = (groupName: string) => {

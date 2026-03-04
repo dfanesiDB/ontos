@@ -105,7 +105,7 @@ APP_FEATURES: Dict[str, Dict[str, str | List[FeatureAccessLevel]]] = {
         'allowed_levels': READ_WRITE_ADMIN_LEVELS # Users request, admins grant
     },
     'data-asset-reviews': {
-        'name': 'Data Asset Review',
+        'name': 'Asset Reviews',
         'allowed_levels': READ_WRITE_ADMIN_LEVELS # Stewards review, admins manage
     },
     'data-catalog': {
@@ -135,7 +135,7 @@ APP_FEATURES: Dict[str, Dict[str, str | List[FeatureAccessLevel]]] = {
         'allowed_levels': ADMIN_ONLY_LEVELS # Only Admins change settings
     },
     'semantic-models': {
-        'name': 'Business Glossary',
+        'name': 'Concept Browser',
         'allowed_levels': READ_WRITE_ADMIN_LEVELS
     },
     'tags': {

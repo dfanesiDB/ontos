@@ -13,7 +13,7 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User as UserIcon, FlaskConical, Beaker, Users as UsersIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, FlaskConical, Beaker, Users as UsersIcon, Settings, Info } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useFeatureVisibilityStore } from '@/stores/feature-visibility-store';
 import { usePermissions } from '@/stores/permissions-store';
@@ -225,6 +225,14 @@ export default function UserInfo() {
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>{t('userMenu.profile')}</span>
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate('/settings')}>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>{t('userMenu.settings', 'Settings')}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate('/about')}>
+                <Info className="mr-2 h-4 w-4" />
+                <span>{t('userMenu.about', 'About')}</span>
+            </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         {canSwitchRoles && (
@@ -271,6 +279,7 @@ export default function UserInfo() {
                     className="scale-75"
                  />
             </DropdownMenuItem>
+            {isAdminActual && (
              <DropdownMenuItem
                 className="flex items-center justify-between"
                 onSelect={(e) => e.preventDefault()}
@@ -285,6 +294,7 @@ export default function UserInfo() {
                     className="scale-75"
                 />
             </DropdownMenuItem>
+            )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled>

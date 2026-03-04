@@ -13,6 +13,11 @@ import {
   Briefcase,
   Clock,
   UserCog,
+  ScrollText,
+  UserCheck,
+  FolderOpen,
+  Shapes,
+  BoxSelect,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -30,6 +35,17 @@ interface SettingsNavGroup {
 }
 
 const settingsNavGroups: SettingsNavGroup[] = [
+  {
+    titleKey: 'settings:nav.groups.referenceData',
+    defaultTitle: 'Reference Data',
+    items: [
+      { path: '/settings/data-domains', labelKey: 'settings:tabs.dataDomains', defaultLabel: 'Domains', icon: BoxSelect },
+      { path: '/settings/business-roles', labelKey: 'settings:tabs.businessRoles', defaultLabel: 'Business Roles', icon: Briefcase },
+      { path: '/settings/asset-types', labelKey: 'settings:tabs.assetTypes', defaultLabel: 'Asset Types', icon: Shapes },
+      { path: '/settings/teams', labelKey: 'settings:tabs.teams', defaultLabel: 'Teams', icon: UserCheck },
+      { path: '/settings/projects', labelKey: 'settings:tabs.projects', defaultLabel: 'Projects', icon: FolderOpen },
+    ],
+  },
   {
     titleKey: 'settings:nav.groups.configuration',
     defaultTitle: 'Configuration',
@@ -56,6 +72,7 @@ const settingsNavGroups: SettingsNavGroup[] = [
     items: [
       { path: '/settings/jobs', labelKey: 'settings:tabs.jobs', defaultLabel: 'Jobs', icon: Clock },
       { path: '/settings/delivery', labelKey: 'settings:tabs.delivery', defaultLabel: 'Delivery', icon: Briefcase },
+      { path: '/settings/workflows', labelKey: 'settings:tabs.workflows', defaultLabel: 'Workflows', icon: GitBranch },
     ],
   },
   {
@@ -63,6 +80,7 @@ const settingsNavGroups: SettingsNavGroup[] = [
     defaultTitle: 'Access Control',
     items: [
       { path: '/settings/roles', labelKey: 'settings:tabs.roles', defaultLabel: 'App Roles', icon: UserCog },
+      { path: '/settings/audit', labelKey: 'settings:tabs.audit', defaultLabel: 'Audit Trail', icon: ScrollText },
     ],
   },
 ];

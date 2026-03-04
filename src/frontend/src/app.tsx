@@ -62,6 +62,9 @@ import HierarchyBrowserView from './views/hierarchy-browser';
 import SchemaImporterView from './views/schema-importer';
 import OwnerConsumersView from './views/owner-consumers';
 
+// Concepts layout
+import ConceptsLayout from './components/concepts/concepts-layout';
+
 // Settings layout and sub-views
 import SettingsLayout from './components/settings/settings-layout';
 import SettingsGeneralView from './views/settings-general';
@@ -108,7 +111,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
 
               {/* Data Products */}
-              <Route path="/data-domains" element={<DataDomainsView />} />
+              <Route path="/data-domains" element={<Navigate to="/settings/data-domains" replace />} />
               <Route path="/data-domains/:domainId" element={<DataDomainDetailsView />} />
               <Route path="/data-products" element={<DataProducts />} />
               <Route path="/data-products/:productId" element={<DataProductDetails />} />
@@ -119,30 +122,42 @@ export default function App() {
               <Route path="/my-requests" element={<MyRequests />} />
               <Route path="/marketplace" element={<MarketplaceView />} />
               <Route path="/owner-consumers" element={<OwnerConsumersView />} />
-              <Route path="/teams" element={<TeamsView />} />
-              <Route path="/projects" element={<ProjectsView />} />
+              <Route path="/teams" element={<Navigate to="/settings/teams" replace />} />
+              <Route path="/projects" element={<Navigate to="/settings/projects" replace />} />
 
               {/* Governance */}
-              <Route path="/semantic-models" element={<BusinessTermsView />} />
               <Route path="/assets" element={<AssetExplorerView />} />
               <Route path="/assets/:assetId" element={<AssetDetailView />} />
-              <Route path="/asset-types" element={<AssetTypesView />} />
-              <Route path="/business-roles" element={<BusinessRolesView />} />
+              <Route path="/asset-types" element={<Navigate to="/settings/asset-types" replace />} />
+              <Route path="/business-roles" element={<Navigate to="/settings/business-roles" replace />} />
               <Route path="/business-owners" element={<BusinessOwnersView />} />
-              <Route path="/collections" element={<CollectionsView />} />
-              <Route path="/hierarchy" element={<HierarchyBrowserView />} />
               <Route path="/schema-importer" element={<SchemaImporterView />} />
               <Route path="/data-asset-reviews" element={<DataAssetReviews />} />
               <Route path="/data-asset-reviews/:requestId" element={<DataAssetReviewDetails />} />
               <Route path="/data-catalog" element={<DataCatalog />} />
               <Route path="/data-catalog/*" element={<DataCatalogDetails />} />
-              <Route path="/ontology" element={<OntologySearchView />} />
-              <Route path="/ontology-graph" element={<OntologyHomeView />} />
+
+              {/* Concepts - sidebar layout with nested routes */}
+              <Route path="/concepts" element={<ConceptsLayout />}>
+                <Route index element={<Navigate to="/concepts/browser" replace />} />
+                <Route path="collections" element={<CollectionsView />} />
+                <Route path="browser" element={<BusinessTermsView />} />
+                <Route path="search" element={<OntologySearchView />} />
+                <Route path="graph" element={<OntologyHomeView />} />
+                <Route path="hierarchy" element={<HierarchyBrowserView />} />
+              </Route>
+              {/* Backward compat: redirect old concept paths */}
+              <Route path="/semantic-models" element={<Navigate to="/concepts/browser" replace />} />
+              <Route path="/collections" element={<Navigate to="/concepts/collections" replace />} />
+              <Route path="/ontology" element={<Navigate to="/concepts/search" replace />} />
+              <Route path="/ontology-graph" element={<Navigate to="/concepts/graph" replace />} />
+              <Route path="/hierarchy" element={<Navigate to="/concepts/hierarchy" replace />} />
 
               {/* Operations */}
               <Route path="/compliance" element={<Compliance />} />
               <Route path="/compliance/policies/:policyId" element={<CompliancePolicyDetails />} />
               <Route path="/compliance/runs/:runId" element={<ComplianceRunDetails />} />
+              {/* Backward compat: standalone workflow routes */}
               <Route path="/workflows" element={<Workflows />} />
               <Route path="/workflows/new" element={<WorkflowDesignerView />} />
               <Route path="/workflows/:workflowId" element={<WorkflowDesignerView />} />
@@ -170,6 +185,15 @@ export default function App() {
                 <Route path="ui" element={<SettingsUiView />} />
                 <Route path="connectors" element={<SettingsConnectorsView />} />
                 <Route path="semantic-models" element={<SettingsSemanticModelsView />} />
+                <Route path="workflows" element={<Workflows />} />
+                <Route path="workflows/new" element={<WorkflowDesignerView />} />
+                <Route path="workflows/:workflowId" element={<WorkflowDesignerView />} />
+                <Route path="audit" element={<AuditTrail />} />
+                <Route path="data-domains" element={<DataDomainsView />} />
+                <Route path="business-roles" element={<BusinessRolesView />} />
+                <Route path="asset-types" element={<AssetTypesView />} />
+                <Route path="teams" element={<TeamsView />} />
+                <Route path="projects" element={<ProjectsView />} />
               </Route>
 
               {/* System / Utility */}
@@ -179,7 +203,7 @@ export default function App() {
               <Route path="/search/concepts" element={<SearchView />} />
               <Route path="/search/properties" element={<SearchView />} />
               <Route path="/search/kg" element={<SearchView />} />
-              <Route path="/audit" element={<AuditTrail />} />
+              <Route path="/audit" element={<Navigate to="/settings/audit" replace />} />
               <Route path="/about" element={<About />} />
               <Route path="/user-guide" element={<UserGuide />} />
               <Route path="/database-schema" element={<DatabaseSchema />} />
