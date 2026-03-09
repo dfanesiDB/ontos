@@ -307,7 +307,7 @@ export function EntityRelationshipPanel({
               No relationships found
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* Type filter bar */}
               <div className="flex items-center gap-2 flex-wrap">
                 <button
@@ -338,9 +338,9 @@ export function EntityRelationshipPanel({
                   No relationships match this filter
                 </p>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-0">
                   {filteredOutgoing.map((rel) => (
-                    <div key={rel.id} className="group flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors">
+                    <div key={rel.id} className="group flex items-center gap-2 px-3 py-1 rounded-md hover:bg-muted transition-colors">
                       <button
                         onClick={() => navigate(getEntityRoute(rel.target_type, rel.target_id))}
                         className="flex items-center gap-2 flex-1 text-left min-w-0"
@@ -378,7 +378,7 @@ export function EntityRelationshipPanel({
                   ))}
                   {filteredOutgoing.length > 0 && filteredIncoming.length > 0 && <Separator />}
                   {filteredIncoming.map((rel) => (
-                    <div key={rel.id} className="group flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-colors">
+                    <div key={rel.id} className="group flex items-center gap-2 px-3 py-1 rounded-md hover:bg-muted transition-colors">
                       <button
                         onClick={() => navigate(getEntityRoute(rel.source_type, rel.source_id))}
                         className="flex items-center gap-2 flex-1 text-left min-w-0"
