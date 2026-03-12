@@ -9,11 +9,12 @@ export function useCopilotContext(
   pageName: string,
   pageUrl: string,
   selectedEntity?: CopilotEntity | null,
+  featureId?: string,
 ) {
   const { setContext, clearContext } = useCopilotStore((s) => s.actions);
 
   useEffect(() => {
-    setContext(pageName, pageUrl, selectedEntity ?? undefined);
+    setContext(pageName, pageUrl, selectedEntity ?? undefined, featureId);
     return () => clearContext();
-  }, [pageName, pageUrl, selectedEntity?.type, selectedEntity?.name, selectedEntity?.id, setContext, clearContext]);
+  }, [pageName, pageUrl, selectedEntity?.type, selectedEntity?.name, selectedEntity?.id, featureId, setContext, clearContext]);
 }

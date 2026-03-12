@@ -17,6 +17,7 @@ import remarkGfm from 'remark-gfm';
 import LLMConsentDialog, { hasLLMConsent } from '@/components/common/llm-consent-dialog';
 import { fetchLLMStatus, fetchSessions, sendMessage, deleteSession } from '@/components/search/llm-search-api';
 import { useCopilotStore, type CopilotPageContext } from '@/stores/copilot-store';
+import { useCopilotQuestions } from '@/hooks/use-copilot-questions';
 import type { LLMConfig } from '@/types/llm';
 import type { ChatMessage, LLMSearchStatus, SessionSummary } from '@/types/llm-search';
 
@@ -30,18 +31,6 @@ function buildContextPrefix(ctx: CopilotPageContext): string {
   prefix += '. Consider this context when answering.]';
   return prefix;
 }
-
-interface PromptCategory {
-  labelKey: string;
-  promptKeys: string[];
-}
-
-const PROMPT_CATEGORIES: PromptCategory[] = [
-  { labelKey: 'modeling', promptKeys: ['modeling1', 'modeling2', 'modeling3'] },
-  { labelKey: 'mappings', promptKeys: ['mappings1', 'mappings2', 'mappings3'] },
-  { labelKey: 'dataProducts', promptKeys: ['dataProducts1', 'dataProducts2', 'dataProducts3'] },
-  { labelKey: 'healthGovernance', promptKeys: ['healthGovernance1', 'healthGovernance2', 'healthGovernance3'] },
-];
 
 function CopilotMessage({ message }: { message: ChatMessage }) {
   const isUser = message.role === 'user';
@@ -102,6 +91,7 @@ export default function CopilotPanel() {
   const isOpen = useCopilotStore((s) => s.isOpen);
   const pageContext = useCopilotStore((s) => s.pageContext);
   const { closePanel } = useCopilotStore((s) => s.actions);
+  const questionGroups = useCopilotQuestions();
 
   const [status, setStatus] = useState<LLMSearchStatus | null>(null);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
@@ -372,20 +362,20 @@ export default function CopilotPanel() {
                   </div>
                 )}
 
-                {/* Categorized prompts */}
-                {PROMPT_CATEGORIES.map((cat) => (
-                  <div key={cat.labelKey}>
+                {/* Context- and role-aware prompts */}
+                {questionGroups.map((group) => (
+                  <div key={group.category}>
                     <h3 className="text-xs font-medium text-muted-foreground mb-2">
-                      {t(`search:copilot.categories.${cat.labelKey}`)}
+                      {group.label}
                     </h3>
                     <div className="space-y-1.5">
-                      {cat.promptKeys.map((key) => (
+                      {group.questions.map((q) => (
                         <button
-                          key={key}
+                          key={q.key}
                           className="w-full text-left text-sm px-3 py-2 rounded-md border bg-background hover:bg-accent transition-colors"
-                          onClick={() => handleSelectPrompt(t(`search:copilot.prompts.${key}`))}
+                          onClick={() => handleSelectPrompt(q.text)}
                         >
-                          {t(`search:copilot.prompts.${key}`)}
+                          {q.text}
                         </button>
                       ))}
                     </div>
