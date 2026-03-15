@@ -61,6 +61,7 @@ from src.routes import (
     schema_import_routes,
     asset_bulk_routes,
     costs_routes,
+    quality_routes,
     workflows_routes,
     assets_routes,
     business_roles_routes,
@@ -308,6 +309,7 @@ teams_routes.register_routes(app)
 projects_routes.register_routes(app)
 tags_routes.register_routes(app)
 costs_routes.register_routes(app)
+quality_routes.register_routes(app)
 datasets_routes.register_routes(app)
 data_contracts_routes.register_routes(app)
 data_product_routes.register_routes(app)

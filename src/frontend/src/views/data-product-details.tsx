@@ -38,6 +38,7 @@ import RequestProductActionDialog from '@/components/data-products/request-produ
 import CommitDraftDialog from '@/components/data-products/commit-draft-dialog';
 import ApprovalWizardDialog from '@/components/workflows/approval-wizard-dialog';
 import EntityCostsPanel from '@/components/costs/entity-costs-panel';
+import EntityQualityPanel from '@/components/quality/entity-quality-panel';
 import LinkContractToPortDialog from '@/components/data-products/link-contract-to-port-dialog';
 import VersioningRecommendationDialog from '@/components/common/versioning-recommendation-dialog';
 import { Link2, Unlink, GitBranch } from 'lucide-react';
@@ -1777,6 +1778,9 @@ export default function DataProductDetails() {
 
       {/* Costs Panel */}
       <EntityCostsPanel entityId={productId!} entityType="data_product" />
+
+      {/* Quality Panel */}
+      <EntityQualityPanel entityId={productId!} entityType="data_product" productAggregation />
 
       {/* Lineage Editor */}
       {productId && product && (

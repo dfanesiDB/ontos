@@ -13,6 +13,7 @@ import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { useToast } from '@/hooks/use-toast'
 import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel'
+import EntityQualityPanel from '@/components/quality/entity-quality-panel'
 import { OwnershipPanel } from '@/components/common/ownership-panel'
 import { EntityRelationshipPanel } from '@/components/common/entity-relationship-panel'
 import { CommentSidebar } from '@/components/comments'
@@ -2903,6 +2904,11 @@ export default function DataContractDetails() {
       {/* Metadata Panel */}
       {shouldShowSection('metadata-panel') && contract.id && (
         <EntityMetadataPanel entityId={contract.id} entityType="data_contract" />
+      )}
+
+      {/* Quality Panel */}
+      {contract.id && (
+        <EntityQualityPanel entityId={contract.id} entityType="data_contract" />
       )}
 
       {/* Dialogs */}

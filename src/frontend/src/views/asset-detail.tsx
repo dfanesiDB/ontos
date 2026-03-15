@@ -33,6 +33,7 @@ import { CommentSidebar } from '@/components/comments';
 import { RatingPanel } from '@/components/ratings';
 import EntityMetadataPanel from '@/components/metadata/entity-metadata-panel';
 import EntityCostsPanel from '@/components/costs/entity-costs-panel';
+import EntityQualityPanel from '@/components/quality/entity-quality-panel';
 import { usePermissions } from '@/stores/permissions-store';
 import { FeatureAccessLevel } from '@/types/settings';
 import useBreadcrumbStore from '@/stores/breadcrumb-store';
@@ -557,6 +558,9 @@ export default function AssetDetailView() {
 
       {/* Costs Panel */}
       <EntityCostsPanel entityId={assetId!} entityType="asset" />
+
+      {/* Quality Panel */}
+      <EntityQualityPanel entityId={assetId!} entityType="asset" />
 
       {/* Edit dialog */}
       {asset && (

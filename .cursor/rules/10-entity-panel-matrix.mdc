@@ -28,6 +28,7 @@ These tables use an `entity_type` + `entity_id` pattern to link to any entity.
 | Table | Purpose |
 |---|---|
 | `cost_items` | Monetary cost tracking (infra, HR, storage, maintenance) |
+| `quality_items` | Data quality measurements (ODCS dimensions, multi-source, time-tracked) |
 | `comments` | User comments with audience scoping |
 | `comments` (ratings) | Star ratings + optional review text |
 | `entity_relationships` | Typed relationships between any two entities |
@@ -50,6 +51,7 @@ These tables use an `entity_type` + `entity_id` pattern to link to any entity.
 | Panel Component | File | Key Props |
 |---|---|---|
 | `EntityCostsPanel` | `components/costs/entity-costs-panel.tsx` | `entityType`, `entityId` |
+| `EntityQualityPanel` | `components/quality/entity-quality-panel.tsx` | `entityType`, `entityId`, `productAggregation?` |
 | `EntityMetadataPanel` | `components/metadata/entity-metadata-panel.tsx` | `entityType`, `entityId` |
 | `OwnershipPanel` | `components/common/ownership-panel.tsx` | `objectType`, `objectId` |
 | `EntityRelationshipPanel` | `components/common/entity-relationship-panel.tsx` | `entityType`, `entityId` |
@@ -74,6 +76,7 @@ Legend: **Y** = yes, show/support | **—** = no, hide/skip | **Σ** = show summ
 | Panel / Table | DataDomain | DataProduct | DataContract | CompliancePolicy | Concept | Collection |
 |---|---|---|---|---|---|---|
 | **Costs** | Σ | Y | Y | — | — | — |
+| **Quality** | Σ | Y | Y | — | — | — |
 | **Comments** | Y | Y | Y | Y | — | — |
 | **Ratings** | — | Y | Y | — | — | — |
 | **Relationships** | Y | Y | Y | — | — | — |
@@ -95,6 +98,9 @@ Legend: **Y** = yes, show/support | **—** = no, hide/skip | **Σ** = show summ
 - **DataDomain costs:** domains don't carry direct cost items. The UI may show a
   **summary** (Σ) aggregated from child products/contracts, but should never offer
   "Add cost item" on a domain.
+- **DataDomain quality:** same as costs – aggregate-only from child products.
+- **DataProduct quality:** uses `productAggregation` prop to auto-roll-up scores
+  from child contracts. Also accepts direct product-level measurements.
 - **Team, Project, BusinessRole, ProcessWorkflow, GenieSpace, SemanticModel, MdmConfig,
   AssetReview** currently have **no** polymorphic panel integration. If panels are
   added later, update this matrix.
@@ -112,6 +118,7 @@ Legend: **Y** = show | **—** = hide | **Σ** = summary only
 | Panel / Table | Table | View | Column | Dataset | Dashboard | Notebook | ML Model | API Endpoint | Stream | Policy | Business Term | Logical Entity | Logical Attribute | Delivery Channel | System |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | **Costs** | - | - | — | - | - | — | - | — | - | — | — | — | — | — | - |
+| **Quality** | Y | Y | — | Y | — | — | Y | — | — | — | — | — | — | — | — |
 | **Comments** | Y | Y | — | Y | Y | Y | Y | Y | - | — | Y | — | — | — | — |
 | **Ratings** | — | — | — | Y | Y | — | Y | — | — | — | — | — | — | — | — |
 | **Relationships** | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
@@ -153,6 +160,9 @@ Use the asset type name to conditionally render panels:
 ```tsx
 const COST_ELIGIBLE_TYPES = new Set([
   'Table', 'View', 'Dataset', 'Dashboard', 'ML Model', 'Stream', 'System',
+]);
+const QUALITY_ELIGIBLE_TYPES = new Set([
+  'Table', 'View', 'Dataset', 'ML Model',
 ]);
 const COMMENT_ELIGIBLE_TYPES = new Set([
   'Table', 'View', 'Dataset', 'Dashboard', 'Notebook',

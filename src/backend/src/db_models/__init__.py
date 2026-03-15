@@ -27,6 +27,7 @@ from . import metadata as metadata_db
 from . import notifications
 from . import process_workflows
 from . import projects
+from . import quality
 from . import rdf_triples
 from . import semantic_links
 from . import semantic_models
