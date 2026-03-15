@@ -189,6 +189,17 @@ ontos:DataProduct a rdfs:Class ;
     ontos:uiDisplayOrder 1 ;
     ontos:uiPersonaVisibility "admin,steward,producer,consumer" .
 
+ontos:OutputPort a rdfs:Class ;
+    rdfs:subClassOf ontos:Entity ;
+    rdfs:label "Output Port" ;
+    rdfs:comment "An output endpoint of a data product that exposes data via a specific delivery method" ;
+    skos:example "Daily Churn Rate, ML Model Endpoint, Weekly Revenue Report" ;
+    ontos:modelTier "dedicated" ;
+    ontos:uiIcon "ArrowUpFromLine" ;
+    ontos:uiCategory "data" ;
+    ontos:uiDisplayOrder 1 ;
+    ontos:uiPersonaVisibility "admin,steward,producer,consumer" .
+
 ontos:DataContract a rdfs:Class ;
     rdfs:subClassOf ontos:GovernanceArtifact ;
     rdfs:label "Data Contract" ;
@@ -637,7 +648,10 @@ ontos:implementsContract a owl:ObjectProperty ;
 ontos:attachedPolicy a owl:ObjectProperty ;
     rdfs:label "attached policy" ;
     rdfs:comment "Links an entity to a policy that applies to it" ;
-    rdfs:domain ontos:Entity ;
+    rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:DataDomain ,
+               ontos:Dataset , ontos:Schema , ontos:Table , ontos:View ,
+               ontos:Column , ontos:System , ontos:Dashboard , ontos:Notebook ,
+               ontos:MLModel , ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Policy ;
     ontos:uiLabel "Policies" ;
     ontos:inverseLabel "Applied To" ;
@@ -647,7 +661,10 @@ ontos:attachedPolicy a owl:ObjectProperty ;
 ontos:hasTerm a owl:ObjectProperty ;
     rdfs:label "has term" ;
     rdfs:comment "Links an entity to a business term that describes it" ;
-    rdfs:domain ontos:Entity ;
+    rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ,
+               ontos:Table , ontos:View , ontos:Column , ontos:LogicalEntity ,
+               ontos:LogicalAttribute , ontos:BusinessTerm , ontos:Dashboard ,
+               ontos:MLModel , ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:BusinessTerm ;
     ontos:uiLabel "Business Terms" ;
     ontos:inverseLabel "Used By" ;
@@ -664,7 +681,9 @@ ontos:hasTerm a owl:ObjectProperty ;
 ontos:belongsToDomain a owl:ObjectProperty ;
     rdfs:label "belongs to domain" ;
     rdfs:comment "Associates an entity with its parent data domain" ;
-    rdfs:domain ontos:Entity ;
+    rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ,
+               ontos:Table , ontos:View , ontos:BusinessTerm ,
+               ontos:LogicalEntity ;
     rdfs:range ontos:DataDomain ;
     ontos:uiLabel "Domain" ;
     ontos:inverseLabel "Contains" ;
@@ -696,7 +715,10 @@ ontos:containsProduct a owl:ObjectProperty ;
 ontos:ownedByTeam a owl:ObjectProperty ;
     rdfs:label "owned by team" ;
     rdfs:comment "Associates an entity with its owning team" ;
-    rdfs:domain ontos:Entity ;
+    rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:DataDomain ,
+               ontos:Dataset , ontos:Schema , ontos:Table , ontos:View ,
+               ontos:System , ontos:Dashboard , ontos:Notebook , ontos:MLModel ,
+               ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Team ;
     ontos:uiLabel "Owner Team" ;
     ontos:inverseLabel "Owns" ;
@@ -706,7 +728,7 @@ ontos:ownedByTeam a owl:ObjectProperty ;
 ontos:inProject a owl:ObjectProperty ;
     rdfs:label "in project" ;
     rdfs:comment "Associates an entity with its project scope" ;
-    rdfs:domain ontos:Entity ;
+    rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ;
     rdfs:range ontos:Project ;
     ontos:uiLabel "Project" ;
     ontos:inverseLabel "Contains" ;
@@ -779,6 +801,72 @@ ontos:exposes a owl:ObjectProperty ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
+ontos:hasOutputPort a owl:ObjectProperty ;
+    rdfs:label "has output port" ;
+    rdfs:comment "Links a data product to its output ports (deliverables)" ;
+    rdfs:domain ontos:DataProduct ;
+    rdfs:range ontos:OutputPort ;
+    ontos:uiLabel "Deliverables" ;
+    ontos:inverseLabel "Data Product" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
+
+ontos:portHasTable a owl:ObjectProperty ;
+    rdfs:label "port has table" ;
+    rdfs:comment "Links an output port to a table it delivers" ;
+    rdfs:domain ontos:OutputPort ;
+    rdfs:range ontos:Table ;
+    ontos:uiLabel "Tables" ;
+    ontos:inverseLabel "Delivered By Port" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
+
+ontos:portHasView a owl:ObjectProperty ;
+    rdfs:label "port has view" ;
+    rdfs:comment "Links an output port to a view it delivers" ;
+    rdfs:domain ontos:OutputPort ;
+    rdfs:range ontos:View ;
+    ontos:uiLabel "Views" ;
+    ontos:inverseLabel "Delivered By Port" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
+
+ontos:portHasDataset a owl:ObjectProperty ;
+    rdfs:label "port has dataset" ;
+    rdfs:comment "Links an output port to a dataset it delivers" ;
+    rdfs:domain ontos:OutputPort ;
+    rdfs:range ontos:Dataset ;
+    ontos:uiLabel "Datasets" ;
+    ontos:inverseLabel "Delivered By Port" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
+
+ontos:portHasEndpoint a owl:ObjectProperty ;
+    rdfs:label "port has endpoint" ;
+    rdfs:comment "Links an output port to an API endpoint it delivers" ;
+    rdfs:domain ontos:OutputPort ;
+    rdfs:range ontos:APIEndpoint ;
+    ontos:uiLabel "API Endpoints" ;
+    ontos:inverseLabel "Delivered By Port" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
+
+ontos:portHasModel a owl:ObjectProperty ;
+    rdfs:label "port has model" ;
+    rdfs:comment "Links an output port to an ML model it delivers" ;
+    rdfs:domain ontos:OutputPort ;
+    rdfs:range ontos:MLModel ;
+    ontos:uiLabel "ML Models" ;
+    ontos:inverseLabel "Delivered By Port" ;
+    ontos:cardinality "0..*" ;
+    ontos:uiDisplayContext "tab" ;
+    ontos:isHierarchical true .
+
 ontos:dependsOn a owl:ObjectProperty ;
     rdfs:label "depends on" ;
     rdfs:comment "Links a data product to upstream data products it depends on" ;
@@ -819,7 +907,8 @@ ontos:appliesTo a owl:ObjectProperty ;
 ontos:consumesFrom a owl:ObjectProperty ;
     rdfs:label "consumes from" ;
     rdfs:comment "Indicates an asset reads or depends on another asset" ;
-    rdfs:domain ontos:Asset ;
+    rdfs:domain ontos:Dataset , ontos:Table , ontos:View , ontos:Dashboard ,
+               ontos:Notebook , ontos:MLModel , ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Asset ;
     ontos:uiLabel "Consumes From" ;
     ontos:inverseLabel "Consumed By" ;
@@ -829,7 +918,8 @@ ontos:consumesFrom a owl:ObjectProperty ;
 ontos:producesTo a owl:ObjectProperty ;
     rdfs:label "produces to" ;
     rdfs:comment "Indicates an asset writes to or feeds another asset" ;
-    rdfs:domain ontos:Asset ;
+    rdfs:domain ontos:Dataset , ontos:Table , ontos:View , ontos:Notebook ,
+               ontos:MLModel , ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Asset ;
     ontos:uiLabel "Produces To" ;
     ontos:inverseLabel "Produced By" ;
@@ -839,7 +929,9 @@ ontos:producesTo a owl:ObjectProperty ;
 ontos:belongsToSystem a owl:ObjectProperty ;
     rdfs:label "belongs to system" ;
     rdfs:comment "Associates an asset with its host system or platform" ;
-    rdfs:domain ontos:Asset ;
+    rdfs:domain ontos:Schema , ontos:Dataset , ontos:Table , ontos:View ,
+               ontos:Dashboard , ontos:Notebook , ontos:MLModel ,
+               ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:System ;
     ontos:uiLabel "System" ;
     ontos:inverseLabel "Contains" ;
@@ -861,7 +953,9 @@ ontos:deployedOnSystem a owl:ObjectProperty ;
 ontos:replacedBy a owl:ObjectProperty ;
     rdfs:label "replaced by" ;
     rdfs:comment "Indicates a deprecated asset has been replaced by a newer one" ;
-    rdfs:domain ontos:Asset ;
+    rdfs:domain ontos:Schema , ontos:Dataset , ontos:Table , ontos:View ,
+               ontos:Dashboard , ontos:Notebook , ontos:MLModel ,
+               ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Asset ;
     ontos:uiLabel "Replaced By" ;
     ontos:inverseLabel "Replaces" ;
@@ -878,13 +972,19 @@ ontos:replacedBy a owl:ObjectProperty ;
 ontos:hasOwner a owl:ObjectProperty ;
     rdfs:label "has owner" ;
     rdfs:comment "Links an entity to an ownership record" ;
-    rdfs:domain ontos:Entity ;
+    rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:DataDomain ,
+               ontos:Dataset , ontos:Schema , ontos:Table , ontos:View ,
+               ontos:System , ontos:Dashboard , ontos:Notebook , ontos:MLModel ,
+               ontos:APIEndpoint , ontos:Stream , ontos:Policy ,
+               ontos:BusinessTerm , ontos:LogicalEntity ;
     rdfs:range ontos:Ownership .
 
 ontos:hasSemanticConcept a owl:ObjectProperty ;
     rdfs:label "has semantic concept" ;
     rdfs:comment "Links an entity to ontology concepts for semantic enrichment" ;
-    rdfs:domain ontos:Entity ;
+    rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ,
+               ontos:Table , ontos:View , ontos:Column , ontos:LogicalEntity ,
+               ontos:LogicalAttribute , ontos:BusinessTerm ;
     rdfs:range ontos:OntologyConcept ;
     ontos:uiLabel "Semantic Concepts" ;
     ontos:cardinality "0..*" ;
@@ -910,7 +1010,8 @@ ontos:parentGlossary a owl:ObjectProperty ;
 ontos:reviewedBy a owl:ObjectProperty ;
     rdfs:label "reviewed by" ;
     rdfs:comment "Associates an asset with its review process" ;
-    rdfs:domain ontos:Entity ;
+    rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ,
+               ontos:Table , ontos:View ;
     rdfs:range ontos:AssetReview .
 
 ontos:taggedWithConcept a owl:ObjectProperty ;

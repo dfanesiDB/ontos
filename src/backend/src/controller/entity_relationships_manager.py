@@ -40,6 +40,7 @@ DEDICATED_TYPE_RESOLVERS: Dict[str, str] = {
     "DataContract": "data_contracts",
     "Team": "teams",
     "Project": "projects",
+    "OutputPort": "data_product_output_ports",
 }
 
 
@@ -367,6 +368,11 @@ class EntityRelationshipsManager:
             elif table_name == "projects":
                 from src.db_models.projects import ProjectDb
                 obj = db.query(ProjectDb).filter(ProjectDb.id == entity_id).first()
+                if obj:
+                    return {"name": obj.name, "status": getattr(obj, "status", None), "description": getattr(obj, "description", None)}
+            elif table_name == "data_product_output_ports":
+                from src.db_models.data_products import OutputPortDb
+                obj = db.query(OutputPortDb).filter(OutputPortDb.id == entity_id).first()
                 if obj:
                     return {"name": obj.name, "status": getattr(obj, "status", None), "description": getattr(obj, "description", None)}
         except Exception as e:

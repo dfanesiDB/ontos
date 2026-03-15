@@ -52,6 +52,7 @@ import AssetExplorerView from './views/asset-explorer';
 import AssetDetailView from './views/asset-detail';
 import AssetTypesView from './views/asset-types';
 import BusinessRolesView from './views/business-roles';
+import DeliveryMethodsView from './views/delivery-methods';
 import BusinessOwnersView from './views/business-owners';
 import MyProducts from './views/my-products';
 import MyRequests from './views/my-requests';
@@ -197,6 +198,7 @@ export default function App() {
                 <Route path="audit" element={<AuditTrail />} />
                 <Route path="data-domains" element={<DataDomainsView />} />
                 <Route path="business-roles" element={<BusinessRolesView />} />
+                <Route path="delivery-methods" element={<DeliveryMethodsView />} />
                 <Route path="asset-types" element={<AssetTypesView />} />
                 <Route path="teams" element={<TeamsView />} />
                 <Route path="projects" element={<ProjectsView />} />

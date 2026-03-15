@@ -2291,7 +2291,7 @@ export default function DataContractDetails() {
                 <Package className="h-5 w-5 text-primary" />
                 Linked Data Products ({linkedProducts.length})
               </CardTitle>
-              <CardDescription>Data Products using this contract for output ports</CardDescription>
+              <CardDescription>Data Products using this contract for deliverables</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button
@@ -2324,7 +2324,7 @@ export default function DataContractDetails() {
               <Package className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
               <div className="text-muted-foreground mb-2">No linked data products yet</div>
               <div className="text-sm text-muted-foreground mb-4">
-                Create a data product that uses this contract to govern an output port
+                Create a data product that uses this contract to govern a deliverable
               </div>
               {contract && ['active', 'approved', 'certified'].includes((contract.status || '').toLowerCase()) ? (
                 <Button onClick={() => setIsCreateProductDialogOpen(true)}>
@@ -2364,7 +2364,7 @@ export default function DataContractDetails() {
                         </div>
                         {linkedPorts.length > 0 && (
                           <div className="mt-2 text-xs text-muted-foreground">
-                            Output Port{linkedPorts.length > 1 ? 's' : ''}: {linkedPorts.map(port => `${port.name} (v${port.version})`).join(', ')}
+                            Deliverable{linkedPorts.length > 1 ? 's' : ''}: {linkedPorts.map(port => `${port.name} (v${port.version})`).join(', ')}
                           </div>
                         )}
                       </div>
@@ -3087,7 +3087,7 @@ export default function DataContractDetails() {
           setIsLinkProductDialogOpen(false);
           toast({
             title: 'Contract Linked',
-            description: 'Contract successfully linked to product output port.'
+            description: 'Contract successfully linked to product deliverable.'
           });
         }}
       />

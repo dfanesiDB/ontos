@@ -2079,6 +2079,31 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- ============================================================================
+-- 23b. DELIVERY METHODS (type=0f4)
+-- ============================================================================
+-- Defines how an output port (deliverable) delivers data to consumers.
+
+INSERT INTO delivery_methods (id, name, description, category, is_system, status, created_by, created_at, updated_at) VALUES
+-- Access-based delivery
+('0f400001-0000-4000-8000-000000000001', 'Table Access',       'Grants SELECT privileges on underlying tables in Unity Catalog.',                              'access',    true,  'active', 'system@demo', NOW(), NOW()),
+('0f400002-0000-4000-8000-000000000002', 'View Access',        'Grants SELECT privileges on a curated view layer.',                                            'access',    true,  'active', 'system@demo', NOW(), NOW()),
+('0f400003-0000-4000-8000-000000000003', 'Data Share',         'Shares data via Delta Sharing or Databricks-to-Databricks sharing.',                           'access',    true,  'active', 'system@demo', NOW(), NOW()),
+
+-- Endpoint-based delivery
+('0f400004-0000-4000-8000-000000000004', 'Serving Endpoint',   'Exposes an ML model or feature via a Databricks Model Serving endpoint.',                      'endpoint',  true,  'active', 'system@demo', NOW(), NOW()),
+('0f400005-0000-4000-8000-000000000005', 'API Endpoint',       'Delivers data through a REST or GraphQL API.',                                                 'endpoint',  true,  'active', 'system@demo', NOW(), NOW()),
+('0f400006-0000-4000-8000-000000000006', 'Dashboard',          'Provides data via an interactive dashboard (e.g., Databricks SQL Dashboard, Lakeview).',       'endpoint',  true,  'active', 'system@demo', NOW(), NOW()),
+
+-- Export-based delivery
+('0f400007-0000-4000-8000-000000000007', 'File Export',        'Delivers data as exported files (CSV, Parquet, JSON) to a cloud storage location.',            'export',    true,  'active', 'system@demo', NOW(), NOW()),
+
+-- Streaming delivery
+('0f400008-0000-4000-8000-000000000008', 'Streaming',          'Delivers data via a streaming channel (e.g., Kafka topic, Delta Live Tables streaming).',      'streaming', true,  'active', 'system@demo', NOW(), NOW())
+
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ============================================================================
 -- 24. ASSET TYPES — removed (now synced from ontos-ontology.ttl at startup)
 -- ============================================================================
 

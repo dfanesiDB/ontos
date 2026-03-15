@@ -177,6 +177,10 @@ APP_FEATURES: Dict[str, Dict[str, str | List[FeatureAccessLevel]]] = {
         'name': 'Business Owners',
         'allowed_levels': READ_WRITE_ADMIN_LEVELS
     },
+    'delivery-methods': {
+        'name': 'Delivery Methods',
+        'allowed_levels': READ_WRITE_ADMIN_LEVELS
+    },
     # Ontology-driven model
     'ontology': {
         'name': 'Ontology Schema',

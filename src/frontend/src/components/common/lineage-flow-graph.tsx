@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import * as dagre from 'dagre';
 import type { LineageGraph, LineageGraphNode, LineageGraphEdge } from '@/types/ontology-schema';
-import { TYPE_COLOR } from './business-lineage-graph';
+import { TYPE_COLOR } from '@/components/lineage/constants';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Table2, Eye, Columns2, LayoutDashboard, Globe, FileCode, Brain, Activity,

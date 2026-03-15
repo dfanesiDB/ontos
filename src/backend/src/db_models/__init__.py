@@ -36,6 +36,7 @@ from . import teams
 from . import assets
 from . import business_roles
 from . import business_owners
+from . import delivery_methods
 from . import entity_relationships
 from . import entity_subscriptions
 from . import workflow_configurations

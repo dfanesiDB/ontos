@@ -28,6 +28,7 @@ from src.controller.delivery_service import DeliveryService
 from src.controller.assets_manager import AssetsManager
 from src.controller.business_roles_manager import BusinessRolesManager
 from src.controller.business_owners_manager import BusinessOwnersManager
+from src.controller.delivery_methods_manager import DeliveryMethodsManager
 from src.controller.ontology_generator_manager import OntologyGeneratorManager
 
 # Import other dependencies needed by these providers
@@ -204,6 +205,13 @@ def get_business_owners_manager(request: Request) -> BusinessOwnersManager:
     if not manager:
         logger.critical("BusinessOwnersManager not found in application state!")
         raise HTTPException(status_code=503, detail="Business Owners service not configured.")
+    return manager
+
+def get_delivery_methods_manager(request: Request) -> DeliveryMethodsManager:
+    manager = getattr(request.app.state, 'delivery_methods_manager', None)
+    if not manager:
+        logger.critical("DeliveryMethodsManager not found in application state!")
+        raise HTTPException(status_code=503, detail="Delivery Methods service not configured.")
     return manager
 
 def get_delivery_service(request: Request) -> DeliveryService:

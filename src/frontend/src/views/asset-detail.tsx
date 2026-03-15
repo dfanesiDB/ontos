@@ -21,8 +21,8 @@ import { AssetRead } from '@/types/asset';
 import { EntityTypeDefinition } from '@/types/ontology-schema';
 import { AssetFormDialog } from '@/components/common/asset-form-dialog';
 import { BusinessLineageGraph } from '@/components/common/business-lineage-graph';
-import { LineageFlowGraph } from '@/components/common/lineage-flow-graph';
 import { ImpactAnalysisPanel } from '@/components/common/impact-analysis-panel';
+import { BusinessLineageView } from '@/components/lineage';
 import { LineageEditor } from '@/components/common/lineage-editor';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
@@ -521,7 +521,7 @@ export default function AssetDetailView() {
 
         {showLineageTab && (
           <TabsContent value="lineage" className="mt-4">
-            <LineageFlowGraph
+            <BusinessLineageView
               entityType={ontologyTypeName}
               entityId={asset.id}
               className="h-[600px]"

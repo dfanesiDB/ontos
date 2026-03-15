@@ -2127,9 +2127,10 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 except Exception as e:
                     logger.debug(f"Could not resolve project: {e}")
 
-            # Resolve contract names for output ports
+            # Resolve contract names and delivery method names for output ports
             if product_api.outputPorts:
                 from src.repositories.data_contracts_repository import data_contract_repo
+                from src.repositories.delivery_methods_repository import delivery_method_repo
                 for port in product_api.outputPorts:
                     if port.contractId:
                         try:
@@ -2137,6 +2138,12 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                             port.contractName = contract.name if contract else None
                         except Exception as e:
                             logger.debug(f"Could not resolve contract: {e}")
+                    if port.deliveryMethodId:
+                        try:
+                            dm = delivery_method_repo.get(self._db, port.deliveryMethodId)
+                            port.deliveryMethodName = dm.name if dm else None
+                        except Exception as e:
+                            logger.debug(f"Could not resolve delivery method: {e}")
 
             return product_api
 

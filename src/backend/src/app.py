@@ -65,6 +65,7 @@ from src.routes import (
     assets_routes,
     business_roles_routes,
     business_owners_routes,
+    delivery_methods_routes,
     ontology_schema_routes,
     ontology_generator_routes,
     entity_relationship_routes,
@@ -259,6 +260,7 @@ openapi_tags = [
     {"name": "Connections", "description": "Manage external data platform connections"},
     {"name": "Schema Import", "description": "Browse remote systems and import schemas as Ontos assets"},
     {"name": "Asset Bulk", "description": "Bulk import and export of assets via CSV/XLSX"},
+    {"name": "Delivery Methods", "description": "Manage delivery methods for output ports"},
 ]
 
 # Create single FastAPI app with settings dependency
@@ -317,6 +319,7 @@ assets_routes.register_routes(app)
 asset_bulk_routes.register_routes(app)
 business_roles_routes.register_routes(app)
 business_owners_routes.register_routes(app)
+delivery_methods_routes.register_routes(app)
 
 # Governance - Standards and approval workflows
 semantic_models_routes.register_routes(app)

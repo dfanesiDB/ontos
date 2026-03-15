@@ -37,17 +37,20 @@ def get_business_lineage(
     entity_id: str,
     db: DBSessionDep,
     max_depth: int = Query(3, ge=1, le=10),
+    direction: Optional[str] = Query(None, pattern="^(upstream|downstream)$"),
     manager: EntityRelationshipsManager = Depends(get_entity_relationships_manager),
 ):
     """Get lineage graph centered on an entity.
 
     Returns nodes and edges for rendering a lineage graph.
+    Optionally filter by direction: 'upstream' or 'downstream'.
     """
     return manager.get_business_lineage(
         db=db,
         entity_type=entity_type,
         entity_id=entity_id,
         max_depth=max_depth,
+        direction=direction,
     )
 
 

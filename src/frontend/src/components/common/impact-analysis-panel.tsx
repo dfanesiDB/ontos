@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, AlertCircle, RefreshCw, Target, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { LineageGraph } from '@/types/ontology-schema';
-import { BusinessLineageGraph } from './business-lineage-graph';
+import { BusinessLineageView } from '@/components/lineage';
 
 interface ImpactAnalysisPanelProps {
   entityType: string;
@@ -144,12 +144,13 @@ export function ImpactAnalysisPanel({
 
       {/* Graph visualization */}
       {affectedCount > 0 && (
-        <BusinessLineageGraph
+        <BusinessLineageView
           entityType={entityType}
           entityId={entityId}
-          className="h-[500px]"
-          mode="impact"
+          direction="downstream"
           maxDepth={maxDepth}
+          showToolbar={false}
+          className="h-[500px]"
         />
       )}
     </div>

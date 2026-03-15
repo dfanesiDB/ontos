@@ -14,30 +14,9 @@ import {
 } from 'lucide-react';
 import type { LineageGraph, LineageGraphNode } from '@/types/ontology-schema';
 
-// ─── Shared color map (also used by lineage-flow-graph) ─────────────────
-
-export const TYPE_COLOR: Record<string, { bg: string; border: string; text: string; minimap: string; hex: string }> = {
-  BusinessTerm:     { bg: 'bg-indigo-500/10',   border: 'border-indigo-500/50',  text: 'text-indigo-600 dark:text-indigo-400',   minimap: '#6366f1', hex: '#6366f1' },
-  LogicalEntity:    { bg: 'bg-violet-500/10',   border: 'border-violet-500/40',  text: 'text-violet-600 dark:text-violet-400',   minimap: '#8b5cf6', hex: '#8b5cf6' },
-  LogicalAttribute: { bg: 'bg-fuchsia-500/10',  border: 'border-fuchsia-500/40', text: 'text-fuchsia-600 dark:text-fuchsia-400', minimap: '#d946ef', hex: '#d946ef' },
-  System:           { bg: 'bg-blue-500/10',     border: 'border-blue-500/40',    text: 'text-blue-600 dark:text-blue-400',       minimap: '#3b82f6', hex: '#3b82f6' },
-  DataDomain:       { bg: 'bg-purple-500/10',   border: 'border-purple-500/40',  text: 'text-purple-600 dark:text-purple-400',   minimap: '#a855f7', hex: '#a855f7' },
-  DataProduct:      { bg: 'bg-emerald-500/10',  border: 'border-emerald-500/40', text: 'text-emerald-600 dark:text-emerald-400', minimap: '#10b981', hex: '#10b981' },
-  Dataset:          { bg: 'bg-amber-500/10',    border: 'border-amber-500/40',   text: 'text-amber-600 dark:text-amber-400',     minimap: '#f59e0b', hex: '#f59e0b' },
-  DeliveryChannel:  { bg: 'bg-cyan-500/10',     border: 'border-cyan-500/40',    text: 'text-cyan-600 dark:text-cyan-400',       minimap: '#06b6d4', hex: '#06b6d4' },
-  Policy:           { bg: 'bg-red-500/10',      border: 'border-red-500/40',     text: 'text-red-600 dark:text-red-400',         minimap: '#ef4444', hex: '#ef4444' },
-  Table:            { bg: 'bg-orange-500/10',    border: 'border-orange-500/40',  text: 'text-orange-600 dark:text-orange-400',   minimap: '#f97316', hex: '#f97316' },
-  View:             { bg: 'bg-teal-500/10',     border: 'border-teal-500/40',    text: 'text-teal-600 dark:text-teal-400',       minimap: '#14b8a6', hex: '#14b8a6' },
-  Column:           { bg: 'bg-slate-500/10',    border: 'border-slate-500/40',   text: 'text-slate-600 dark:text-slate-400',     minimap: '#64748b', hex: '#64748b' },
-  Schema:           { bg: 'bg-violet-500/10',   border: 'border-violet-500/40',  text: 'text-violet-600 dark:text-violet-400',   minimap: '#8b5cf6', hex: '#8b5cf6' },
-  DataContract:     { bg: 'bg-pink-500/10',     border: 'border-pink-500/40',    text: 'text-pink-600 dark:text-pink-400',       minimap: '#ec4899', hex: '#ec4899' },
-};
-
-const DEFAULT_HEX = '#6b7280';
-
-function hexForType(type: string): string {
-  return TYPE_COLOR[type]?.hex || DEFAULT_HEX;
-}
+// ─── Shared color map — re-exported from lineage constants for backward compat
+export { TYPE_COLOR, DEFAULT_HEX, hexForType } from '@/components/lineage/constants';
+import { hexForType } from '@/components/lineage/constants';
 
 // ─── Route helpers ──────────────────────────────────────────────────────
 

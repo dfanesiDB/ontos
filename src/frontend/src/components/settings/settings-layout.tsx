@@ -18,6 +18,7 @@ import {
   FolderOpen,
   Shapes,
   BoxSelect,
+  Truck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -41,6 +42,7 @@ const settingsNavGroups: SettingsNavGroup[] = [
     items: [
       { path: '/settings/data-domains', labelKey: 'settings:tabs.dataDomains', defaultLabel: 'Domains', icon: BoxSelect },
       { path: '/settings/business-roles', labelKey: 'settings:tabs.businessRoles', defaultLabel: 'Business Roles', icon: Briefcase },
+      { path: '/settings/delivery-methods', labelKey: 'settings:tabs.deliveryMethods', defaultLabel: 'Delivery Methods', icon: Truck },
       { path: '/settings/asset-types', labelKey: 'settings:tabs.assetTypes', defaultLabel: 'Asset Types', icon: Shapes },
       { path: '/settings/teams', labelKey: 'settings:tabs.teams', defaultLabel: 'Teams', icon: UserCheck },
       { path: '/settings/projects', labelKey: 'settings:tabs.projects', defaultLabel: 'Projects', icon: FolderOpen },
