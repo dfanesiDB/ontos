@@ -271,10 +271,10 @@ export default function DataProductDetails() {
   // Products with status 'active' and above must be cloned for editing
   const canEditInPlace = product?.status && ['draft', 'sandbox', 'proposed', 'under_review', 'approved'].includes(product.status.toLowerCase());
   const isPersonalDraft = product?.draftOwnerId != null;
-  const isReadOnly = !canEditInPlace && !isPersonalDraft;
+  const isReadOnly = !canAdmin && !canEditInPlace && !isPersonalDraft;
 
-  // Combined permission check: can write AND can edit in place (or is personal draft)
-  const canModify = canWrite && (canEditInPlace || isPersonalDraft);
+  // Combined permission check: admin can always edit; others need write + editable status
+  const canModify = canAdmin || (canWrite && (canEditInPlace || isPersonalDraft));
 
   useCopilotContext(
     'Data Product Details',
