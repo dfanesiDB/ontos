@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -159,7 +159,7 @@ export default function AssetDetailView() {
   useEffect(() => {
     if (asset) {
       setStaticSegments([
-        { label: 'Asset Explorer', href: '/assets' },
+        { label: 'Asset Explorer', path: '/assets' },
       ]);
       setDynamicTitle(asset.name);
       // Resolve ontology IRI for the asset type
