@@ -204,7 +204,7 @@ export default function DataContractDetails() {
   const [links, setLinks] = useState<EntitySemanticLink[]>([])
   const [selectedSchemaIndex, setSelectedSchemaIndex] = useState(0)
   const [schemaLinks, setSchemaLinks] = useState<Record<string, EntitySemanticLink[]>>({})
-  const [propertyLinks, setPropertyLinks] = useState<Record<string, EntitySemanticLink[]>>({})
+  const [propertyLinks] = useState<Record<string, EntitySemanticLink[]>>({})
 
   // Lazy-loaded schema properties with pagination
   const [schemaProperties, setSchemaProperties] = useState<Record<string, SchemaProperty[]>>({})

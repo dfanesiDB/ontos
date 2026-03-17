@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft, Loader2, AlertCircle, Pencil, Trash2,
+  ArrowLeft, AlertCircle, Pencil, Trash2,
   MapPin, Globe, Calendar, User, Tag, FileJson, Network, GitBranch,
   LayoutGrid, Share2,
 } from 'lucide-react';
@@ -22,7 +22,6 @@ import { ImpactAnalysisPanel } from '@/components/common/impact-analysis-panel';
 import { BusinessLineageView } from '@/components/lineage';
 import { LineageEditor } from '@/components/common/lineage-editor';
 import { useApi } from '@/hooks/use-api';
-import { useToast } from '@/hooks/use-toast';
 import { RelativeDate } from '@/components/common/relative-date';
 import { EntityTreePanel } from '@/components/common/entity-tree-panel';
 import { OwnershipPanel } from '@/components/common/ownership-panel';
@@ -104,8 +103,7 @@ export default function AssetDetailView() {
   const [isLineageEditorOpen, setIsLineageEditorOpen] = useState(false);
   const [relViewMode, setRelViewMode] = useState<'table' | 'graph'>('table');
 
-  const { get: apiGet, loading: apiIsLoading } = useApi();
-  const { toast } = useToast();
+  const { get: apiGet } = useApi();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
