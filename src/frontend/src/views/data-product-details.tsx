@@ -22,6 +22,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import useBreadcrumbStore from '@/stores/breadcrumb-store';
 import { usePermissions } from '@/stores/permissions-store';
+import { useUserStore } from '@/stores/user-store';
+import { FeatureAccessLevel } from '@/types/settings';
 import * as Settings from '@/types/settings';
 import { useNotificationsStore } from '@/stores/notifications-store';
 import CreateVersionDialog from '@/components/data-products/create-version-dialog';
@@ -56,6 +58,9 @@ import { useCopilotContext } from '@/hooks/use-copilot-context';
  * Displays product with sections for all ODPS entities.
  * Complex nested entities are edited via form dialogs (to be created).
  */
+
+type ViewMode = 'minimal' | 'medium' | 'large'
+const VIEW_MODE_STORAGE_KEY = 'data-product-view-mode'
 
 type CheckApiResponseFn = <T>(
   response: { data?: T | { detail?: string }, error?: string | null | undefined },
@@ -213,7 +218,8 @@ export default function DataProductDetails() {
   const { toast } = useToast();
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
-  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const { hasPermission, isLoading: permissionsLoading, getPermissionLevel } = usePermissions();
+  const { userInfo, fetchUserInfo } = useUserStore();
   const refreshNotifications = useNotificationsStore((state) => state.refreshNotifications);
   const { getDomainName, getDomainIdByName } = useDomains();
 
@@ -279,6 +285,45 @@ export default function DataProductDetails() {
 
   // Combined permission check: admin can always edit; others need write + editable status
   const canModify = canAdmin || (canWrite && (canEditInPlace || isPersonalDraft));
+
+  // View mode state for filtering sections - initialize from localStorage
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    if (stored && ['minimal', 'medium', 'large'].includes(stored)) {
+      return stored as ViewMode;
+    }
+    return 'minimal';
+  });
+
+  const getDefaultViewMode = useCallback((): ViewMode => {
+    if (product?.owner_team_id && userInfo?.groups?.includes(product.owner_team_id)) {
+      return 'large';
+    }
+    const permissionLevel = getPermissionLevel('data-products');
+    if (permissionLevel === FeatureAccessLevel.READ_WRITE ||
+        permissionLevel === FeatureAccessLevel.ADMIN ||
+        permissionLevel === FeatureAccessLevel.FULL) {
+      return 'medium';
+    }
+    return 'minimal';
+  }, [product?.owner_team_id, userInfo?.groups, getPermissionLevel]);
+
+  useEffect(() => {
+    if (!userInfo) {
+      fetchUserInfo();
+    }
+  }, [userInfo, fetchUserInfo]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    if (!stored) {
+      setViewMode(getDefaultViewMode());
+    }
+  }, [getDefaultViewMode]);
+
+  useEffect(() => {
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
+  }, [viewMode]);
 
   useCopilotContext(
     'Data Product Details',
@@ -1067,6 +1112,19 @@ export default function DataProductDetails() {
     }
   };
 
+  const shouldShowSection = (section: string): boolean => {
+    switch (viewMode) {
+      case 'minimal':
+        return ['deliverables', 'description', 'hierarchy'].includes(section);
+      case 'medium':
+        return !['management-ports', 'support-channels', 'metadata-panel', 'ratings', 'costs', 'quality'].includes(section);
+      case 'large':
+        return true;
+      default:
+        return false;
+    }
+  };
+
   if (loading || permissionsLoading) {
     return <DetailViewSkeleton cards={5} actionButtons={5} />;
   }
@@ -1093,10 +1151,40 @@ export default function DataProductDetails() {
   return (
     <div className="py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => navigate(listPath)} size="sm">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to List
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate(listPath)} size="sm">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to List
+          </Button>
+
+          {/* View Mode Toggle */}
+          <div className="inline-flex items-stretch h-8 gap-px border rounded-md bg-background overflow-hidden">
+            <Button
+              variant={viewMode === 'minimal' ? 'default' : 'ghost'}
+              onClick={() => setViewMode('minimal')}
+              className="h-full w-8 p-0 font-semibold text-xs rounded-none"
+              title={t('common:tooltips.smallView')}
+            >
+              S
+            </Button>
+            <Button
+              variant={viewMode === 'medium' ? 'default' : 'ghost'}
+              onClick={() => setViewMode('medium')}
+              className="h-full w-8 p-0 font-semibold text-xs rounded-none"
+              title={t('common:tooltips.mediumView')}
+            >
+              M
+            </Button>
+            <Button
+              variant={viewMode === 'large' ? 'default' : 'ghost'}
+              onClick={() => setViewMode('large')}
+              className="h-full w-8 p-0 font-semibold text-xs rounded-none"
+              title={t('common:tooltips.largeView')}
+            >
+              L
+            </Button>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setIsRequestDialogOpen(true)} size="sm">
             <KeyRound className="mr-2 h-4 w-4" /> Request...
@@ -1235,67 +1323,81 @@ export default function DataProductDetails() {
               <Label className="text-xs text-muted-foreground min-w-[4rem]">Version:</Label>
               <Badge variant="outline" className="text-xs">{product.version || t('common:states.notAvailable')}</Badge>
             </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground min-w-[4rem]">Domain:</Label>
-              {product.domain && getDomainIdByName(domainLabel) ? (
-                <span
-                  className="text-xs cursor-pointer text-primary hover:underline truncate"
-                  onClick={() => navigate(`/data-domains/${getDomainIdByName(domainLabel)}`)}
-                >
-                  {domainLabel}
-                </span>
-              ) : (
-                <span className="text-xs text-muted-foreground">{domainLabel}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground min-w-[4rem]">Project:</Label>
-              {(product as any).project_id && product.project_name ? (
-                <span
-                  className="text-xs cursor-pointer text-primary hover:underline truncate"
-                  onClick={() => navigate(`/projects/${(product as any).project_id}`)}
-                  title={`Project ID: ${(product as any).project_id}`}
-                >
-                  {product.project_name}
-                </span>
-              ) : (
-                <span className="text-xs text-muted-foreground">{t('common:states.notAssigned')}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground min-w-[4rem]">Tenant:</Label>
-              <span className="text-xs text-muted-foreground truncate">{product.tenant || t('common:states.notAssigned')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground min-w-[4rem]">Owner:</Label>
-              {product.owner_team_id && product.owner_team_name ? (
-                <span
-                  className="text-xs cursor-pointer text-primary hover:underline truncate"
-                  onClick={() => navigate(`/teams/${product.owner_team_id}`)}
-                  title={`Team ID: ${product.owner_team_id}`}
-                >
-                  {product.owner_team_name}
-                </span>
-              ) : (
-                <span className="text-xs text-muted-foreground">{t('common:states.notAssigned')}</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground min-w-[4rem]">API Ver:</Label>
-              {product.apiVersion ? (
-                <Badge variant="outline" className="text-xs">{product.apiVersion}</Badge>
-              ) : (
-                <span className="text-xs text-muted-foreground">N/A</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground min-w-[4rem]">Created:</Label>
-              <span className="text-xs text-muted-foreground truncate">{formatDate(product.created_at)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground min-w-[4rem]">Updated:</Label>
-              <span className="text-xs text-muted-foreground truncate">{formatDate(product.updated_at)}</span>
-            </div>
+            {(viewMode !== 'minimal' || product.domain) && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground min-w-[4rem]">Domain:</Label>
+                {product.domain && getDomainIdByName(domainLabel) ? (
+                  <span
+                    className="text-xs cursor-pointer text-primary hover:underline truncate"
+                    onClick={() => navigate(`/data-domains/${getDomainIdByName(domainLabel)}`)}
+                  >
+                    {domainLabel}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{domainLabel}</span>
+                )}
+              </div>
+            )}
+            {(viewMode !== 'minimal' || ((product as any).project_id && product.project_name)) && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground min-w-[4rem]">Project:</Label>
+                {(product as any).project_id && product.project_name ? (
+                  <span
+                    className="text-xs cursor-pointer text-primary hover:underline truncate"
+                    onClick={() => navigate(`/projects/${(product as any).project_id}`)}
+                    title={`Project ID: ${(product as any).project_id}`}
+                  >
+                    {product.project_name}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{t('common:states.notAssigned')}</span>
+                )}
+              </div>
+            )}
+            {(viewMode !== 'minimal' || product.tenant) && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground min-w-[4rem]">Tenant:</Label>
+                <span className="text-xs text-muted-foreground truncate">{product.tenant || t('common:states.notAssigned')}</span>
+              </div>
+            )}
+            {(viewMode !== 'minimal' || (product.owner_team_id && product.owner_team_name)) && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground min-w-[4rem]">Owner:</Label>
+                {product.owner_team_id && product.owner_team_name ? (
+                  <span
+                    className="text-xs cursor-pointer text-primary hover:underline truncate"
+                    onClick={() => navigate(`/teams/${product.owner_team_id}`)}
+                    title={`Team ID: ${product.owner_team_id}`}
+                  >
+                    {product.owner_team_name}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{t('common:states.notAssigned')}</span>
+                )}
+              </div>
+            )}
+            {viewMode !== 'minimal' && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground min-w-[4rem]">API Ver:</Label>
+                {product.apiVersion ? (
+                  <Badge variant="outline" className="text-xs">{product.apiVersion}</Badge>
+                ) : (
+                  <span className="text-xs text-muted-foreground">N/A</span>
+                )}
+              </div>
+            )}
+            {(viewMode !== 'minimal' || product.created_at) && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground min-w-[4rem]">Created:</Label>
+                <span className="text-xs text-muted-foreground truncate">{formatDate(product.created_at)}</span>
+              </div>
+            )}
+            {(viewMode !== 'minimal' || product.updated_at) && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground min-w-[4rem]">Updated:</Label>
+                <span className="text-xs text-muted-foreground truncate">{formatDate(product.updated_at)}</span>
+              </div>
+            )}
           </div>
 
           <div className="pt-2 border-t">
@@ -1468,7 +1570,7 @@ export default function DataProductDetails() {
       )}
 
       {/* Business Lineage Graph */}
-      {productId && (
+      {shouldShowSection('lineage') && productId && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -1494,57 +1596,60 @@ export default function DataProductDetails() {
       )}
 
       {/* Production Readiness Checklist */}
-      {productId && <ReadinessChecklist productId={productId} />}
+      {shouldShowSection('readiness') && productId && <ReadinessChecklist productId={productId} />}
 
       {/* Consumables (Input Ports) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Consumables ({product.inputPorts?.length || 0})</span>
-            {canModify && <Button size="sm" onClick={() => setIsInputPortDialogOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Consumable</Button>}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {product.inputPorts && product.inputPorts.length > 0 ? (
-            <div className="space-y-2">
-              {product.inputPorts.map((port, idx) => (
-                <div key={idx} className="flex items-start justify-between border rounded p-3">
-                  <div className="flex-1">
-                    <div className="font-medium">{port.name} (v{port.version})</div>
-                    <div className="text-sm text-muted-foreground">Contract: {port.contractId}</div>
-                  </div>
-                  {canModify && (
-                    <div className="flex gap-2 ml-3">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingInputPortIndex(idx);
-                          setIsInputPortDialogOpen(true);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteInputPort(idx)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+      {shouldShowSection('consumables') && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Consumables ({product.inputPorts?.length || 0})</span>
+              {canModify && <Button size="sm" onClick={() => setIsInputPortDialogOpen(true)}><Plus className="mr-2 h-4 w-4" />Add Consumable</Button>}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {product.inputPorts && product.inputPorts.length > 0 ? (
+              <div className="space-y-2">
+                {product.inputPorts.map((port, idx) => (
+                  <div key={idx} className="flex items-start justify-between border rounded p-3">
+                    <div className="flex-1">
+                      <div className="font-medium">{port.name} (v{port.version})</div>
+                      <div className="text-sm text-muted-foreground">Contract: {port.contractId}</div>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No consumables defined</p>
-          )}
-        </CardContent>
-      </Card>
+                    {canModify && (
+                      <div className="flex gap-2 ml-3">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingInputPortIndex(idx);
+                            setIsInputPortDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteInputPort(idx)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No consumables defined</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Management Ports Section (NEW in ODPS v1.0.0) */}
+      {shouldShowSection('management-ports') && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -1593,8 +1698,10 @@ export default function DataProductDetails() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Team Section */}
+      {shouldShowSection('team') && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -1658,8 +1765,10 @@ export default function DataProductDetails() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Support Channels */}
+      {shouldShowSection('support-channels') && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -1707,9 +1816,10 @@ export default function DataProductDetails() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Subscribers Section (only visible to owners/admins) */}
-      {(canWrite || canAdmin) && subscribers && (
+      {shouldShowSection('subscribers') && (canWrite || canAdmin) && subscribers && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1748,7 +1858,7 @@ export default function DataProductDetails() {
       )}
 
       {/* Access Grants Panel */}
-      {productId && (
+      {shouldShowSection('access-grants') && productId && (
         <AccessGrantsPanel
           entityType="data_product"
           entityId={productId}
@@ -1758,33 +1868,45 @@ export default function DataProductDetails() {
       )}
 
       {/* Ownership Panel */}
-      <OwnershipPanel objectType="data_product" objectId={productId!} canAssign={canModify} className="mb-6" />
+      {shouldShowSection('ownership') && (
+        <OwnershipPanel objectType="data_product" objectId={productId!} canAssign={canModify} className="mb-6" />
+      )}
 
       {/* Entity Relationships Panel */}
-      <EntityRelationshipPanel
-        entityType="DataProduct"
-        entityId={productId!}
-        title="Related Entities"
-        canEdit={canModify}
-      />
+      {shouldShowSection('entity-relationships') && (
+        <EntityRelationshipPanel
+          entityType="DataProduct"
+          entityId={productId!}
+          title="Related Entities"
+          canEdit={canModify}
+        />
+      )}
 
       {/* Metadata Panel */}
-      <EntityMetadataPanel entityId={productId!} entityType="data_product" />
+      {shouldShowSection('metadata-panel') && (
+        <EntityMetadataPanel entityId={productId!} entityType="data_product" />
+      )}
 
       {/* Ratings Panel */}
-      <RatingPanel
-        entityType="data_product"
-        entityId={productId!}
-        title={t('details.ratings.title', 'Ratings & Reviews')}
-        showDistribution
-        allowSubmit={canRead}
-      />
+      {shouldShowSection('ratings') && (
+        <RatingPanel
+          entityType="data_product"
+          entityId={productId!}
+          title={t('details.ratings.title', 'Ratings & Reviews')}
+          showDistribution
+          allowSubmit={canRead}
+        />
+      )}
 
       {/* Costs Panel */}
-      <EntityCostsPanel entityId={productId!} entityType="data_product" />
+      {shouldShowSection('costs') && (
+        <EntityCostsPanel entityId={productId!} entityType="data_product" />
+      )}
 
       {/* Quality Panel */}
-      <EntityQualityPanel entityId={productId!} entityType="data_product" productAggregation />
+      {shouldShowSection('quality') && (
+        <EntityQualityPanel entityId={productId!} entityType="data_product" productAggregation />
+      )}
 
       {/* Lineage Editor */}
       {productId && product && (
