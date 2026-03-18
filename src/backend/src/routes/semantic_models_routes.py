@@ -804,6 +804,67 @@ async def get_knowledge_collections(
         raise HTTPException(status_code=500, detail="Failed to retrieve collections")
 
 
+@router.get('/knowledge/collections/{collection_iri:path}/export')
+async def export_knowledge_collection(
+    collection_iri: str,
+    format: str = Query("turtle", description="Export format: turtle or rdfxml"),
+    manager: SemanticModelsManager = Depends(get_semantic_models_manager),
+    _: bool = Depends(PermissionChecker('semantic-models', FeatureAccessLevel.READ_ONLY))
+):
+    """Export a collection as Turtle or RDF/XML."""
+    from fastapi.responses import Response
+    try:
+        if format.lower() in ("turtle", "ttl"):
+            content = manager.export_collection_as_turtle(collection_iri)
+            media_type = "text/turtle"
+            filename = f"{collection_iri.split(':')[-1]}.ttl"
+        else:
+            content = manager.export_collection_as_rdfxml(collection_iri)
+            media_type = "application/rdf+xml"
+            filename = f"{collection_iri.split(':')[-1]}.rdf"
+        
+        return Response(
+            content=content,
+            media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error exporting collection: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to export collection")
+
+
+@router.post('/knowledge/collections/{collection_iri:path}/import')
+async def import_to_knowledge_collection(
+    collection_iri: str,
+    file: UploadFile = File(...),
+    current_user: CurrentUserDep = None,
+    manager: SemanticModelsManager = Depends(get_semantic_models_manager),
+    _: bool = Depends(PermissionChecker('semantic-models', FeatureAccessLevel.READ_WRITE))
+) -> dict:
+    """Import RDF content into an existing collection."""
+    try:
+        content = await file.read()
+        content_str = content.decode('utf-8')
+        
+        # Determine format from filename
+        format = "turtle" if file.filename and file.filename.endswith('.ttl') else "xml"
+        
+        count = manager.import_rdf_to_collection(
+            collection_iri=collection_iri,
+            content=content_str,
+            format=format,
+            imported_by=current_user.email if current_user else None,
+        )
+        return {'success': True, 'triples_imported': count}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error importing to collection: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to import content")
+
+
 @router.get('/knowledge/collections/{collection_iri:path}')
 async def get_knowledge_collection(
     collection_iri: str,
@@ -892,67 +953,6 @@ async def delete_knowledge_collection(
     except Exception as e:
         logger.error(f"Error deleting collection: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to delete collection")
-
-
-@router.get('/knowledge/collections/{collection_iri:path}/export')
-async def export_knowledge_collection(
-    collection_iri: str,
-    format: str = Query("turtle", description="Export format: turtle or rdfxml"),
-    manager: SemanticModelsManager = Depends(get_semantic_models_manager),
-    _: bool = Depends(PermissionChecker('semantic-models', FeatureAccessLevel.READ_ONLY))
-):
-    """Export a collection as Turtle or RDF/XML."""
-    from fastapi.responses import Response
-    try:
-        if format.lower() in ("turtle", "ttl"):
-            content = manager.export_collection_as_turtle(collection_iri)
-            media_type = "text/turtle"
-            filename = f"{collection_iri.split(':')[-1]}.ttl"
-        else:
-            content = manager.export_collection_as_rdfxml(collection_iri)
-            media_type = "application/rdf+xml"
-            filename = f"{collection_iri.split(':')[-1]}.rdf"
-        
-        return Response(
-            content=content,
-            media_type=media_type,
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error exporting collection: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to export collection")
-
-
-@router.post('/knowledge/collections/{collection_iri:path}/import')
-async def import_to_knowledge_collection(
-    collection_iri: str,
-    file: UploadFile = File(...),
-    current_user: CurrentUserDep = None,
-    manager: SemanticModelsManager = Depends(get_semantic_models_manager),
-    _: bool = Depends(PermissionChecker('semantic-models', FeatureAccessLevel.READ_WRITE))
-) -> dict:
-    """Import RDF content into an existing collection."""
-    try:
-        content = await file.read()
-        content_str = content.decode('utf-8')
-        
-        # Determine format from filename
-        format = "turtle" if file.filename and file.filename.endswith('.ttl') else "xml"
-        
-        count = manager.import_rdf_to_collection(
-            collection_iri=collection_iri,
-            content=content_str,
-            format=format,
-            imported_by=current_user.email if current_user else None,
-        )
-        return {'success': True, 'triples_imported': count}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error importing to collection: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to import content")
 
 
 # ============================================================================
