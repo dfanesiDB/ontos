@@ -87,6 +87,7 @@ const CommentSidebar: React.FC<CommentSidebarProps> = ({
 
   // Ref for the ScrollArea viewport to control scrolling
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const hasFetchedCount = useRef(false);
 
   // State for available teams and roles
   const [availableTeams, setAvailableTeams] = useState<AudienceTeam[]>([]);
@@ -330,9 +331,10 @@ const CommentSidebar: React.FC<CommentSidebarProps> = ({
     setIsFormOpen(false);
   };
 
-  // Fetch comment count on mount if requested
+  // Fetch comment count on mount if requested (guarded to prevent re-entry loop)
   useEffect(() => {
-    if (fetchCountOnMount) {
+    if (fetchCountOnMount && !hasFetchedCount.current) {
+      hasFetchedCount.current = true;
       fetchCommentCount();
     }
   }, [fetchCountOnMount, fetchCommentCount]);

@@ -7,7 +7,7 @@
  * Infrastructure (System) shown as badges, not nodes.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -120,7 +120,7 @@ function BusinessLineageViewInner({
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  const layoutConfig: LayoutConfig = { ...DEFAULT_CONFIG, nestingDepth };
+  const layoutConfig = useMemo<LayoutConfig>(() => ({ ...DEFAULT_CONFIG, nestingDepth }), [nestingDepth]);
 
   // Dark mode detection
   useEffect(() => {
@@ -166,8 +166,8 @@ function BusinessLineageViewInner({
   // Compute layout when graph changes
   useEffect(() => {
     if (!graph) {
-      setNodes([]);
-      setEdges([]);
+      setNodes((prev) => prev.length ? [] : prev);
+      setEdges((prev) => prev.length ? [] : prev);
       return;
     }
 

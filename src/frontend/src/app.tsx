@@ -4,6 +4,7 @@ import { ThemeProvider } from './components/theme';
 import Layout from './components/layout/layout';
 import { TooltipProvider } from './components/ui/tooltip';
 import { Toaster } from './components/ui/toaster';
+import { RouteErrorBoundary } from './components/layout/route-error-boundary';
 import { useUserStore } from './stores/user-store';
 import { usePermissions } from './stores/permissions-store';
 import { useNotificationsStore } from './stores/notifications-store';
@@ -109,9 +110,9 @@ export default function App() {
       <TooltipProvider>
         <Router future={{ 
           v7_relativeSplatPath: true,
-          v7_startTransition: true 
         }}>
           <Layout>
+            <RouteErrorBoundary>
             <Routes>
               <Route path="/" element={<Home />} />
 
@@ -219,6 +220,7 @@ export default function App() {
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </RouteErrorBoundary>
           </Layout>
         </Router>
         <Toaster />
