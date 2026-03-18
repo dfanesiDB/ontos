@@ -87,6 +87,7 @@ class ConnectionsManager:
             config=clean_config,
             enabled=data.enabled,
             is_default=data.is_default,
+            system_asset_id=data.system_asset_id,
             created_by=created_by or "",
         )
         self._db.add(db_obj)

@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import DatasetLookupDialog from './dataset-lookup-dialog'
+import InferFromAssetDialog from './infer-from-asset-dialog'
+import type { InferredSchemaObject } from './infer-from-asset-dialog'
 import BusinessConceptsDisplay from '@/components/business-concepts/business-concepts-display'
 import { useDomains } from '@/hooks/use-domains'
 import { useToast } from '@/hooks/use-toast'
@@ -286,72 +287,34 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
   const addServerConfig = () => setServerConfigs((prev) => [...prev, { server: '', type: 'postgresql', environment: 'production' }])
   const removeServerConfig = (idx: number) => setServerConfigs((prev) => prev.filter((_, i) => i !== idx))
 
-  const handleInferFromDataset = async (table: { full_name: string }) => {
-    const datasetPath = table.full_name
-    const logicalName = datasetPath.split('.').pop() || datasetPath
-
-    // Create schema immediately so user sees progress
-    const newIndex = schemaObjects.length
-    setSchemaObjects((prev) => [...prev, { name: logicalName, physicalName: datasetPath, properties: [] }])
+  const handleInferFromAsset = (schemas: InferredSchemaObject[]) => {
+    const baseIndex = schemaObjects.length
+    const newObjects = schemas.map(s => ({
+      name: s.name,
+      physicalName: s.physicalName,
+      description: s.description || undefined,
+      properties: s.properties.map(p => ({
+        name: p.name,
+        physicalType: p.physicalType,
+        logicalType: p.logicalType || 'string',
+        required: p.required,
+        description: p.description,
+        partitioned: p.partitioned,
+      })),
+    }))
+    setSchemaObjects((prev) => [...prev, ...newObjects])
     setStep(2)
+
+    const totalCols = schemas.reduce((sum, s) => sum + s.properties.length, 0)
+    toast({
+      title: 'Schema inferred successfully',
+      description: `Added ${schemas.length} schema${schemas.length > 1 ? 's' : ''} with ${totalCols} columns`,
+    })
+
     setTimeout(() => {
-      const el = document.getElementById(`schema-object-${newIndex}`)
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        const input = el.querySelector('input') as HTMLInputElement | null
-        if (input) input.focus()
-      }
+      const el = document.getElementById(`schema-object-${baseIndex}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 0)
-
-    // Try to fetch columns asynchronously
-    try {
-      const res = await fetch(`/api/catalogs/dataset/${encodeURIComponent(datasetPath)}`)
-      if (!res.ok) throw new Error('Failed to load dataset schema')
-      const data = await res.json()
-
-      // Enhanced column mapping with UC metadata
-      const columns = Array.isArray(data?.schema)
-        ? data.schema.map((c: any) => ({
-            name: String(c.name || ''),
-            physicalType: String(c.physicalType || c.type || ''), // UC physical type
-            logicalType: String(c.logicalType || c.logical_type || 'string'), // ODCS logical type
-            required: c.nullable === undefined ? undefined : !Boolean(c.nullable),
-            description: String(c.comment || ''), // UC column comment
-            partitioned: Boolean(c.partitioned),
-            partitionKeyPosition: c.partitionKeyPosition || undefined,
-          }))
-        : []
-
-      // Update schema object with enhanced metadata and table info
-      setSchemaObjects((prev) => prev.map((o, i) => {
-        if (i === newIndex) {
-          return {
-            ...o,
-            properties: columns,
-            // Add table-level metadata if available
-            ...(data.table_info && {
-              physicalName: data.table_info.storage_location || datasetPath,
-              description: data.table_info.comment || undefined,
-              tableType: data.table_info.table_type || undefined,
-              owner: data.table_info.owner || undefined,
-              createdAt: data.table_info.created_at || undefined,
-              updatedAt: data.table_info.updated_at || undefined,
-              tableProperties: data.table_info.properties || undefined,
-            })
-          }
-        }
-        return o
-      }))
-
-      const columnCount = columns.length
-      const tableInfo = data.table_info || {}
-      toast({
-        title: 'Schema inferred successfully',
-        description: `Loaded ${columnCount} columns from ${datasetPath}${tableInfo.owner ? ` (owner: ${tableInfo.owner})` : ''}`
-      })
-    } catch (e) {
-      toast({ title: 'Schema added without columns', description: 'Could not fetch columns. Configure SQL warehouse to enable inference.', variant: 'warning' as any })
-    }
   }
 
   const handleNext = () => {
@@ -747,7 +710,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
               </div>
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={() => setLookupOpen(true)} className="gap-2">
-                  <span>🔍</span> Infer from Dataset
+                  <span>🔍</span> Infer from Asset
                 </Button>
                 <Button type="button" variant="default" onClick={addObject} className="gap-2">
                   <span>➕</span> Add Schema Object
@@ -758,7 +721,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
             {schemaObjects.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-muted-foreground/25 rounded-lg">
                 <div className="text-muted-foreground mb-2">No schema objects defined yet</div>
-                <div className="text-sm text-muted-foreground">Start by adding a schema object or inferring from an existing dataset</div>
+                <div className="text-sm text-muted-foreground">Start by adding a schema object or inferring from an existing asset</div>
               </div>
             ) : (
               <div className="space-y-6">
@@ -2062,7 +2025,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
           </div>
         </DialogFooter>
 
-        <DatasetLookupDialog isOpen={lookupOpen} onOpenChange={setLookupOpen} onSelect={handleInferFromDataset} />
+        <InferFromAssetDialog isOpen={lookupOpen} onOpenChange={setLookupOpen} onInfer={handleInferFromAsset} />
       </DialogContent>
     </Dialog>
   )

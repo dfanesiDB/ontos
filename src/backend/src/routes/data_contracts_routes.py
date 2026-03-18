@@ -1240,7 +1240,10 @@ async def get_schema_properties(
     limit: int = 50,
     _: bool = Depends(PermissionChecker('data-contracts', FeatureAccessLevel.READ_ONLY))
 ):
-    """Get paginated properties for a specific schema object."""
+    """Get paginated properties for a specific schema object.
+
+    Use limit=0 to return all properties without pagination (e.g. for the edit dialog).
+    """
     from sqlalchemy import func as sa_func
 
     schema_obj = (
@@ -1253,14 +1256,14 @@ async def get_schema_properties(
 
     total = db.query(sa_func.count(SchemaPropertyDb.id)).filter(SchemaPropertyDb.object_id == schema_obj.id).scalar()
 
-    props = (
+    query = (
         db.query(SchemaPropertyDb)
         .filter(SchemaPropertyDb.object_id == schema_obj.id)
         .order_by(SchemaPropertyDb.name)
-        .offset(skip)
-        .limit(limit)
-        .all()
     )
+    if limit > 0:
+        query = query.offset(skip).limit(limit)
+    props = query.all()
 
     items = []
     for p in props:
@@ -1284,6 +1287,11 @@ async def get_schema_properties(
             "description": p.transform_description,
             "businessName": p.business_name,
             "criticalDataElement": p.critical_data_element,
+            "examples": p.examples,
+            "transformLogic": p.transform_logic,
+            "transformSourceObjects": p.transform_source_objects,
+            "transformDescription": p.transform_description,
+            "encryptedName": p.encrypted_name,
         }
         item.update(options)
         items.append(item)
