@@ -248,7 +248,7 @@ export default function DataContractDetails() {
 
   // Computed properties for status-based editability
   // Admins bypass status restrictions; others need draft/proposed
-  const canEditInPlace = isContractAdmin || (contract?.status && EDITABLE_STATUSES.includes(contract.status.toLowerCase()))
+  const canEditInPlace = isContractAdmin || !!(contract?.status && EDITABLE_STATUSES.includes(contract.status.toLowerCase()))
   // Personal drafts are editable since they have draft status
   const isPersonalDraft = contract?.draftOwnerId != null
   // Contract is read-only if it's not editable and not a personal draft

@@ -133,11 +133,11 @@ describe('DataContractWizardDialog Schema Inference', () => {
 
     // Wait for step 2 to appear - use getByText with partial match
     await waitFor(() => {
-      expect(screen.getByText(/Infer from Dataset/i)).toBeInTheDocument()
+      expect(screen.getByText(/Infer from Asset/i)).toBeInTheDocument()
     }, { timeout: 5000 })
 
-    // Click "Infer from Dataset" button
-    const inferButton = screen.getByText(/Infer from Dataset/i)
+    // Click "Infer from Asset" button
+    const inferButton = screen.getByText(/Infer from Asset/i)
     fireEvent.click(inferButton)
 
     // Click the dataset selection in the mocked dialog
@@ -172,7 +172,7 @@ describe('DataContractWizardDialog Schema Inference', () => {
     const nextButton = screen.getByRole('button', { name: /next/i })
     fireEvent.click(nextButton)
 
-    const inferButton = screen.getByText(/Infer from Dataset/i)
+    const inferButton = screen.getByText(/Infer from Asset/i)
     fireEvent.click(inferButton)
 
     const selectDatasetButton = screen.getByTestId('select-dataset')
@@ -206,7 +206,7 @@ describe('DataContractWizardDialog Schema Inference', () => {
     const nextButton = screen.getByRole('button', { name: /next/i })
     fireEvent.click(nextButton)
 
-    const inferButton = screen.getByText(/Infer from Dataset/i)
+    const inferButton = screen.getByText(/Infer from Asset/i)
     fireEvent.click(inferButton)
 
     const selectDatasetButton = screen.getByTestId('select-dataset')
@@ -257,7 +257,7 @@ describe('DataContractWizardDialog Schema Inference', () => {
     const nextButton = screen.getByRole('button', { name: /next/i })
     fireEvent.click(nextButton)
 
-    const inferButton = screen.getByText(/Infer from Dataset/i)
+    const inferButton = screen.getByText(/Infer from Asset/i)
     fireEvent.click(inferButton)
 
     const selectDatasetButton = screen.getByTestId('select-dataset')
@@ -288,7 +288,7 @@ describe('DataContractWizardDialog Schema Inference', () => {
     const nextButton = screen.getByRole('button', { name: /next/i })
     fireEvent.click(nextButton)
 
-    const inferButton = screen.getByText(/Infer from Dataset/i)
+    const inferButton = screen.getByText(/Infer from Asset/i)
     fireEvent.click(inferButton)
 
     const selectDatasetButton = screen.getByTestId('select-dataset')
@@ -323,7 +323,7 @@ describe('DataContractWizardDialog Schema Inference', () => {
     const nextButton = screen.getByRole('button', { name: /next/i })
     fireEvent.click(nextButton)
 
-    const inferButton = screen.getByText(/Infer from Dataset/i)
+    const inferButton = screen.getByText(/Infer from Asset/i)
     fireEvent.click(inferButton)
 
     const selectDatasetButton = screen.getByTestId('select-dataset')
@@ -353,7 +353,7 @@ describe('DataContractWizardDialog Schema Inference', () => {
     const nextButton = screen.getByRole('button', { name: /next/i })
     fireEvent.click(nextButton)
 
-    const inferButton = screen.getByText(/Infer from Dataset/i)
+    const inferButton = screen.getByText(/Infer from Asset/i)
     fireEvent.click(inferButton)
 
     const selectDatasetButton = screen.getByTestId('select-dataset')
@@ -400,7 +400,7 @@ describe('DataContractWizardDialog Schema Inference', () => {
     const nextButton = screen.getByRole('button', { name: /next/i })
     fireEvent.click(nextButton)
 
-    const inferButton = screen.getByText(/Infer from Dataset/i)
+    const inferButton = screen.getByText(/Infer from Asset/i)
     fireEvent.click(inferButton)
 
     const selectDatasetButton = screen.getByTestId('select-dataset')
