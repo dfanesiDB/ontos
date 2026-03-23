@@ -18,7 +18,9 @@ from sse_starlette.sse import EventSourceResponse
 
 from src.common.config import Settings, get_settings
 from src.common.database import get_db
+from src.common.dependencies import AuditManagerDep
 from src.common.logging import get_logger
+from src.controller.audit_manager import AuditManager
 from src.controller.mcp_tokens_manager import MCPTokensManager, MCPTokenInfo
 from src.models.mcp import JSONRPCRequest, JSONRPCError, JSONRPCResponse
 from src.tools.base import ToolContext, ToolResult
@@ -47,6 +49,9 @@ MCP_AUTH_MISSING_SCOPE = -32002
 
 # MCP Protocol Version
 MCP_PROTOCOL_VERSION = "2024-11-05"
+
+# Feature ID for audit logging
+MCP_FEATURE_ID = "mcp"
 
 # Session storage (in-memory for now, could be moved to Redis/DB for production)
 _sessions: Dict[str, Dict[str, Any]] = {}
@@ -113,14 +118,36 @@ class MCPHandler:
         settings: Settings,
         token_info: MCPTokenInfo,
         request: Request,
+        audit_manager: Optional[AuditManager] = None,
         session_id: Optional[str] = None
     ):
         self._db = db
         self._settings = settings
         self._token_info = token_info
         self._request = request
+        self._audit_manager = audit_manager
         self._session_id = session_id
         self._tool_registry = create_default_registry()
+    
+    def _get_username(self) -> str:
+        return self._token_info.created_by or self._token_info.name
+    
+    def _get_ip_address(self) -> Optional[str]:
+        return self._request.client.host if self._request.client else None
+    
+    def _audit(self, *, action: str, success: bool, details: Optional[Dict[str, Any]] = None):
+        """Log an audit record if audit manager is available."""
+        if not self._audit_manager:
+            return
+        self._audit_manager.log_action(
+            db=self._db,
+            username=self._get_username(),
+            ip_address=self._get_ip_address(),
+            feature=MCP_FEATURE_ID,
+            action=action,
+            success=success,
+            details=details,
+        )
     
     async def handle(self, rpc_request: JSONRPCRequest) -> JSONRPCResponse:
         """Route the request to the appropriate handler."""
@@ -160,9 +187,20 @@ class MCPHandler:
     async def _handle_initialize(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle initialize request."""
         # Store client info in session if available
+        client_info = params.get("clientInfo", {})
         if self._session_id and self._session_id in _sessions:
-            _sessions[self._session_id]["client_info"] = params.get("clientInfo", {})
+            _sessions[self._session_id]["client_info"] = client_info
             _sessions[self._session_id]["initialized"] = True
+        
+        self._audit(
+            action="SESSION_CREATE",
+            success=True,
+            details={
+                "session_id": self._session_id,
+                "token_name": self._token_info.name,
+                "client_info": client_info,
+            },
+        )
         
         return {
             "protocolVersion": MCP_PROTOCOL_VERSION,
@@ -214,6 +252,17 @@ class MCPHandler:
         # Check scope
         required_scope = getattr(tool, "required_scope", "*")
         if not self._has_scope(required_scope):
+            self._audit(
+                action="SCOPE_VIOLATION",
+                success=False,
+                details={
+                    "tool_name": tool_name,
+                    "required_scope": required_scope,
+                    "token_scopes": self._token_info.scopes,
+                    "token_name": self._token_info.name,
+                    "session_id": self._session_id,
+                },
+            )
             raise MCPError(
                 MCP_AUTH_MISSING_SCOPE,
                 f"Missing required scope: {required_scope}",
@@ -223,11 +272,19 @@ class MCPHandler:
         # Create tool context
         ctx = self._create_tool_context()
         
-        # Execute the tool
+        # Execute the tool with audit logging
+        success = False
+        details_for_audit: Dict[str, Any] = {
+            "tool_name": tool_name,
+            "token_name": self._token_info.name,
+            "session_id": self._session_id,
+        }
         try:
             result = await tool.execute(ctx, **tool_args)
+            is_error = not result.success
+            details_for_audit["is_error"] = is_error
+            success = not is_error
             
-            # Format result for MCP
             if result.success:
                 return {
                     "content": [
@@ -239,6 +296,7 @@ class MCPHandler:
                     "isError": False
                 }
             else:
+                details_for_audit["tool_error"] = result.error
                 return {
                     "content": [
                         {
@@ -251,6 +309,7 @@ class MCPHandler:
                 
         except Exception as e:
             logger.error(f"Error executing tool {tool_name}: {e}", exc_info=True)
+            details_for_audit["exception"] = {"type": type(e).__name__, "message": str(e)}
             return {
                 "content": [
                     {
@@ -260,6 +319,8 @@ class MCPHandler:
                 ],
                 "isError": True
             }
+        finally:
+            self._audit(action="TOOL_CALL", success=success, details=details_for_audit)
     
     def _has_scope(self, required_scope: str) -> bool:
         """Check if token has required scope."""
@@ -434,6 +495,7 @@ async def mcp_sse_stream(
 @router.post("")
 async def mcp_handler(
     request: Request,
+    audit_manager: AuditManagerDep,
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
@@ -470,6 +532,15 @@ async def mcp_handler(
     # Validate API key
     token_info = validate_api_key(db, x_api_key)
     if not token_info:
+        audit_manager.log_action(
+            db=db,
+            username="anonymous",
+            ip_address=request.client.host if request.client else None,
+            feature=MCP_FEATURE_ID,
+            action="AUTH_FAILURE",
+            success=False,
+            details={"reason": "Invalid or missing API key"},
+        )
         return await error_response(MCP_AUTH_FAILED, "Invalid or missing API key")
     
     # Parse request body
@@ -509,7 +580,7 @@ async def mcp_handler(
     logger.info(f"MCP request: method={rpc_request.method}, token={token_info.name}, sse={use_sse}")
     
     # Handle the request
-    handler = MCPHandler(db, settings, token_info, request, session_id)
+    handler = MCPHandler(db, settings, token_info, request, audit_manager, session_id)
     response = await handler.handle(rpc_request)
     
     # Commit any changes
@@ -539,6 +610,7 @@ async def mcp_handler(
 @router.delete("")
 async def mcp_delete_session(
     request: Request,
+    audit_manager: AuditManagerDep,
     db: Session = Depends(get_db),
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     mcp_session_id: Optional[str] = Header(None, alias="MCP-Session-Id"),
@@ -551,6 +623,15 @@ async def mcp_delete_session(
     # Validate API key
     token_info = validate_api_key(db, x_api_key)
     if not token_info:
+        audit_manager.log_action(
+            db=db,
+            username="anonymous",
+            ip_address=request.client.host if request.client else None,
+            feature=MCP_FEATURE_ID,
+            action="AUTH_FAILURE",
+            success=False,
+            details={"reason": "Invalid or missing API key", "endpoint": "DELETE"},
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key"
@@ -565,6 +646,15 @@ async def mcp_delete_session(
     if mcp_session_id in _sessions:
         del _sessions[mcp_session_id]
         logger.info(f"Deleted MCP session: {mcp_session_id}")
+        audit_manager.log_action(
+            db=db,
+            username=token_info.created_by or token_info.name,
+            ip_address=request.client.host if request.client else None,
+            feature=MCP_FEATURE_ID,
+            action="SESSION_DELETE",
+            success=True,
+            details={"session_id": mcp_session_id, "token_name": token_info.name},
+        )
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     
     raise HTTPException(
