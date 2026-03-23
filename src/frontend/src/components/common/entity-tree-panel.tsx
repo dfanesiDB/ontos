@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Link2, ChevronRight, ChevronDown, Loader2, AlertCircle, ExternalLink,
-  PlusCircle, Trash2, Search, Box, Table2, Eye, Columns2, LayoutDashboard,
+  PlusCircle, Trash2, Box, Table2, Eye, Columns2, LayoutDashboard,
   Globe, FileCode, Brain, Activity, Server, Shield, BookOpen, Database,
   FolderOpen, Shapes, Network, ArrowLeft,
 } from 'lucide-react';
@@ -10,16 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter,
-  DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -28,7 +19,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import type { RelationshipDefinition, InstanceHierarchyNode } from '@/types/ontology-schema';
+import type { InstanceHierarchyNode } from '@/types/ontology-schema';
+import { AddRelationshipDialog } from '@/components/common/add-relationship-dialog';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,12 +47,6 @@ interface RelationshipSummary {
   outgoing: RelationshipRecord[];
   incoming: RelationshipRecord[];
   total: number;
-}
-
-interface SearchResult {
-  id: string;
-  name: string;
-  type: string;
 }
 
 interface EntityTreePanelProps {
@@ -421,13 +407,6 @@ export function EntityTreePanel({
 
   // Add relationship state
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [validRelationships, setValidRelationships] = useState<RelationshipDefinition[]>([]);
-  const [selectedRelType, setSelectedRelType] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [selectedTarget, setSelectedTarget] = useState<SearchResult | null>(null);
-  const [addLoading, setAddLoading] = useState(false);
 
   // Delete state
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -436,7 +415,7 @@ export function EntityTreePanel({
   // Type filter
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
-  const { get: apiGet, post: apiPost, delete: apiDelete } = useApi();
+  const { get: apiGet, delete: apiDelete } = useApi();
   const { toast } = useToast();
 
   // ------ data fetching ------
@@ -457,73 +436,7 @@ export function EntityTreePanel({
     }
   }, [apiGet, entityType, entityId]);
 
-  const fetchValidRelationships = useCallback(async () => {
-    try {
-      const iri = `http://ontos.app/ontology#${entityType}`;
-      const response = await apiGet<{ type_iri: string; outgoing: RelationshipDefinition[]; incoming: RelationshipDefinition[] }>(
-        `/api/ontology/entity-types/relationships?type_iri=${encodeURIComponent(iri)}`
-      );
-      if (!response.error && response.data) {
-        setValidRelationships(response.data.outgoing);
-      }
-    } catch { /* non-critical */ }
-  }, [apiGet, entityType]);
-
   useEffect(() => { fetchRelationships(); }, [fetchRelationships]);
-
-  // ------ CRUD handlers ------
-
-  const handleSearchTargets = useCallback(async (query: string) => {
-    if (!query || query.length < 2 || !selectedRelType) return;
-    setSearchLoading(true);
-    try {
-      const relDef = validRelationships.find(r => r.property_name === selectedRelType);
-      const targetType = relDef?.target_type_label || relDef?.target_type_iri?.split('#')[1] || '';
-      const response = await apiGet<SearchResult[]>(
-        `/api/assets?search=${encodeURIComponent(query)}&limit=10`
-      );
-      if (!response.error && Array.isArray(response.data)) {
-        const filtered = targetType
-          ? response.data.filter((a: any) => a.asset_type_name === targetType || !targetType)
-          : response.data;
-        setSearchResults(filtered.map((a: any) => ({
-          id: a.id,
-          name: a.name,
-          type: a.asset_type_name || 'Asset',
-        })));
-      }
-    } catch {
-      setSearchResults([]);
-    } finally {
-      setSearchLoading(false);
-    }
-  }, [apiGet, selectedRelType, validRelationships]);
-
-  const handleAddRelationship = async () => {
-    if (!selectedTarget || !selectedRelType) return;
-    setAddLoading(true);
-    try {
-      const relDef = validRelationships.find(r => r.property_name === selectedRelType);
-      const targetType = relDef?.target_type_label || relDef?.target_type_iri?.split('#')[1] || selectedTarget.type;
-      const payload = {
-        source_type: entityType,
-        source_id: entityId,
-        target_type: targetType,
-        target_id: selectedTarget.id,
-        relationship_type: selectedRelType,
-      };
-      const response = await apiPost('/api/entity-relationships', payload);
-      if (response.error) throw new Error(response.error);
-      toast({ title: 'Relationship created' });
-      setIsAddOpen(false);
-      resetAddForm();
-      fetchRelationships();
-    } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
-    } finally {
-      setAddLoading(false);
-    }
-  };
 
   const handleDeleteRelationship = async () => {
     if (!deleteId) return;
@@ -539,19 +452,6 @@ export function EntityTreePanel({
     } finally {
       setDeleteLoading(false);
     }
-  };
-
-  const resetAddForm = () => {
-    setSelectedRelType('');
-    setSearchQuery('');
-    setSearchResults([]);
-    setSelectedTarget(null);
-  };
-
-  const openAddDialog = () => {
-    resetAddForm();
-    fetchValidRelationships();
-    setIsAddOpen(true);
   };
 
   // ------ derived data ------
@@ -644,7 +544,7 @@ export function EntityTreePanel({
               <Badge variant="secondary" className="ml-1 text-xs">{total}</Badge>
             </CardTitle>
             {canEdit && (
-              <Button variant="outline" size="sm" onClick={openAddDialog}>
+              <Button variant="outline" size="sm" onClick={() => setIsAddOpen(true)}>
                 <PlusCircle className="mr-1 h-3.5 w-3.5" /> Add
               </Button>
             )}
@@ -704,99 +604,13 @@ export function EntityTreePanel({
       </Card>
 
       {/* Add Relationship Dialog */}
-      <Dialog open={isAddOpen} onOpenChange={(open) => { setIsAddOpen(open); if (!open) resetAddForm(); }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add Relationship</DialogTitle>
-            <DialogDescription>
-              Create a new relationship from this {formatTypeName(entityType)} to another entity.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label>Relationship Type</Label>
-              <Select
-                value={selectedRelType}
-                onValueChange={(val) => {
-                  setSelectedRelType(val);
-                  setSelectedTarget(null);
-                  setSearchResults([]);
-                  setSearchQuery('');
-                }}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select relationship type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {validRelationships.map((r) => (
-                    <SelectItem key={r.property_name} value={r.property_name}>
-                      {r.label} → {r.target_type_label || r.target_type_iri?.split('#')[1] || '?'}
-                    </SelectItem>
-                  ))}
-                  {validRelationships.length === 0 && (
-                    <SelectItem value="_none" disabled>No valid relationships defined</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {selectedRelType && (
-              <div>
-                <Label>Search Target Entity</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    placeholder="Search by name…"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSearchTargets(searchQuery); }}
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleSearchTargets(searchQuery)}
-                    disabled={searchLoading || searchQuery.length < 2}
-                  >
-                    {searchLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                  </Button>
-                </div>
-
-                {searchResults.length > 0 && (
-                  <div className="mt-2 border rounded-md max-h-48 overflow-y-auto">
-                    {searchResults.map((r) => (
-                      <button
-                        key={r.id}
-                        onClick={() => setSelectedTarget(r)}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-muted transition-colors ${
-                          selectedTarget?.id === r.id ? 'bg-primary/10 border-l-2 border-primary' : ''
-                        }`}
-                      >
-                        <span className="truncate">{r.name}</span>
-                        <Badge variant="outline" className="text-xs ml-2">{r.type}</Badge>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {selectedTarget && (
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    Selected: <span className="font-medium text-foreground">{selectedTarget.name}</span>
-                    <Badge variant="secondary" className="ml-2 text-xs">{selectedTarget.type}</Badge>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddRelationship} disabled={!selectedTarget || !selectedRelType || addLoading}>
-              {addLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Relationship
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddRelationshipDialog
+        isOpen={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        entityType={entityType}
+        entityId={entityId}
+        onRelationshipCreated={fetchRelationships}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
