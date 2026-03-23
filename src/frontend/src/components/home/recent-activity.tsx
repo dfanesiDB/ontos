@@ -38,7 +38,7 @@ export default function RecentActivity({ limit = 10 }: RecentActivityProps) {
         case 'data_product':
           return `/data-products/${entityId}`;
         case 'data_domain':
-          return `/data-domains/${entityId}`;
+          return `/settings/data-domains/${entityId}`;
         case 'data_contract':
           return `/data-contracts/${entityId}`;
         default:

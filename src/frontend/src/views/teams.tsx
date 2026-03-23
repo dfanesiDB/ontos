@@ -171,7 +171,7 @@ export default function TeamsView() {
                 className="text-xs text-muted-foreground cursor-pointer hover:underline"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/data-domains/${team.domain_id}`);
+                  navigate(`/settings/data-domains/${team.domain_id}`);
                 }}
               >
                 {t('table.domainPrefix')} {domainName}

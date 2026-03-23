@@ -187,7 +187,7 @@ const DataDomainMiniGraphInner: React.FC<DataDomainMiniGraphProps> = ({ currentD
     if (onNodeClick) {
       onNodeClick(domainId);
     } else {
-      navigate(`/data-domains/${domainId}`);
+      navigate(`/settings/data-domains/${domainId}`);
     }
   };
 

@@ -30,7 +30,7 @@ interface DomainNodeData {
 const DomainNode: React.FC<NodeProps<DomainNodeData>> = ({ data, id }) => {
     const navigate = useNavigate();
     const handleNodeClick = () => {
-        navigate(`/data-domains/${id}`);
+        navigate(`/settings/data-domains/${id}`);
     };
 
     return (

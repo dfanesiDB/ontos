@@ -1338,7 +1338,7 @@ export default function DataProductDetails() {
                   {product.domain && getDomainIdByName(domainLabel) ? (
                     <span
                       className="text-xs cursor-pointer text-primary hover:underline truncate"
-                      onClick={() => navigate(`/data-domains/${getDomainIdByName(domainLabel)}`)}
+                      onClick={() => navigate(`/settings/data-domains/${getDomainIdByName(domainLabel)}`)}
                     >
                       {domainLabel}
                     </span>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
@@ -70,7 +70,7 @@ const createChildDomainsColumns = (_navigate: (path: string) => void): ColumnDef
     header: "Name",
     cell: ({ row }) => (
       <Link
-        to={`/data-domains/${row.original.id}`}
+        to={`/settings/data-domains/${row.original.id}`}
         className="font-medium text-primary hover:underline"
       >
         {row.getValue("name")}
@@ -228,8 +228,7 @@ export default function DataDomainDetailsView() {
   const { t } = useTranslation(['data-domains', 'common']);
   const { domainId } = useParams<{ domainId: string }>();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
-  const listPath = pathname.replace(/\/[^/]+$/, '');
+  const listPath = '/settings/data-domains';
   const { get, post, delete: del } = useApi();
   const { toast } = useToast();
   
@@ -605,7 +604,7 @@ export default function DataDomainDetailsView() {
             
             {domain.parent_info && (
               <InfoItem label="Parent Domain" icon={<ListTree />}>
-                <Link to={`/data-domains/${domain.parent_info.id}`} className="text-primary hover:underline">
+                <Link to={`/settings/data-domains/${domain.parent_info.id}`} className="text-primary hover:underline">
                   {domain.parent_info.name}
                 </Link>
               </InfoItem>

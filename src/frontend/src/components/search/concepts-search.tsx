@@ -363,7 +363,7 @@ export default function ConceptsSearch({
         path = `/data-contracts/${link.entity_id}`;
         break;
       case 'data_domain':
-        path = `/data-domains/${link.entity_id}`;
+        path = `/settings/data-domains/${link.entity_id}`;
         break;
       case 'dataset':
         path = `/datasets/${link.entity_id}`;

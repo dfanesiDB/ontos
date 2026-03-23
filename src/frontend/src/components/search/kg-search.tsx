@@ -105,7 +105,7 @@ const AppEntityHover: React.FC<{ iri: string; children: React.ReactNode }> = ({ 
                 const path = info.entityType === 'data_product'
                   ? `/data-products/${info.entityId}`
                   : info.entityType === 'data_domain'
-                    ? `/data-domains/${info.entityId}`
+                    ? `/settings/data-domains/${info.entityId}`
                     : `/data-contracts/${info.entityId}`;
                 window.location.href = path;
               }}>Open</Button>

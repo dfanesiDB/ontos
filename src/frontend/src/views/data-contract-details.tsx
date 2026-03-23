@@ -1755,7 +1755,7 @@ export default function DataContractDetails() {
                   return domainName && domainId ? (
                     <span
                       className="text-xs cursor-pointer text-primary hover:underline truncate"
-                      onClick={() => navigate(`/data-domains/${domainId}`)}
+                      onClick={() => navigate(`/settings/data-domains/${domainId}`)}
                     >
                       {domainName}
                     </span>

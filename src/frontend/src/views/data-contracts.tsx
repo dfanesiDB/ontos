@@ -294,7 +294,7 @@ export default function DataContracts() {
                 className="text-xs text-muted-foreground cursor-pointer hover:underline"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/data-domains/${domainId}`);
+                  navigate(`/settings/data-domains/${domainId}`);
                 }}
               >
                 ↳ Domain: {domainName}

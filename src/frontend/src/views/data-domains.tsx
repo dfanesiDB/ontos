@@ -160,7 +160,7 @@ export default function DataDomainsView() {
   };
 
   const handleNavigateToDomain = (domainId: string) => {
-    navigate(`/data-domains/${domainId}`);
+    navigate(`/settings/data-domains/${domainId}`);
   };
 
   const columns = useMemo<ColumnDef<DataDomain>[]>(() => [

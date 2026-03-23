@@ -118,7 +118,6 @@ export default function App() {
 
               {/* Data Products */}
               <Route path="/data-domains" element={<Navigate to="/settings/data-domains" replace />} />
-              <Route path="/data-domains/:domainId" element={<DataDomainDetailsView />} />
               <Route path="/data-products" element={<DataProducts />} />
               <Route path="/data-products/:productId" element={<DataProductDetails />} />
               <Route path="/data-contracts" element={<DataContracts />} />
@@ -198,6 +197,7 @@ export default function App() {
                 <Route path="workflows/:workflowId" element={<WorkflowDesignerView />} />
                 <Route path="audit" element={<AuditTrail />} />
                 <Route path="data-domains" element={<DataDomainsView />} />
+                <Route path="data-domains/:domainId" element={<DataDomainDetailsView />} />
                 <Route path="business-roles" element={<BusinessRolesView />} />
                 <Route path="delivery-methods" element={<DeliveryMethodsView />} />
                 <Route path="asset-types" element={<AssetTypesView />} />
