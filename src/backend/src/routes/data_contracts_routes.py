@@ -1250,7 +1250,15 @@ async def add_contract_schema(
     try:
         manager._create_schema_objects(db, contract_id, [schema_data], current_user)
         db.commit()
-        audit_manager.log_update(db, "data_contract", contract_id, current_user, {"action": "add_schema", "schema_name": schema_data.get("name")})
+        audit_manager.log_action(
+            db=db,
+            username=current_user.username if current_user else 'anonymous',
+            ip_address=request.client.host if request.client else None,
+            feature='data-contracts',
+            action='ADD_SCHEMA',
+            success=True,
+            details={'contract_id': contract_id, 'schema_name': schema_data.get("name")}
+        )
         return {"status": "ok", "schema_name": schema_data.get("name")}
     except Exception as e:
         db.rollback()
@@ -1284,7 +1292,15 @@ async def delete_contract_schema(
     try:
         db.query(SchemaObjectDb).filter(SchemaObjectDb.id == schema_obj.id).delete()
         db.commit()
-        audit_manager.log_update(db, "data_contract", contract_id, current_user, {"action": "delete_schema", "schema_name": schema_name})
+        audit_manager.log_action(
+            db=db,
+            username=current_user.username if current_user else 'anonymous',
+            ip_address=request.client.host if request.client else None,
+            feature='data-contracts',
+            action='DELETE_SCHEMA',
+            success=True,
+            details={'contract_id': contract_id, 'schema_name': schema_name}
+        )
     except Exception as e:
         db.rollback()
         logger.error("Failed to delete schema '%s' from contract %s: %s", schema_name, contract_id, e, exc_info=True)
