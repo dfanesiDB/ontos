@@ -4,7 +4,14 @@ export type DataContractListItem = {
   name: string
   version: string
   status: string
-  published?: boolean // Marketplace publication status
+  published?: boolean
+  publication_scope?: string | null
+  published_at?: string | null
+  published_by?: string | null
+  certification_level?: number | null
+  inherited_certification_level?: number | null
+  certified_at?: string | null
+  certified_by?: string | null
   owner_team_id?: string // UUID of the owning team
   owner_team_name?: string // Resolved owner team name
   project_id?: string // Project association
@@ -244,10 +251,16 @@ export interface DataContract {
   parentContractId?: string // Parent version reference
   baseName?: string // Base name without version suffix
   changeSummary?: string // Summary of changes in this version
-  // Personal draft visibility (three-tier model)
-  // Tier 1: draftOwnerId set = personal draft, only owner can see
-  // Tier 2: draftOwnerId null, published=false = team/project visible
-  // Tier 3: published=true = marketplace visible to all
+  // Publication & Certification
+  publication_scope?: string | null
+  published_at?: string | null
+  published_by?: string | null
+  certification_level?: number | null
+  inherited_certification_level?: number | null
+  certified_at?: string | null
+  certified_by?: string | null
+  certification_expires_at?: string | null
+  certification_notes?: string | null
   draftOwnerId?: string
 }
 

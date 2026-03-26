@@ -71,6 +71,14 @@ class DatasetDb(Base):
     
     # Marketplace publication status
     published = Column(Boolean, nullable=False, default=False, index=True)
+
+    # Certification
+    certification_level = Column(Integer, nullable=True, index=True)
+    inherited_certification_level = Column(Integer, nullable=True)
+    certified_at = Column(DateTime(timezone=True), nullable=True)
+    certified_by = Column(String, nullable=True)
+    certification_expires_at = Column(DateTime(timezone=True), nullable=True)
+    certification_notes = Column(Text, nullable=True)
     
     # Metadata Inheritance
     # Maximum level of metadata to inherit from associated contracts.

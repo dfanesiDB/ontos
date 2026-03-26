@@ -53,6 +53,7 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
   const [assetType, setAssetType] = useState<MarketplaceAssetType>('products');
+  const [scopeFilter, setScopeFilter] = useState<string>('all');
   
   // Graph view state
   const [selectedDomainDetails, setSelectedDomainDetails] = useState<DataDomain | null>(null);
@@ -360,9 +361,14 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
         p.description?.usage?.toLowerCase().includes(query)
       );
     }
+
+    // Filter by publication scope
+    if (scopeFilter !== 'all') {
+      filtered = filtered.filter(p => (p as any).publication_scope === scopeFilter);
+    }
     
     return filtered;
-  }, [allProducts, selectedDomainId, searchQuery, matchSets]);
+  }, [allProducts, selectedDomainId, searchQuery, matchSets, scopeFilter]);
 
   // Filter datasets based on search query (datasets don't have domain association)
   const filteredDatasets = useMemo(() => {

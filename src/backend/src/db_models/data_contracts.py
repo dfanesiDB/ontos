@@ -49,9 +49,20 @@ class DataContractDb(Base):
     change_summary = Column(Text, nullable=True)  # Summary of changes in this version
 
     # Personal draft visibility field
-    # If set, this is a personal draft visible only to the owner
-    # NULL = follows normal team/project visibility rules (Tier 2/3)
     draft_owner_id = Column(String, nullable=True, index=True)
+
+    # Publication scope (replaces boolean `published`)
+    publication_scope = Column(String, nullable=False, default="none", index=True)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    published_by = Column(String, nullable=True)
+
+    # Certification
+    certification_level = Column(Integer, nullable=True, index=True)
+    inherited_certification_level = Column(Integer, nullable=True)
+    certified_at = Column(DateTime(timezone=True), nullable=True)
+    certified_by = Column(String, nullable=True)
+    certification_expires_at = Column(DateTime(timezone=True), nullable=True)
+    certification_notes = Column(Text, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

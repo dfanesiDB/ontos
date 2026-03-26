@@ -8,7 +8,7 @@ export type ScopeLevel = 'enterprise' | 'domain' | 'department' | 'team' | 'proj
 
 export type SourceType = 'custom' | 'imported';
 
-export type ConceptStatus = 'draft' | 'under_review' | 'approved' | 'published' | 'certified' | 'deprecated' | 'archived';
+export type ConceptStatus = 'draft' | 'under_review' | 'approved' | 'active' | 'deprecated' | 'retired';
 
 export type PromotionType = 'promoted' | 'demoted' | 'migrated';
 
