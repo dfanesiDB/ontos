@@ -210,6 +210,12 @@ export interface DatasetListItem {
   status: DatasetStatus;
   version?: string;
   published: boolean;
+
+  // Certification
+  certification_level?: number | null;
+  inherited_certification_level?: number | null;
+  certified_at?: string | null;
+  certified_by?: string | null;
   
   // Contract reference
   contract_id?: string;
@@ -253,6 +259,12 @@ export interface Dataset {
   status: DatasetStatus;
   version?: string;
   published: boolean;
+
+  // Certification
+  certification_level?: number | null;
+  inherited_certification_level?: number | null;
+  certified_at?: string | null;
+  certified_by?: string | null;
   
   // Metadata inheritance
   max_level_inheritance?: number;

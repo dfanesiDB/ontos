@@ -269,7 +269,7 @@ export function AssetFormDialog({
                             <SelectItem value="draft">Draft</SelectItem>
                             <SelectItem value="active">Active</SelectItem>
                             <SelectItem value="deprecated">Deprecated</SelectItem>
-                            <SelectItem value="archived">Archived</SelectItem>
+                            <SelectItem value="retired">Retired</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

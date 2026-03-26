@@ -25,16 +25,17 @@ logger = get_logger(__name__)
 # ============================================================================
 
 class DataProductStatus(str, Enum):
-    """ODPS lifecycle status values (aligned with ODCS)."""
+    """ODPS lifecycle status values. Alias for EntityStatus; kept for backward compatibility.
+    Note: CERTIFIED removed — certification is now a separate dimension (see lifecycle.py).
+    """
     DRAFT = "draft"
-    SANDBOX = "sandbox"  # Optional testing state
+    SANDBOX = "sandbox"
     PROPOSED = "proposed"
-    UNDER_REVIEW = "under_review"  # Formal review
-    APPROVED = "approved"  # Approved but not yet active
+    UNDER_REVIEW = "under_review"
+    APPROVED = "approved"
     ACTIVE = "active"
-    CERTIFIED = "certified"  # Elevated status after active
     DEPRECATED = "deprecated"
-    RETIRED = "retired"  # Terminal state
+    RETIRED = "retired"
 
 
 # ============================================================================
@@ -326,7 +327,20 @@ class DataProduct(BaseModel):
     parent_product_id: Optional[str] = Field(None, alias="parentProductId", description="Parent version ID for version lineage")
     base_name: Optional[str] = Field(None, alias="baseName", description="Base name without version for grouping versions")
     change_summary: Optional[str] = Field(None, alias="changeSummary", description="Summary of changes in this version")
-    published: bool = Field(False, description="Whether published to marketplace")
+    published: bool = Field(False, description="Whether published to marketplace (legacy)")
+
+    # Publication fields
+    publication_scope: Optional[str] = Field("none", description="Publication scope: none, domain, organization, external")
+    published_at: Optional[datetime] = Field(None, description="When published")
+    published_by: Optional[str] = Field(None, description="Who published")
+
+    # Certification fields
+    certification_level: Optional[int] = Field(None, description="Ordinal of assigned certification level")
+    inherited_certification_level: Optional[int] = Field(None, description="Inherited certification level via relationships")
+    certified_at: Optional[datetime] = Field(None, description="When certification was granted")
+    certified_by: Optional[str] = Field(None, description="Who granted certification")
+    certification_expires_at: Optional[datetime] = Field(None, description="When certification expires")
+    certification_notes: Optional[str] = Field(None, description="Certification notes")
 
     # Field validators to parse JSON strings from database
     @field_validator('tags', mode='before')

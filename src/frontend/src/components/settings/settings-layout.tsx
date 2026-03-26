@@ -19,6 +19,7 @@ import {
   Shapes,
   BoxSelect,
   Truck,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -46,6 +47,7 @@ const settingsNavGroups: SettingsNavGroup[] = [
       { path: '/settings/asset-types', labelKey: 'settings:tabs.assetTypes', defaultLabel: 'Asset Types', icon: Shapes },
       { path: '/settings/teams', labelKey: 'settings:tabs.teams', defaultLabel: 'Teams', icon: UserCheck },
       { path: '/settings/projects', labelKey: 'settings:tabs.projects', defaultLabel: 'Projects', icon: FolderOpen },
+      { path: '/settings/certification-levels', labelKey: 'settings:tabs.certificationLevels', defaultLabel: 'Certification Levels', icon: ShieldCheck },
     ],
   },
   {

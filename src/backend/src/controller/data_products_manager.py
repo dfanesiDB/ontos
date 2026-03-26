@@ -519,18 +519,9 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
             ValueError: If transition is invalid or product not found
             SQLAlchemyError: If database operation fails
         """
-        # Define valid status transitions (ODPS lifecycle aligned with ODCS)
-        valid_transitions = {
-            'draft': ['sandbox', 'proposed', 'deprecated'],
-            'sandbox': ['draft', 'proposed', 'deprecated'],
-            'proposed': ['draft', 'under_review', 'deprecated'],
-            'under_review': ['draft', 'approved', 'deprecated'],
-            'approved': ['active', 'draft', 'deprecated'],
-            'active': ['certified', 'deprecated'],
-            'certified': ['deprecated', 'active'],
-            'deprecated': ['retired', 'active'],
-            'retired': []  # Terminal state
-        }
+        # Certification is now a separate dimension — removed from status transitions
+        from src.models.lifecycle import DATA_PRODUCT_TRANSITIONS
+        valid_transitions = DATA_PRODUCT_TRANSITIONS
         
         try:
             product_db = self._repo.get(db=self._db, id=product_id)
@@ -645,25 +636,12 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
         """
         return self.transition_status(product_id, 'sandbox', current_user)
 
-    def submit_for_certification(self, product_id: str, current_user: Optional[str] = None) -> DataProductApi:
-        """
-        Submit a draft/sandbox product for review (draft/sandbox → proposed).
-
-        ODPS lifecycle: This moves a product from 'draft' or 'sandbox' to 'proposed' status,
-        indicating it's ready for governance review/approval.
-
-        Args:
-            product_id: ID of the product to submit
-            current_user: Username for audit trail
-
-        Returns:
-            Updated product with 'proposed' status
-
-        Raises:
-            ValueError: If product not found or invalid status transition
-            SQLAlchemyError: If database operation fails
-        """
+    def submit_for_review(self, product_id: str, current_user: Optional[str] = None) -> DataProductApi:
+        """Submit a draft/sandbox product for review (draft/sandbox → proposed)."""
         return self.transition_status(product_id, 'proposed', current_user)
+
+    # Backward-compatible alias
+    submit_for_certification = submit_for_review
 
     def approve_product(self, product_id: str, current_user: Optional[str] = None) -> DataProductApi:
         """
@@ -737,7 +715,7 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 # Validate that all linked contracts are in an approved status
                 from src.repositories.data_contracts_repository import data_contract_repo
                 
-                valid_contract_statuses = ['approved', 'active', 'certified']
+                valid_contract_statuses = ['approved', 'active']
                 contracts_not_approved = []
                 
                 for port in product_db.output_ports:
@@ -758,6 +736,15 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
 
             # Use transition_status for validation and update
             result = self.transition_status(product_id, 'active', current_user)
+
+            # Set publication scope
+            from datetime import datetime, timezone
+            product_db.published = True
+            product_db.publication_scope = "organization"
+            product_db.published_at = datetime.now(timezone.utc)
+            product_db.published_by = current_user
+            self._db.add(product_db)
+            self._db.flush()
 
             # Fire on_publish trigger
             try:
@@ -781,28 +768,18 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
             raise
 
     def certify_product(self, product_id: str, current_user: Optional[str] = None) -> DataProductApi:
+        """DEPRECATED: certification is now a separate dimension. Use the certify endpoint instead.
+        
+        Kept for backward compatibility — raises informative error.
         """
-        Certify an active product (active → certified).
-
-        ODPS lifecycle (aligned with ODCS): Marks an active product as certified, indicating
-        it meets elevated standards for high-value or regulated use cases.
-
-        Args:
-            product_id: ID of the product to certify
-            current_user: Username for audit trail
-
-        Returns:
-            Updated product with 'certified' status
-
-        Raises:
-            ValueError: If product not found or invalid status transition
-            SQLAlchemyError: If database operation fails
-        """
-        return self.transition_status(product_id, 'certified', current_user)
+        raise ValueError(
+            "Status-based certification is removed. "
+            "Use POST /api/data-products/{id}/certify with a certification_level instead."
+        )
 
     def deprecate_product(self, product_id: str, current_user: Optional[str] = None) -> DataProductApi:
         """
-        Deprecate an active or certified product (active/certified → deprecated).
+        Deprecate an active product (active → deprecated).
 
         ODPS lifecycle: Marks a product as deprecated, signaling
         it will be retired soon and consumers should migrate.

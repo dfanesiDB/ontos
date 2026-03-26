@@ -97,8 +97,9 @@ async def move_product_to_sandbox(
         raise HTTPException(status_code=500, detail="Failed to move product to sandbox")
 
 
+@router.post('/data-products/{product_id}/submit-review')
 @router.post('/data-products/{product_id}/submit-certification')
-async def submit_product_certification(
+async def submit_product_for_review(
     product_id: str,
     request: Request,
     db: DBSessionDep,
@@ -109,7 +110,7 @@ async def submit_product_certification(
 ):
     """Submit a draft/sandbox product for review (draft/sandbox → proposed)."""
     try:
-        updated_product = manager.submit_for_certification(product_id, current_user.username if current_user else None)
+        updated_product = manager.submit_for_review(product_id, current_user.username if current_user else None)
         
         audit_manager.log_action(
             db=db,
@@ -243,8 +244,193 @@ async def publish_product(
         raise HTTPException(status_code=500, detail="Failed to publish product")
 
 
+@router.post('/data-products/{product_id}/set-publication-scope')
+async def set_publication_scope(
+    product_id: str,
+    request: Request,
+    db: DBSessionDep,
+    audit_manager: AuditManagerDep,
+    current_user: AuditCurrentUserDep,
+    body: dict = Body(...),
+    manager: DataProductsManager = Depends(get_data_products_manager),
+    _: bool = Depends(PermissionChecker(DATA_PRODUCTS_FEATURE_ID, FeatureAccessLevel.READ_WRITE))
+):
+    """
+    Set publication scope for a data product.
+    Body: { "scope": "none" | "domain" | "organization" | "external" }
+    Product must be active to publish.
+    """
+    from datetime import datetime, timezone
+    scope = body.get("scope", "none")
+    valid_scopes = ["none", "domain", "organization", "external"]
+    if scope not in valid_scopes:
+        raise HTTPException(status_code=422, detail=f"Invalid scope. Must be one of: {valid_scopes}")
+
+    try:
+        product_db = manager._repo.get(db=db, id=product_id)
+        if not product_db:
+            raise HTTPException(status_code=404, detail="Data product not found")
+
+        if scope != "none" and product_db.status != "active":
+            raise HTTPException(
+                status_code=409,
+                detail=f"Product must be active to publish. Current status: {product_db.status}"
+            )
+
+        product_db.publication_scope = scope
+        if scope != "none":
+            product_db.published = True
+            product_db.published_at = datetime.now(timezone.utc)
+            product_db.published_by = current_user.username if current_user else None
+        else:
+            product_db.published = False
+            product_db.published_at = None
+            product_db.published_by = None
+        db.add(product_db)
+        db.commit()
+        db.refresh(product_db)
+
+        audit_manager.log_action(
+            db=db,
+            username=current_user.username,
+            ip_address=request.client.host if request.client else None,
+            feature=DATA_PRODUCTS_FEATURE_ID,
+            action='SET_PUBLICATION_SCOPE',
+            success=True,
+            details={'product_id': product_id, 'scope': scope}
+        )
+
+        return {
+            'publication_scope': product_db.publication_scope,
+            'published_at': str(product_db.published_at) if product_db.published_at else None,
+            'published_by': product_db.published_by,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.exception("Set publication scope failed for product_id=%s", product_id)
+        raise HTTPException(status_code=500, detail="Failed to set publication scope")
+
+
+@router.post('/data-products/{product_id}/unpublish')
+async def unpublish_product(
+    product_id: str,
+    request: Request,
+    db: DBSessionDep,
+    audit_manager: AuditManagerDep,
+    current_user: AuditCurrentUserDep,
+    manager: DataProductsManager = Depends(get_data_products_manager),
+    _: bool = Depends(PermissionChecker(DATA_PRODUCTS_FEATURE_ID, FeatureAccessLevel.READ_WRITE))
+):
+    """Remove a data product from the marketplace (set publication_scope to none)."""
+    try:
+        product_db = manager._repo.get(db=db, id=product_id)
+        if not product_db:
+            raise HTTPException(status_code=404, detail="Data product not found")
+
+        product_db.publication_scope = "none"
+        product_db.published = False
+        product_db.published_at = None
+        product_db.published_by = None
+        db.add(product_db)
+        db.commit()
+
+        audit_manager.log_action(
+            db=db,
+            username=current_user.username,
+            ip_address=request.client.host if request.client else None,
+            feature=DATA_PRODUCTS_FEATURE_ID,
+            action='UNPUBLISH',
+            success=True,
+            details={'product_id': product_id}
+        )
+
+        return {'publication_scope': 'none'}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.exception("Unpublish product failed for product_id=%s", product_id)
+        raise HTTPException(status_code=500, detail="Failed to unpublish product")
+
+
 @router.post('/data-products/{product_id}/certify')
 async def certify_product(
+    product_id: str,
+    request: Request,
+    db: DBSessionDep,
+    audit_manager: AuditManagerDep,
+    current_user: AuditCurrentUserDep,
+    body: dict = Body(...),
+    manager: DataProductsManager = Depends(get_data_products_manager),
+    _: bool = Depends(ApprovalChecker('PRODUCTS'))
+):
+    """
+    Certify a data product at a specific certification level.
+    Requires active status. Certification is now a separate dimension from status.
+    Body: { "certification_level": int, "notes": str? }
+    """
+    from datetime import datetime, timezone
+    certification_level = body.get("certification_level")
+    if certification_level is None:
+        raise HTTPException(status_code=422, detail="certification_level is required")
+
+    try:
+        product_db = manager._repo.get(db=db, id=product_id)
+        if not product_db:
+            raise HTTPException(status_code=404, detail="Data product not found")
+
+        if product_db.status not in ("active",):
+            raise HTTPException(
+                status_code=409,
+                detail=f"Product must be active to certify. Current status: {product_db.status}"
+            )
+
+        from src.repositories.certification_levels_repository import certification_levels_repo
+        level = certification_levels_repo.get_by_order(db, certification_level)
+        if not level:
+            raise HTTPException(status_code=404, detail=f"Certification level {certification_level} not found")
+
+        product_db.certification_level = certification_level
+        product_db.certified_at = datetime.now(timezone.utc)
+        product_db.certified_by = current_user.username if current_user else None
+        product_db.certification_notes = body.get("notes")
+        db.add(product_db)
+        db.commit()
+        db.refresh(product_db)
+
+        audit_manager.log_action(
+            db=db,
+            username=current_user.username,
+            ip_address=request.client.host if request.client else None,
+            feature=DATA_PRODUCTS_FEATURE_ID,
+            action='CERTIFY',
+            success=True,
+            details={'product_id': product_id, 'certification_level': certification_level}
+        )
+
+        # Propagate certification to downstream entities
+        from src.controller.certification_propagator import propagate_certification
+        propagate_certification(db, "DataProduct", product_id)
+        db.commit()
+
+        return {
+            'certification_level': product_db.certification_level,
+            'certified_at': str(product_db.certified_at),
+            'certified_by': product_db.certified_by,
+            'certification_notes': product_db.certification_notes,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.exception("Certify product failed for product_id=%s", product_id)
+        raise HTTPException(status_code=500, detail="Failed to certify product")
+
+
+@router.post('/data-products/{product_id}/decertify')
+async def decertify_product(
     product_id: str,
     request: Request,
     db: DBSessionDep,
@@ -253,32 +439,38 @@ async def certify_product(
     manager: DataProductsManager = Depends(get_data_products_manager),
     _: bool = Depends(ApprovalChecker('PRODUCTS'))
 ):
-    """
-    Certify an active product (active → certified).
-    ODPS lifecycle (aligned with ODCS): Elevated status for high-value products.
-    """
+    """Remove certification from a data product."""
     try:
-        updated_product = manager.certify_product(product_id, current_user.username if current_user else None)
-        
+        product_db = manager._repo.get(db=db, id=product_id)
+        if not product_db:
+            raise HTTPException(status_code=404, detail="Data product not found")
+
+        old_level = product_db.certification_level
+        product_db.certification_level = None
+        product_db.certified_at = None
+        product_db.certified_by = None
+        product_db.certification_expires_at = None
+        product_db.certification_notes = None
+        db.add(product_db)
+        db.commit()
+
         audit_manager.log_action(
             db=db,
             username=current_user.username,
             ip_address=request.client.host if request.client else None,
             feature=DATA_PRODUCTS_FEATURE_ID,
-            action='CERTIFY',
+            action='DECERTIFY',
             success=True,
-            details={'product_id': product_id, 'status': updated_product.status}
+            details={'product_id': product_id, 'previous_level': old_level}
         )
-        
-        return {'status': updated_product.status}
-    except ValueError as e:
-        logger.error("Validation error certifying product %s: %s", product_id, e)
-        raise HTTPException(status_code=409, detail=str(e))
+
+        return {'certification_level': None}
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Certify product failed for product_id=%s", product_id)
-        raise HTTPException(status_code=500, detail="Failed to certify product")
+        db.rollback()
+        logger.exception("Decertify product failed for product_id=%s", product_id)
+        raise HTTPException(status_code=500, detail="Failed to decertify product")
 
 
 @router.post('/data-products/{product_id}/deprecate')

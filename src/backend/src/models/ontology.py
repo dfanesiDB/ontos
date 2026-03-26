@@ -29,13 +29,13 @@ class SourceType(str, Enum):
 
 
 class ConceptStatus(str, Enum):
+    """Ontology concept status. Aligned with EntityStatus; CERTIFIED removed (separate dimension)."""
     DRAFT = "draft"
     UNDER_REVIEW = "under_review"
     APPROVED = "approved"
-    PUBLISHED = "published"
-    CERTIFIED = "certified"
+    ACTIVE = "active"
     DEPRECATED = "deprecated"
-    ARCHIVED = "archived"
+    RETIRED = "retired"
 
 
 class PromotionType(str, Enum):

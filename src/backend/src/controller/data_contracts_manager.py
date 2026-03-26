@@ -3535,18 +3535,9 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         if not contract:
             raise ValueError("Contract not found")
         
-        # Define valid status transitions (ODCS lifecycle)
-        # Lifecycle: draft → proposed → under_review → approved → active → certified → deprecated → retired
-        valid_transitions = {
-            'draft': ['proposed', 'deprecated'],
-            'proposed': ['draft', 'under_review', 'deprecated'],
-            'under_review': ['draft', 'approved', 'deprecated'],
-            'approved': ['active', 'draft', 'deprecated'],
-            'active': ['certified', 'deprecated'],
-            'certified': ['deprecated', 'active'],
-            'deprecated': ['retired', 'active'],
-            'retired': []  # Terminal state
-        }
+        # Certification is now a separate dimension — removed from status transitions
+        from src.models.lifecycle import DATA_CONTRACT_TRANSITIONS
+        valid_transitions = DATA_CONTRACT_TRANSITIONS
         
         current_status = contract.status or 'draft'
         if new_status not in valid_transitions.get(current_status, []):

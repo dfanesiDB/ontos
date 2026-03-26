@@ -53,6 +53,7 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
   const [assetType, setAssetType] = useState<MarketplaceAssetType>('products');
+  const [scopeFilter, setScopeFilter] = useState<string>('all');
   
   // Graph view state
   const [selectedDomainDetails, setSelectedDomainDetails] = useState<DataDomain | null>(null);
@@ -70,9 +71,9 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   const [productsError, setProductsError] = useState<string | null>(null);
   
   // Subscribed products state
-  const [subscribedProducts, setSubscribedProducts] = useState<DataProduct[]>([]);
+  const [, setSubscribedProducts] = useState<DataProduct[]>([]);
   const [subscribedProductIds, setSubscribedProductIds] = useState<Set<string>>(new Set());
-  const [subscribedLoading, setSubscribedLoading] = useState(true);
+  const [, setSubscribedLoading] = useState(true);
   
   // Datasets state
   const [allDatasets, setAllDatasets] = useState<DatasetListItem[]>([]);
@@ -80,9 +81,9 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   const [datasetsError, setDatasetsError] = useState<string | null>(null);
   
   // Subscribed datasets state
-  const [subscribedDatasets, setSubscribedDatasets] = useState<DatasetListItem[]>([]);
+  const [, setSubscribedDatasets] = useState<DatasetListItem[]>([]);
   const [subscribedDatasetIds, setSubscribedDatasetIds] = useState<Set<string>>(new Set());
-  const [subscribedDatasetsLoading, setSubscribedDatasetsLoading] = useState(false);
+  const [, setSubscribedDatasetsLoading] = useState(false);
   
   // Selected dataset for dialogs
   const [selectedDataset, setSelectedDataset] = useState<DatasetListItem | null>(null);
@@ -360,9 +361,14 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
         p.description?.usage?.toLowerCase().includes(query)
       );
     }
+
+    // Filter by publication scope
+    if (scopeFilter !== 'all') {
+      filtered = filtered.filter(p => (p as any).publication_scope === scopeFilter);
+    }
     
     return filtered;
-  }, [allProducts, selectedDomainId, searchQuery, matchSets]);
+  }, [allProducts, selectedDomainId, searchQuery, matchSets, scopeFilter]);
 
   // Filter datasets based on search query (datasets don't have domain association)
   const filteredDatasets = useMemo(() => {

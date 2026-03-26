@@ -74,6 +74,7 @@ from src.routes import (
     business_lineage_routes,
     readiness_routes,
     suggestion_routes,
+    certification_levels_routes,
 )
 
 from src.common.database import init_db, get_session_factory, SQLAlchemySession
@@ -334,6 +335,7 @@ entity_subscription_routes.register_routes(app)
 business_lineage_routes.register_routes(app)
 readiness_routes.register_routes(app)
 suggestion_routes.register_routes(app)
+certification_levels_routes.register_routes(app)
 data_asset_reviews_routes.register_routes(app)
 data_catalog_routes.register_routes(app)
 

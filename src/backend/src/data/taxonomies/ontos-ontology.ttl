@@ -1111,7 +1111,7 @@ ontos:status a owl:DatatypeProperty ;
     ontos:uiFieldOrder 3 ;
     ontos:isRequired true ;
     ontos:uiFieldGroup "basic" ;
-    ontos:uiSelectOptions "draft,active,deprecated,retired" .
+    ontos:uiSelectOptions "draft,sandbox,proposed,under_review,approved,active,deprecated,retired" .
 
 ontos:version a owl:DatatypeProperty ;
     rdfs:label "version" ;
@@ -1125,9 +1125,10 @@ ontos:version a owl:DatatypeProperty ;
 
 ontos:lifecycle a owl:DatatypeProperty ;
     rdfs:label "lifecycle" ;
-    rdfs:comment "Current lifecycle stage of the entity" ;
+    rdfs:comment "DEPRECATED — use ontos:status instead. Kept for backward compatibility." ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
+    owl:deprecated true ;
     skos:example "draft, active, deprecated, retired" .
 
 # --- Descriptive ---
@@ -1223,6 +1224,31 @@ ontos:certificationExpiresAt a owl:DatatypeProperty ;
     rdfs:label "certification expires at" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:dateTime .
+
+ontos:certificationLevel a owl:DatatypeProperty ;
+    rdfs:label "certification level" ;
+    rdfs:comment "Ordinal of the assigned certification level (references certification_levels table)" ;
+    rdfs:domain ontos:Entity ;
+    rdfs:range xsd:integer .
+
+ontos:inheritedCertificationLevel a owl:DatatypeProperty ;
+    rdfs:label "inherited certification level" ;
+    rdfs:comment "Certification level inherited via entity relationships (BFS propagation)" ;
+    rdfs:domain ontos:Entity ;
+    rdfs:range xsd:integer .
+
+ontos:certificationNotes a owl:DatatypeProperty ;
+    rdfs:label "certification notes" ;
+    rdfs:domain ontos:Entity ;
+    rdfs:range xsd:string .
+
+ontos:publicationScope a owl:DatatypeProperty ;
+    rdfs:label "publication scope" ;
+    rdfs:comment "Visibility scope: none, domain, organization, external" ;
+    rdfs:domain ontos:Entity ;
+    rdfs:range xsd:string ;
+    ontos:uiFieldType "select" ;
+    ontos:uiSelectOptions "none,domain,organization,external" .
 
 
 # ############################################################################
